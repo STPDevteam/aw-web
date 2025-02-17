@@ -38,6 +38,22 @@ export const Character = ({
   onClick: () => void;
 }) => {
   const [spriteSheet, setSpriteSheet] = useState<Spritesheet>();
+
+  const getRandomEmoji = () => {
+    const emojis = ['❓', '😀', '😉', '😎', '😐', '😑', '😪', '😫'];
+    return emojis[Math.floor(Math.random() * emojis.length)];
+  };
+
+  const [randomEmoji, setRandomEmoji] = useState<string>(getRandomEmoji());
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setRandomEmoji(getRandomEmoji());
+    }, 30000); 
+    return () => clearInterval(intervalId);
+  }, []);
+
+
   useEffect(() => {
     const parseSheet = async () => {
       const sheet = new Spritesheet(
@@ -83,8 +99,6 @@ export const Character = ({
       break;
   }
 
-  const emojis = ['❓','😀','😉','😎','😐','😑','😪','😫']
-  const randomIndex = Math.floor(Math.random() * emojis.length)
   return (
     <Container x={x} y={y} interactive={true} pointerdown={onClick} cursor="pointer">
       {isThinking && (
@@ -109,7 +123,7 @@ export const Character = ({
       
        {
         !isThinking && !isSpeaking && !!!emoji && 
-        <Text x={0} y={-24} scale={{ x: -0.8, y: -0.8 }} text={emojis[randomIndex]} anchor={{ x: 0.5, y: 0.5 }} />
+        <Text x={0} y={-24} scale={{ x: 0.8, y: 0.8 }} text={randomEmoji} anchor={{ x: 0.5, y: 0.5 }} />
       }
     </Container>
   );
