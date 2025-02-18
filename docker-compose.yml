@@ -9,7 +9,7 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     environment:
-      - VITE_CONVEX_URL=http://127.0.0.1:${PORT:-3210}
+      - VITE_CONVEX_URL=http://52.197.50.200:${PORT:-3210}
     networks:
       - ai-town-network
   backend:
