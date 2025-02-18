@@ -91,7 +91,7 @@ export default function PlayerDetails({
     if (!humanPlayer || !playerId) {
       return;
     }
-    console.log(`Starting conversation`);
+    //console.log(`Starting conversation`);
     await toastOnError(startConversation({ playerId: humanPlayer.id, invitee: playerId }));
   };
   const onAcceptInvite = async () => {

@@ -50,7 +50,7 @@ export const enqueueBackgroundMusicGeneration = internalAction({
     }
     const worldStatus = await ctx.runQuery(api.world.defaultWorldStatus);
     if (!worldStatus) {
-      console.log('No active default world, returning.');
+      //console.log('No active default world, returning.');
       return;
     }
     // TODO: MusicGen-Large on Replicate only allows 30 seconds. Use MusicGen-Small for longer?

@@ -32,7 +32,7 @@ function download(data, filename, type) {
 export function generate_sprite_file() {
 
     let layer0 = g_ctx.g_layers[0];
-    console.log("generate_sprite_file");
+    //console.log("generate_sprite_file");
 
     let text = generate_preamble();
 
@@ -104,9 +104,9 @@ export function generate_sprite_file() {
     text += '}\n';
     text += '}\n';
 
-    //console.log(text);
+    ////console.log(text);
     let filename = g_ctx.tilesetpath.split('/').slice(-1)[0];
     filename = filename.split('.')[0];
-    console.log("spritefile: saving to file ",filename);
+    //console.log("spritefile: saving to file ",filename);
     UTIL.download(text, filename+".json", "text/plain");
 }

@@ -7,6 +7,13 @@ import { sleep } from '../util/sleep';
 import { Id } from '../_generated/dataModel';
 import { ENGINE_ACTION_DURATION } from '../constants';
 
+if (process.env.NODE_ENV === 'production') {
+  //console.log = () => {};
+  console.info = () => {};
+  console.debug = () => {};
+  console.warn = () => {};
+}
+
 export async function createEngine(ctx: MutationCtx) {
   const now = Date.now();
   const engineId = await ctx.db.insert('engines', {
