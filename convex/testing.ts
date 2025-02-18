@@ -76,7 +76,7 @@ export const stop = mutation({
       console.debug(`World ${worldStatus.worldId} is already inactive`);
       return;
     }
-    //console.log(`Stopping engine ${engine._id}...`);
+    console.log(`Stopping engine ${engine._id}...`);
     await ctx.db.patch(worldStatus._id, { status: 'stoppedByDeveloper' });
     await stopEngine(ctx, worldStatus.worldId);
   },
@@ -92,7 +92,7 @@ export const resume = mutation({
       console.debug(`World ${worldStatus.worldId} is already running`);
       return;
     }
-    //console.log(
+    console.log(
       `Resuming engine ${engine._id} for world ${worldStatus.worldId} (state: ${worldStatus.status})...`,
     );
     await ctx.db.patch(worldStatus._id, { status: 'running' });
@@ -106,7 +106,7 @@ export const archive = internalMutation({
     if (engine.running) {
       throw new Error(`Engine ${engine._id} is still running!`);
     }
-    //console.log(`Archiving world ${worldStatus.worldId}...`);
+    console.log(`Archiving world ${worldStatus.worldId}...`);
     await ctx.db.patch(worldStatus._id, { isDefault: false });
   },
 });

@@ -50,7 +50,7 @@ g_ctx.debug_flag2 = false; // really verbose output
 
 function tileset_index_from_coords(x, y) {
     let retme = x + (y*g_ctx.tilesettilew);
-    //console.log("tileset_index_from_coord ",retme, x, y);
+    console.log("tileset_index_from_coord ",retme, x, y);
     return retme; 
 }
 function level_index_from_coords(x, y) {
@@ -63,7 +63,7 @@ function tileset_index_from_px(x, y) {
     let coord_x = Math.floor(x / (g_ctx.tiledimx + CONFIG.tilesetpadding));
     let coord_y = Math.floor(y / (g_ctx.tiledimx+ CONFIG.tilesetpadding));
 
-    //console.log("tileset_index_from_px ",x, y);
+    console.log("tileset_index_from_px ",x, y);
 
     return tileset_index_from_coords(coord_x, coord_y); 
 }
@@ -76,8 +76,8 @@ function level_index_from_px(x, y) {
 function tileset_coords_from_index(index) {
         let x = index % (g_ctx.tilesettilew);
         let y = Math.floor(index / (g_ctx.tilesettilew));
-        // //console.log("tilesettilewidth: ",g_ctx.tilesettilew);
-        // //console.log("tileset_coords_from_index tile coords: ",index,x,y);
+        // console.log("tilesettilewidth: ",g_ctx.tilesettilew);
+        // console.log("tileset_coords_from_index tile coords: ",index,x,y);
         return [x,y];
 }
 
@@ -169,7 +169,7 @@ class LayerContext {
         } else if (this.num == 3) {
             tiles = mod.objmap[1];
         } else {
-            //console.log("loadFromMapFile: Error unknow layer number");
+            console.log("loadFromMapFile: Error unknow layer number");
             return;
         }
 
@@ -218,7 +218,7 @@ class LayerContext {
     addTileLevelPx(x, y, index) {
 
         if (x > CONFIG.levelwidth || y > CONFIG.levelheight){
-            //console.log("tile placed outside of level boundary, ignoring",x,y)
+            console.log("tile placed outside of level boundary, ignoring",x,y)
             return -1;
         } 
 
@@ -258,12 +258,12 @@ class LayerContext {
         ctile2.y = Math.floor(yPx / dy) * dy;
         ctile2.zIndex = this.num; 
 
-        // //console.log(xPx,yPx,ctile.x,ctile.y);
+        // console.log(xPx,yPx,ctile.x,ctile.y);
 
         let new_index = level_index_from_px(ctile.x, ctile.y);
 
         if(g_ctx.debug_flag2){
-            //console.log('addTileLevelPx ',this.num,' ctile.x ', ctile.x, 'ctile.y ', ctile.y, "index ", index, "new_index", new_index);
+            console.log('addTileLevelPx ',this.num,' ctile.x ', ctile.x, 'ctile.y ', ctile.y, "index ", index, "new_index", new_index);
         }
 
         if (!g_ctx.dkey) {
@@ -274,7 +274,7 @@ class LayerContext {
 
         if (this.sprites.hasOwnProperty(new_index)) {
             if(g_ctx.debug_flag){
-             //console.log("addTileLevelPx: ",this.num,"removing old tile", new_index);
+             console.log("addTileLevelPx: ",this.num,"removing old tile", new_index);
             }
             this.container.removeChild(this.sprites[new_index]);
             delete this.sprites[new_index];
@@ -305,7 +305,7 @@ class TilesetContext {
 
         this.widthpx  = g_ctx.tilesetpxw;
         this.heightpx = g_ctx.tilesetpxh;
-        //console.log(mod.tilesetpath);
+        console.log(mod.tilesetpath);
         const texture = PIXI.Texture.from(mod.tilesetpath);
         const bg    = new PIXI.Sprite(texture);
 
@@ -339,7 +339,7 @@ class TilesetContext {
             g_ctx.tile_index = tileset_index_from_px(e.global.x, e.global.y); 
 
             if(g_ctx.debug_flag) {
-                //console.log("g_ctx.tileset mouse down. index "+g_ctx.tile_index);
+                console.log("g_ctx.tileset mouse down. index "+g_ctx.tile_index);
             }
         });
 
@@ -349,7 +349,7 @@ class TilesetContext {
     }
 
     addTileSheet(name, sheet){
-        //console.log(" tileset.addTileSheet ", sheet);
+        console.log(" tileset.addTileSheet ", sheet);
 
 
         // FIXME ... development code
@@ -417,7 +417,7 @@ function loadAnimatedSpritesFromModule(mod){
     }
 
     for(let key of m.keys()){
-        //console.log("loadAnimatedSpritesFromModule: ",key);
+        console.log("loadAnimatedSpritesFromModule: ",key);
         PIXI.Assets.load("./"+key).then(
             function(sheet) {
 
@@ -427,7 +427,7 @@ function loadAnimatedSpritesFromModule(mod){
                 let asprarray = m.get(key);
                 for (let asprite of asprarray) {
                     // TODO FIXME, pass in animation name
-                    //console.log("Loading animation", asprite.animation);
+                    console.log("Loading animation", asprite.animation);
                     g_ctx.g_layers[asprite.layer].addTileLevelPx(asprite.x, asprite.y, -1);
                 }
                 g_ctx.spritesheet     = null;
@@ -465,10 +465,10 @@ function downloadpng(filename) {
     for(let i = 0; i <  children.length; i++) {
         let child = children[i];
         if (! child.hasOwnProperty('isSprite') || !child.isSprite){
-            //console.log(child);
+            console.log(child);
             continue;
         }
-        // //console.log(child, typeof child);
+        // console.log(child, typeof child);
         g_ctx.composite.container.removeChild(child);
         newcontainer.addChild(child);
     }
@@ -476,7 +476,7 @@ function downloadpng(filename) {
       const { renderer } = g_ctx.composite_app;
       renderer.plugins.extract.canvas(newcontainer).toBlob(function (b) {
 
-      //console.log(b);
+      console.log(b);
       var a = document.createElement("a");
       document.body.append(a);
       a.download = filename;
@@ -575,7 +575,7 @@ window.addEventListener(
             let layer = undome.shift();
             for(let i = 0; i < undome.length; i++) {
                 if (g_ctx.debug_flag) {
-                    //console.log("Undo removing ", undome[i])
+                    console.log("Undo removing ", undome[i])
                 }
                 // Remove current tile
                 layer.container.removeChild(layer.sprites[undome[i][0]]);
@@ -634,7 +634,7 @@ window.addEventListener(
 function onTilesetDragStart(e)
 {
     if (g_ctx.debug_flag) {
-        //console.log("onDragStartTileset()");
+        console.log("onDragStartTileset()");
     }
     g_ctx.tileset.app.stage.eventMode = 'static';
     g_ctx.tileset.app.stage.addEventListener('pointermove', onTilesetDrag);
@@ -654,7 +654,7 @@ function onTilesetDragStart(e)
 function onTilesetDragEnd(e)
 {
     if (g_ctx.debug_flag) {
-        //console.log("onDragEndTileset()");
+        console.log("onDragEndTileset()");
     }
 
     g_ctx.tileset.app.stage.eventMode = 'auto';
@@ -680,7 +680,7 @@ function onTilesetDragEnd(e)
     let endtiley = Math.floor(g_ctx.tileset.dragctx.endy / g_ctx.tiledimx);
 
     if (g_ctx.debug_flag) {
-        //console.log("sx sy ex ey ", starttilex, ",", starttiley, ",", endtilex, ",", endtiley);
+        console.log("sx sy ex ey ", starttilex, ",", starttiley, ",", endtilex, ",", endtiley);
     }
     // let mouse clicked handle if there isn't a multiple tile square
     if(starttilex === endtilex && starttiley === endtiley ){
@@ -706,7 +706,7 @@ function onTilesetDragEnd(e)
 function onTilesetDrag(e)
 {
     if (g_ctx.debug_flag) {
-        //console.log("onDragTileset()");
+        console.log("onDragTileset()");
     }
     g_ctx.tileset.dragctx.endx = e.global.x;
     g_ctx.tileset.dragctx.endy = e.global.y;
@@ -812,7 +812,7 @@ function onLevelMouseover(e) {
     let x = e.data.global.x;
     let y = e.data.global.y;
     if(g_ctx.debug_flag2){
-        //console.log("onLevelMouseOver ",this.num);
+        console.log("onLevelMouseOver ",this.num);
     }
     if (x < this.scrollpane.scrollLeft || x > this.scrollpane.scrollLeft + CONFIG.htmlCompositePaneW) {
         return;
@@ -888,7 +888,7 @@ function onLevelMouseover(e) {
 
 function onLevelMouseOut(e) {
     if (g_ctx.debug_flag2) {
-        //console.log("onLevelMouseOut ",this.num);
+        console.log("onLevelMouseOut ",this.num);
     }
 
     //FIXME there is a funky race condition where the mouse enters a second layer before leaving the last and the following line
@@ -924,7 +924,7 @@ function onLevelMousemove(e) {
 }
 function onCompositeMousedown(layer, e) {
     if (g_ctx.debug_flag) {
-        //console.log('onCompositeMouseDown: X', e.data.global.x, 'Y', e.data.global.y);
+        console.log('onCompositeMouseDown: X', e.data.global.x, 'Y', e.data.global.y);
     }
 
     let xorig = e.data.global.x;
@@ -937,7 +937,7 @@ function onCompositeMousedown(layer, e) {
 // Place with no variable target at destination
 function levelPlaceNoVariable(layer, e) {
     if (g_ctx.debug_flag) {
-        //console.log('levelPlaceNoVariable: X', e.data.global.x, 'Y', e.data.global.y);
+        console.log('levelPlaceNoVariable: X', e.data.global.x, 'Y', e.data.global.y);
     }
 
     let xorig = e.data.global.x;
@@ -968,7 +968,7 @@ function levelPlaceNoVariable(layer, e) {
 function onLevelPointerDown(layer, e)
 {
     if (g_ctx.debug_flag) {
-        //console.log("onLevelPointerDown()");
+        console.log("onLevelPointerDown()");
     }
     layer.app.stage.eventMode = 'static';
     layer.app.stage.addEventListener('pointermove', onLevelDrag.bind(null, layer, e));
@@ -996,7 +996,7 @@ function onLevelDrag(layer, e)
     layer.dragctx.endy = e.global.y;
 
     if (g_ctx.debug_flag) {
-        //console.log("onLevelDrag()");
+        console.log("onLevelDrag()");
     }
     
     layer.dragctx.square.clear();
@@ -1025,11 +1025,11 @@ function onLevelDragEnd(layer, e)
     layer.dragctx.endy = e.data.global.y;
 
     if(layer.dragctx.startx == -1){
-        //console.log("onLevelDragEnd() start is -1 bailing");
+        console.log("onLevelDragEnd() start is -1 bailing");
         return;
     }
     if (g_ctx.debug_flag) {
-        //console.log("onLevelDragEnd()");
+        console.log("onLevelDragEnd()");
     }
 
     if(layer.dragctx.endx < layer.dragctx.startx){
@@ -1057,8 +1057,8 @@ function onLevelDragEnd(layer, e)
     let endtiley = Math.floor(layer.dragctx.endy / g_ctx.tiledimx);
 
     if (g_ctx.debug_flag) {
-        //console.log("sx ", starttilex, " ex ", endtilex);
-        //console.log("sy ", starttiley, " ey ", endtiley);
+        console.log("sx ", starttilex, " ex ", endtilex);
+        console.log("sy ", starttiley, " ey ", endtiley);
     }
 
     // no variable placement. 
@@ -1091,7 +1091,7 @@ function onLevelDragEnd(layer, e)
         let selected_row = g_ctx.selected_tiles[0][1];
         // selected_grid[0] = [];
         for (let index of g_ctx.selected_tiles) {
-            // //console.log("Selected row ", selected_row, index);
+            // console.log("Selected row ", selected_row, index);
             if(index[1] != selected_row){
                 selected_row = index[1];
                 row++;
@@ -1215,7 +1215,7 @@ function setGridSize(size) {
         g_ctx.tiledimx = 16;
         g_ctx.tiledimy = 16;
         g_ctx.curtiles = g_ctx.tiles16;
-        //console.log("set to curTiles16");
+        console.log("set to curTiles16");
     } else if (size == 32) {
         if (g_ctx.tiledimx == 32) { return; }
         g_ctx.tilesettilew = (g_ctx.tilesettilew/ (size / g_ctx.tiledimx));
@@ -1223,7 +1223,7 @@ function setGridSize(size) {
         g_ctx.tiledimx = 32;
         g_ctx.tiledimy = 32;
         g_ctx.curtiles = g_ctx.tiles32;
-        //console.log("set to curTiles32");
+        console.log("set to curTiles32");
     } else {
         console.debug("Invalid TileDim!");
         return;
@@ -1253,27 +1253,27 @@ function initRadios() {
 function initTilesSync(callme) {
     return new Promise((resolve, reject) => {
 
-        //console.log("initTileSync");
+        console.log("initTileSync");
         const texture = new PIXI.BaseTexture(g_ctx.tilesetpath);
         if(texture.valid) {
-            //console.log("BaseTexture already valid");
+            console.log("BaseTexture already valid");
             callme();
             return;
         }
 
-        //console.log("Loading texture ", g_ctx.tilesetpath);
+        console.log("Loading texture ", g_ctx.tilesetpath);
         texture.on('loaded', function () {
             // size of g_ctx.tileset in px
             g_ctx.tilesetpxw = texture.width;
             g_ctx.tilesetpxh = texture.height;
-            //console.log("Texture size w:", g_ctx.tilesetpxw, "h:", g_ctx.tilesetpxh);
+            console.log("Texture size w:", g_ctx.tilesetpxw, "h:", g_ctx.tilesetpxh);
             // size of g_ctx.tileset in tiles
             let tileandpad = g_ctx.tiledimx + CONFIG.tilesetpadding;
             let numtilesandpadw = Math.floor(g_ctx.tilesetpxw / tileandpad);
             g_ctx.tilesettilew = numtilesandpadw + Math.floor((g_ctx.tilesetpxw - (numtilesandpadw * tileandpad)) / g_ctx.tiledimx);
             let numtilesandpadh = Math.floor(g_ctx.tilesetpxh / tileandpad);
             g_ctx.tilesettileh = numtilesandpadh + Math.floor((g_ctx.tilesetpxh - (numtilesandpadh * tileandpad)) / g_ctx.tiledimx);
-            //console.log("Number of x tiles ", g_ctx.tilesettilew, " y tiles ", g_ctx.tilesettileh);
+            console.log("Number of x tiles ", g_ctx.tilesettilew, " y tiles ", g_ctx.tilesettileh);
             g_ctx.MAXTILEINDEX = g_ctx.tilesettilew * g_ctx.tilesettileh;
 
             texture.destroy();
@@ -1296,14 +1296,14 @@ const initTilesConfig = async () => {
         
     const texture = new PIXI.BaseTexture(g_ctx.tilesetpath);
     if (g_ctx.debug_flag) {
-        //console.log("initTilessConfi: Loading texture ",g_ctx.tilesetpath);
+        console.log("initTilessConfi: Loading texture ",g_ctx.tilesetpath);
     }
     texture .on('loaded', function() {
         // size of g_ctx.tileset in px
         g_ctx.tilesetpxw = texture.width;
         g_ctx.tilesetpxh = texture.height;
         if (g_ctx.debug_flag) {
-            //console.log("\tsize w:", g_ctx.tilesetpxw, "h:", g_ctx.tilesetpxh);
+            console.log("\tsize w:", g_ctx.tilesetpxw, "h:", g_ctx.tilesetpxh);
         }
 
         // size of g_ctx.tileset in tiles
@@ -1314,7 +1314,7 @@ const initTilesConfig = async () => {
         g_ctx.tilesettileh = numtilesandpadh + Math.floor((g_ctx.tilesetpxh - (numtilesandpadh * tileandpad))/g_ctx.tiledimx);
 
         if (g_ctx.debug_flag) {
-            //console.log("\tnum tiles x ", g_ctx.tilesettilew, " y ", g_ctx.tilesettileh);
+            console.log("\tnum tiles x ", g_ctx.tilesettilew, " y ", g_ctx.tilesettileh);
         }
 
         g_ctx.MAXTILEINDEX = g_ctx.tilesettilew * g_ctx.tilesettileh;

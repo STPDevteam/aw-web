@@ -49,7 +49,7 @@ export const heartbeatWorld = mutation({
       console.debug(`World ${worldStatus._id} is stopped by developer, not restarting.`);
     }
     if (worldStatus.status === 'inactive') {
-      //console.log(`Restarting inactive world ${worldStatus._id}...`);
+      console.log(`Restarting inactive world ${worldStatus._id}...`);
       await ctx.db.patch(worldStatus._id, { status: 'running' });
       await startEngine(ctx, worldStatus.worldId);
     }
@@ -64,7 +64,7 @@ export const stopInactiveWorlds = internalMutation({
       if (cutoff < worldStatus.lastViewed || worldStatus.status !== 'running') {
         continue;
       }
-      //console.log(`Stopping inactive world ${worldStatus._id}`);
+      console.log(`Stopping inactive world ${worldStatus._id}`);
       await ctx.db.patch(worldStatus._id, { status: 'inactive' });
       await stopEngine(ctx, worldStatus.worldId);
     }

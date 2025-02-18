@@ -141,7 +141,7 @@ export async function chatCompletion(
   body.model = body.model ?? config.chatModel;
   const stopWords = body.stop ? (typeof body.stop === 'string' ? [body.stop] : body.stop) : [];
   if (config.stopWords) stopWords.push(...config.stopWords);
-  //console.log(body);
+  console.log(body);
   const {
     result: content,
     retries,
@@ -175,7 +175,7 @@ export async function chatCompletion(
       if (content === undefined) {
         throw new Error('Unexpected result from OpenAI: ' + JSON.stringify(json));
       }
-      //console.log(content);
+      console.log(content);
       return content;
     }
   });
@@ -197,7 +197,7 @@ export async function tryPullOllama(model: string, error: string) {
       },
       body: JSON.stringify({ name: model }),
     });
-    //console.log('Pull response', await pullResp.text());
+    console.log('Pull response', await pullResp.text());
     throw { retry: true, error: `Dynamically pulled model. Original error: ${error}` };
   }
 }
@@ -300,7 +300,7 @@ export async function retryWithBackoff<T>(
       const retryError = e as RetryError;
       if (i < RETRY_BACKOFF.length) {
         if (retryError.retry) {
-          //console.log(
+          console.log(
             `Attempt ${i + 1} failed, waiting ${RETRY_BACKOFF[i]}ms to retry...`,
             Date.now(),
           );

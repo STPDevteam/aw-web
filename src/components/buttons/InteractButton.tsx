@@ -53,10 +53,10 @@ export default function InteractButton() {
       return;
     }
     if (isPlaying) {
-      //console.log(`Leaving game for player ${userPlayerId}`);
+      console.log(`Leaving game for player ${userPlayerId}`);
       void leave({ worldId });
     } else {
-      //console.log(`Joining game`);
+      console.log(`Joining game`);
       void joinInput(worldId);
     }
   };

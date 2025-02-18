@@ -71,4 +71,4 @@ if (tiledMapData.layers.length > 0) {
 // Write the processed data to the final JS file
 fs.writeFileSync('converted-map.js', jsContent);
 
-//console.log('Map conversion and JS module creation complete.');
+console.log('Map conversion and JS module creation complete.');

@@ -42,13 +42,13 @@ export const vacuumOldEntries = internalMutation({
   handler: async (ctx, args) => {
     const before = Date.now() - VACUUM_MAX_AGE;
     for (const tableName of TablesToVacuum) {
-      //console.log(`Checking ${tableName}...`);
+      console.log(`Checking ${tableName}...`);
       const exists = await ctx.db
         .query(tableName)
         .withIndex('by_creation_time', (q) => q.lt('_creationTime', before))
         .first();
       if (exists) {
-        //console.log(`Vacuuming ${tableName}...`);
+        console.log(`Vacuuming ${tableName}...`);
         await ctx.scheduler.runAfter(0, internal.crons.vacuumTable, {
           tableName,
           before,
@@ -83,7 +83,7 @@ export const vacuumTable = internalMutation({
         cursor: results.continueCursor,
       });
     } else {
-      //console.log(`Vacuumed ${soFar + results.page.length} entries from ${tableName}`);
+      console.log(`Vacuumed ${soFar + results.page.length} entries from ${tableName}`);
     }
   },
 });
