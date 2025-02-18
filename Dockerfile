@@ -28,16 +28,20 @@ RUN . $NVM_DIR/nvm.sh && nvm install $NODE_VERSION
 ENV NODE_PATH $NVM_DIR/versions/node/v$NODE_VERSION/lib/node_modules
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
+# Global install Yarn
+RUN npm install -g yarn
+
 # Set the working directory
 WORKDIR /usr/src/app
 
 # Copy dependency files
 COPY package*.json ./
+COPY yarn.lock ./
 
-# Install npm dependencies
-RUN npm install
+# Install dependencies using Yarn
+RUN yarn install
 
-RUN npx update-browserslist-db@latest
+RUN yarn dlx update-browserslist-db@latest
 
 # Copy application files
 COPY . .
@@ -45,4 +49,4 @@ COPY . .
 # Expose necessary ports
 EXPOSE 5173
 
-CMD ["npx", "vite", "--host"]
+CMD ["yarn", "vite", "--host"]
