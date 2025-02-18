@@ -130,11 +130,11 @@ export function generate_level_file() {
         let y_coord = child.y / g_ctx.tiledimy;
 
         if (typeof tile_array0[x_coord] == 'undefined'){
-            console.log("**Error xcoord undefined ", x_coord);
+            //console.log("**Error xcoord undefined ", x_coord);
 
         }
         else if (typeof tile_array0[x_coord][y_coord] == 'undefined'){
-            console.log("**Error xcoord/ycoord undefined ", x_coord, y_coord);
+            //console.log("**Error xcoord/ycoord undefined ", x_coord, y_coord);
         }else{
             tile_array0[x_coord][y_coord] = child.index;
         }
@@ -163,11 +163,11 @@ export function generate_level_file() {
         let x_coord = child.x / g_ctx.tiledimx;
         let y_coord = child.y / g_ctx.tiledimy;
         if (typeof tile_array1[x_coord] == 'undefined'){
-            console.log("**Error xcoord undefined ", x_coord);
+            //console.log("**Error xcoord undefined ", x_coord);
 
         }
         else if (typeof tile_array1[x_coord][y_coord] == 'undefined'){
-            console.log("**Error xcoord/ycoord undefined ", x_coord, y_coord);
+            //console.log("**Error xcoord/ycoord undefined ", x_coord, y_coord);
         }else{
             tile_array1[x_coord][y_coord] = child.index;
         }
@@ -197,11 +197,11 @@ export function generate_level_file() {
         let x_coord = child.x / g_ctx.tiledimx;
         let y_coord = child.y / g_ctx.tiledimy;
         if (typeof tile_array2[x_coord] == 'undefined'){
-            console.log("**Error xcoord undefined ", x_coord);
+            //console.log("**Error xcoord undefined ", x_coord);
 
         }
         else if (typeof tile_array2[x_coord][y_coord] == 'undefined'){
-            console.log("**Error xcoord/ycoord undefined ", x_coord, y_coord);
+            //console.log("**Error xcoord/ycoord undefined ", x_coord, y_coord);
         }else{
         tile_array2[x_coord][y_coord] = child.index;
         }
@@ -231,11 +231,11 @@ export function generate_level_file() {
         let x_coord = child.x / g_ctx.tiledimx;
         let y_coord = child.y / g_ctx.tiledimy;
         if (typeof tile_array3[x_coord] == 'undefined'){
-            console.log("**Error xcoord undefined ", x_coord);
+            //console.log("**Error xcoord undefined ", x_coord);
 
         }
         else if (typeof tile_array3[x_coord][y_coord] == 'undefined'){
-            console.log("**Error xcoord/ycoord undefined ", x_coord, y_coord);
+            //console.log("**Error xcoord/ycoord undefined ", x_coord, y_coord);
         }else{
         tile_array3[x_coord][y_coord] = child.index;
         }

@@ -32,7 +32,7 @@ export function MessageInput({
 
     // Set the typing indicator if we're not submitting.
     if (e.key !== 'Enter') {
-      console.log(inflightUuid.current);
+      //console.log(inflightUuid.current);
       if (currentlyTyping || inflightUuid.current !== undefined) {
         return;
       }

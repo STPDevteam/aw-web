@@ -35,7 +35,7 @@ export function initCompositePNGLoader() {
     fileInput.onchange = (evt) => {
         if (!window.FileReader) return; // Browser is not compatible
         if (g_ctx.debug_flag) {
-            console.log("compositepng ", fileInput.files[0].name);
+            //console.log("compositepng ", fileInput.files[0].name);
         }
         let bgname = fileInput.files[0].name;
 
@@ -54,7 +54,7 @@ export function initTilesetLoader(callme) {
     fileInput.onchange = async (evt) => {
         if (!window.FileReader) return; // Browser is not compatible
         if (g_ctx.debug_flag) {
-            console.log("spritesheet ", fileInput.files[0].name);
+            //console.log("spritesheet ", fileInput.files[0].name);
         }
         g_ctx.tilesetpath =  "./spritesheets/"+fileInput.files[0].name;
 

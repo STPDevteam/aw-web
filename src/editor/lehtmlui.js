@@ -43,7 +43,7 @@ export function initCompositePNGLoader() {
     fileInput.onchange = (evt) => {
         if (!window.FileReader) return; // Browser is not compatible
         if (g_ctx.debug_flag) {
-            console.log("compositepng ", fileInput.files[0].name);
+            //console.log("compositepng ", fileInput.files[0].name);
         }
         let bgname = fileInput.files[0].name;
 
@@ -63,12 +63,12 @@ export function initSpriteSheetLoader() {
     fileInput.onchange = async (evt) => {
         if (!window.FileReader) return; // Browser is not compatible
         if (g_ctx.debug_flag) {
-            console.log("spritesheet ", fileInput.files[0].name);
+            //console.log("spritesheet ", fileInput.files[0].name);
         }
         let ssname = fileInput.files[0].name;
 
         let sheet = await PIXI.Assets.load("./"+ssname);
-        console.log(sheet);
+        //console.log(sheet);
         g_ctx.tileset.addTileSheet(ssname, sheet);
         g_ctx.selected_tiles = [];
     }
@@ -83,7 +83,7 @@ export function initTilesetLoader(callme) {
     fileInput.onchange = async (evt) => {
         if (!window.FileReader) return; // Browser is not compatible
         if (g_ctx.debug_flag) {
-            console.log("tilesetfile ", fileInput.files[0].name);
+            //console.log("tilesetfile ", fileInput.files[0].name);
         }
         g_ctx.tilesetpath =  "./tilesets/"+fileInput.files[0].name;
 
