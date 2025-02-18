@@ -41,7 +41,7 @@ COPY yarn.lock ./
 # Install dependencies using Yarn
 RUN yarn install
 
-RUN yarn dlx update-browserslist-db@latest
+RUN npx update-browserslist-db@latest
 
 # Copy application files
 COPY . .
