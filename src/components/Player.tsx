@@ -35,6 +35,7 @@ export const Player = ({
   }
   const character = characters.find((c) => c.name === playerCharacter);
 
+  // console.log('character', character)
   const locationBuffer = game.world.historicalLocations?.get(player.id);
   const historicalLocation = useHistoricalValue<Location>(
     locationFields,
@@ -89,3 +90,4 @@ export const Player = ({
     </>
   );
 };
+
