@@ -72,6 +72,8 @@ export const Character = ({
   const roundedOrientation = Math.floor(orientation / 90);
   const direction = ['right', 'down', 'left', 'up'][roundedOrientation];
 
+  // console.log('direction', direction)
+
   // Prevents the animation from stopping when the texture changes
   // (see https://github.com/pixijs/pixi-react/issues/359)
   const ref = useRef<PIXI.AnimatedSprite | null>(null);
@@ -103,11 +105,11 @@ export const Character = ({
     <Container x={x} y={y} interactive={true} pointerdown={onClick} cursor="pointer">
       {isThinking && (
         // TODO: We'll eventually have separate assets for thinking and speech animations.
-        <Text x={-20} y={-10} scale={{ x: -0.8, y: 0.8 }} text={'💭'} anchor={{ x: 0.5, y: 0.5 }} />
+        <Text x={36} y={-96} scale={{ x: 3.2, y: 3.2 }} text={'💭'} anchor={{ x: 0.5, y: 0.5 }} />
       )}
-      {isSpeaking && (
+      {isSpeaking && ( // 
         // TODO: We'll eventually have separate assets for thinking and speech animations.
-        <Text x={18} y={-10} scale={0.8} text={'💬'} anchor={{ x: 0.5, y: 0.5 }} />
+        <Text x={36} y={-96} scale={1.6} text={'💬'} anchor={{ x: 0.5, y: 0.5 }} />
       )}
       {isViewer && <ViewerIndicator />}
       <AnimatedSprite
@@ -116,14 +118,15 @@ export const Character = ({
         textures={spriteSheet.animations[direction]}
         animationSpeed={speed}
         anchor={{ x: 0.5, y: 0.5 }}
+        scale={{ x: 2, y: 2 }} 
       />
       {emoji && (
-        <Text x={0} y={-24} scale={{ x: -0.8, y: 0.8 }} text={emoji} anchor={{ x: 0.5, y: 0.5 }} />
+        <Text x={0} y={-96} scale={{ x: -3.2, y: 3.2 }} text={emoji} anchor={{ x: 0.5, y: 0.5 }} />
       )}
       
        {
         !isThinking && !isSpeaking && !!!emoji && 
-        <Text x={0} y={-24} scale={{ x: 0.8, y: 0.8 }} text={randomEmoji} anchor={{ x: 0.5, y: 0.5 }} />
+        <Text x={0} y={-48} scale={{ x: 3.2, y: 3.2 }} text={randomEmoji} anchor={{ x: 0.5, y: 0.5 }} />
       }
     </Container>
   );
@@ -133,9 +136,10 @@ function ViewerIndicator() {
   const draw = useCallback((g: PIXI.Graphics) => {
     g.clear();
     g.beginFill(0xffff0b, 0.5);
-    g.drawRoundedRect(-10, 10, 20, 10, 100);
+    g.drawRoundedRect(-20, 20, 40, 20, 200);
     g.endFill();
   }, []);
 
   return <Graphics draw={draw} />;
 }
+
