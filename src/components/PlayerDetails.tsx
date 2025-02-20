@@ -244,7 +244,7 @@ export default function PlayerDetails({
         />
       )}
       {!playerConversation && previousConversation && (
-        <>
+        <div style={{ }} className=''>
           <div className="box flex-grow">
             <h2 className=" text-lg text-center">Previous conversation</h2>
           </div>
@@ -256,7 +256,7 @@ export default function PlayerDetails({
             humanPlayer={humanPlayer}
             scrollViewRef={scrollViewRef}
           />
-        </>
+        </div>
       )}
     </div>
   );

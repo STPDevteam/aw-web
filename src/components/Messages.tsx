@@ -70,7 +70,7 @@ export function Messages({
   }
   const messageNodes: { time: number; node: React.ReactNode }[] = messages.map((m) => {
     const node = (
-      <div key={`text-${m._id}`} className=" mb-6">
+      <div key={`text-${m._id}`} className=" mb-6 ">
         <div className="flex gap-4">
           <span className="uppercase flex-grow">{m.authorName}</span>
           <time dateTime={m._creationTime.toString()}>
@@ -135,7 +135,7 @@ export function Messages({
   const nodes = [...messageNodes, ...membershipNodes];
   nodes.sort((a, b) => a.time - b.time);
   return (
-    <div className="chats text-base sm:text-sm">
+    <div className="text-base sm:text-sm ">
       <div className="text-black p-2">
         {nodes.length > 0 && nodes.map((n) => n.node)}
         {currentlyTyping && currentlyTyping.playerId !== humanPlayerId && (
