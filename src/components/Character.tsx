@@ -101,15 +101,18 @@ export const Character = ({
       break;
   }
 
+  const emojiText = (e:string, x?: number) => (
+    <Text x={ x || 36} y={-72} scale={{ x: 2, y: 2 }} text={e} anchor={{ x: 0.5, y: 0.5 }} />
+  )
   return (
     <Container x={x} y={y} interactive={true} pointerdown={onClick} cursor="pointer">
       {isThinking && (
         // TODO: We'll eventually have separate assets for thinking and speech animations.
-        <Text x={36} y={-96} scale={{ x: 3.2, y: 3.2 }} text={'💭'} anchor={{ x: 0.5, y: 0.5 }} />
+        <>{emojiText('💭')}</>
       )}
       {isSpeaking && ( // 
         // TODO: We'll eventually have separate assets for thinking and speech animations.
-        <Text x={36} y={-96} scale={1.6} text={'💬'} anchor={{ x: 0.5, y: 0.5 }} />
+        <>{emojiText('💬')}</>
       )}
       {isViewer && <ViewerIndicator />}
       <AnimatedSprite
@@ -121,12 +124,12 @@ export const Character = ({
         scale={{ x: 2, y: 2 }} 
       />
       {emoji && (
-        <Text x={0} y={-96} scale={{ x: -3.2, y: 3.2 }} text={emoji} anchor={{ x: 0.5, y: 0.5 }} />
+        <>{emojiText(emoji)}</>
       )}
       
        {
-        !isThinking && !isSpeaking && !!!emoji && 
-        <Text x={0} y={-48} scale={{ x: 3.2, y: 3.2 }} text={randomEmoji} anchor={{ x: 0.5, y: 0.5 }} />
+        !isThinking && !isSpeaking && !!!emoji  &&  
+        <>{emojiText(randomEmoji)}</>
       }
     </Container>
   );
