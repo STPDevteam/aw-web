@@ -214,9 +214,9 @@ export default function PlayerDetails({
           </a>
         </>
       )}
-      {!playerConversation && player.activity && player.activity.until > Date.now() && (
+      {!playerConversation && player.activity && player.activity.until > Date.now()  && ( 
         <div className="box flex-grow mt-6">
-          <h2 className="bg-brown-700 text-base sm:text-lg text-cente ">
+          <h2 className="text-base sm:text-lg text-cente ">
             {player.activity.description}
           </h2>
         </div>
