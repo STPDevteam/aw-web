@@ -135,6 +135,7 @@ body {
 .box {
   background-image: url(../assets/ui/name-bg.png);
   background-size: 100% 100%;
+  max-width: 328px;
 }
 
 .desc { 
