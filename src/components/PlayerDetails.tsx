@@ -133,10 +133,10 @@ export default function PlayerDetails({
 
   const pendingSuffix = (s: string) => '';
   return (
-    <>      
-      <div className="flex gap-4" >
+    <div style={{ paddingLeft: '50px' }}>      
+      <div className="flex gap-4"  style={{ marginTop: '120px', maxWidth: '328px', width: '100%'}}>
         <div className="box  w-3/4 sm:w-full mr-auto">
-          <h2 className=" p-2 font-display text-2xl sm:text-4xl tracking-wider  text-center">
+          <h2 className=" p-2 font-display text-2xl sm:text-4xl tracking-wider  text-center" style={{ color: '#FFF1D1'}}>
             {playerDescription?.name}
           </h2>
         </div>
@@ -258,6 +258,6 @@ export default function PlayerDetails({
           />
         </>
       )}
-    </>
+    </div>
   );
 }
