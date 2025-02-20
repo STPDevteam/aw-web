@@ -1,7 +1,8 @@
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
-import closeImg from '../../assets/close.svg';
+import closeImg from '../../assets/ui/close.png';
+
 import { SelectElement } from './Player';
 import { Messages } from './Messages';
 import { toastOnError } from '../toasts';
@@ -55,7 +56,7 @@ export default function PlayerDetails({
 
   if (!playerId) {
     return (
-      <div className="h-full text-xl flex text-center items-center p-4">
+      <div className="h-full text-xl flex text-center items-center p-4" >
         Click on an agent on the map to see chat history.
       </div>
     );
@@ -132,20 +133,19 @@ export default function PlayerDetails({
 
   const pendingSuffix = (s: string) => '';
   return (
-    <>
-      <div className="flex gap-4">
-        <div className="box w-3/4 sm:w-full mr-auto">
-          <h2 className="bg-brown-700 p-2 font-display text-2xl sm:text-4xl tracking-wider shadow-solid text-center">
+    <>      
+      <div className="flex gap-4" >
+        <div className="box  w-3/4 sm:w-full mr-auto">
+          <h2 className=" p-2 font-display text-2xl sm:text-4xl tracking-wider  text-center">
             {playerDescription?.name}
           </h2>
         </div>
         <a
-          className="button text-white shadow-solid text-2xl cursor-pointer pointer-events-auto"
+          className="text-white shadow-solid text-2xl cursor-pointer pointer-events-auto"
           onClick={() => setSelectedElement(undefined)}
-        >
-          <h2 className="h-full bg-clay-700">
-            <img className="w-4 h-4 sm:w-5 sm:h-5" src={closeImg} />
-          </h2>
+          style={{ width: '53px', height: '58px',display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >          
+          <img src={closeImg} />
         </a>
       </div>
       {canInvite && (
@@ -216,13 +216,13 @@ export default function PlayerDetails({
       )}
       {!playerConversation && player.activity && player.activity.until > Date.now() && (
         <div className="box flex-grow mt-6">
-          <h2 className="bg-brown-700 text-base sm:text-lg text-center">
+          <h2 className="bg-brown-700 text-base sm:text-lg text-cente ">
             {player.activity.description}
           </h2>
         </div>
       )}
-      <div className="desc my-6">
-        <p className="leading-tight -m-4 bg-brown-700 text-base sm:text-sm">
+      <div className="desc">
+        <p className="leading-tight -m-4 text-base sm:text-sm" style={{ color: '#2E1F1D'}}>
           {!isMe && playerDescription?.description}
           {isMe && <i>This is you!</i>}
           {!isMe && inConversationWithMe && (

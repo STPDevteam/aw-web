@@ -63,10 +63,34 @@ body {
 }
 
 .game-frame {
-  border-width: 36px;
-  border-image-source: url(../assets/ui/frame.svg);
-  border-image-repeat: stretch;
-  border-image-slice: 25%;
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    z-index: 1;          
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none; 
+    background-image: url(../assets/ui/frame.png);
+    background-size: 100% 100%;
+
+   
+
+  }
+}
+.game-container {
+  
+  &::before {
+    border-style: none !important;
+  };
+  &::after {
+    border-style: none !important;
+  }
 }
 
 .game-progress-bar {
@@ -88,7 +112,8 @@ body {
 
 @media screen and (min-width: 640px) {
   .game-frame {
-    border-width: 48px;
+    border-width: 0px;
+    /* border-width: 48px; */
   }
 }
 
@@ -108,17 +133,18 @@ body {
 }
 
 .box {
-  border-width: 12px;
-  border-image-source: url(../assets/ui/box.svg);
-  border-image-repeat: stretch;
-  border-image-slice: 12.5%;
+  background-image: url(../assets/ui/name-bg.png);
+  background-size: 100% 100%;
 }
 
-.desc {
-  border-width: 56px;
-  border-image-source: url(../assets/ui/desc.svg);
-  border-image-repeat: stretch;
-  border-image-slice: 28%;
+.desc { 
+  max-width: 328px;
+  width: 100%;
+  /* height: 408px; */
+  border-radius: 21px;
+  border: 4px dashed #2E1F1D;
+  padding: 24px;
+  margin-top: 26px;
 }
 
 .chats {
@@ -182,4 +208,18 @@ p[contenteditable='true']:empty::before {
 
 .shape-top-left-corner {
   clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+
+.bd1 {
+  border: 2px solid red;
+}
+.bd2 {
+  border: 2px solid blue;
+}
+.bd3 {
+  border: 2px solid green;
+}
+.bd4 {
+  border: 2px solid #fff;
 }
