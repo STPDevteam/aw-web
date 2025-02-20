@@ -44,10 +44,17 @@ export default function Game() {
 
   // grid-cols-[0.69fr_0.31fr] lg:grid-cols-[0.69fr_0.31fr] 
   return (  
-    <>
+    < >
       {SHOW_DEBUG_UI && <DebugTimeManager timeManager={timeManager} width={200} height={100} />}
-      <div style={{ display: 'grid', gridTemplateColumns: '6.92fr 3.08fr', width: '100%'}} 
-        className="  mx-auto w-full max-w grid lg:grid-cols-[1fr_auto] lg:grow max-w-[1400px] min-h-[480px] game-frame">
+      <div className=' lg:grow max-w-[1800px] mx-auto w-full max-w grid lg:grid-cols-[1fr_auto] lg:grow' style={{ zIndex: 2,position:'relative', width: '100%', display: 'flex', gridTemplateColumns: '6.92fr 3.08fr',flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div />
+      
+        <div className='' style={{ marginRight: '136px' }}>
+          <img src={logoImg} style={{  width: '390px', height: '153px'}}/>
+        </div> 
+      </div>
+      <div  style={{ display: 'grid', gridTemplateColumns: '6.92fr 3.08fr', width: '100%', marginTop: '-75px', }} 
+        className="  mx-auto w-full max-w grid lg:grid-cols-[1fr_auto] lg:grow max-w-[1800px] min-h-[480px] game-frame">
         {/* Game area */}
          <div className=" overflow-hidden  game-container"  style={{  paddingTop: '28px', paddingLeft: '45px', position: 'relative', zIndex: -1,  }} ref={gameWrapperRef} >
             <Stage width={width} height={height - 60} options={{ backgroundColor: 0x7ab5ff }}>
@@ -67,15 +74,12 @@ export default function Game() {
         
         {/* Right column area */}
         <div
-          className=" flex flex-col  overflow-y-auto shrink-0 px-4 py-6 sm:px-6 lg:w-96 xl:pr-6 text-brown-100"
+          className="  flex flex-col  overflow-y-auto shrink-0 px-4 py-6 sm:px-6 lg:w-96 xl:pr-6 text-brown-100"
          
           ref={scrollViewRef}
           // padding: '120px 56px 56px 56px', 
           style={{ zIndex: 2, width: '100%', paddingLeft: '24px' }}
         >
-          {/* <div style={{ position: 'absolute', top: 0, left: 0, width: '390px', height: '153px'}}>
-            <img src={logoImg} />
-          </div> */}
           <PlayerDetails
             worldId={worldId}
             engineId={engineId}
@@ -85,7 +89,7 @@ export default function Game() {
             scrollViewRef={scrollViewRef}
           />
         </div>
-      </div>
+      </div>      
     </>
   );
 }
