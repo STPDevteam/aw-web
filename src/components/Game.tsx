@@ -42,11 +42,12 @@ export default function Game() {
   }
 
 
-
+  // grid-cols-[0.69fr_0.31fr] lg:grid-cols-[0.69fr_0.31fr] 
   return (  
     <>
       {SHOW_DEBUG_UI && <DebugTimeManager timeManager={timeManager} width={200} height={100} />}
-      <div style={{  }} className="  mx-auto w-full max-w grid grid-cols-[0.69fr_0.31fr] lg:grid-cols-[0.69fr_0.31fr] lg:grid-cols-[1fr_auto] lg:grow max-w-[1400px] min-h-[480px] game-frame">
+      <div style={{ display: 'grid', gridTemplateColumns: '6.92fr 3.08fr', width: '100%'}} 
+        className="  mx-auto w-full max-w grid lg:grid-cols-[1fr_auto] lg:grow max-w-[1400px] min-h-[480px] game-frame">
         {/* Game area */}
          <div className=" overflow-hidden  game-container"  style={{  paddingTop: '28px', paddingLeft: '45px', position: 'relative', zIndex: -1,  }} ref={gameWrapperRef} >
             <Stage width={width} height={height - 60} options={{ backgroundColor: 0x7ab5ff }}>
