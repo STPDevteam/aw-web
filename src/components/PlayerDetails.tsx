@@ -133,7 +133,7 @@ export default function PlayerDetails({
 
   const pendingSuffix = (s: string) => '';
   return (
-    <div style={{ paddingLeft: '50px' }}>      
+    <div className='' style={{  }}>      
       <div className="flex gap-4"  style={{ marginTop: '120px', maxWidth: '328px', width: '100%'}}>
         <div className="box  w-3/4 sm:w-full mr-auto">
           <h2 className=" p-2 font-display text-2xl sm:text-4xl tracking-wider  text-center" style={{ color: '#FFF1D1'}}>
@@ -151,26 +151,26 @@ export default function PlayerDetails({
       {canInvite && (
         <a
           className={
-            'mt-6 button text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
+            'mt-6 text-white text-xl cursor-pointer pointer-events-auto' +
             pendingSuffix('startConversation')
           }
           onClick={onStartConversation}
         >
-          <div className="h-full bg-clay-700 text-center">
+          <div className="h-full text-center">
             <span>Start conversation</span>
           </div>
         </a>
       )}
-      {waitingForAccept && (
-        <a className="mt-6 button text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
-          <div className="h-full bg-clay-700 text-center">
+      {waitingForAccept && ( 
+        <a className="mt-6 text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
+          <div className="h-full  text-center">
             <span>Waiting for accept...</span>
           </div>
         </a>
       )}
       {waitingForNearby && (
-        <a className="mt-6 button text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
-          <div className="h-full bg-clay-700 text-center">
+        <a className="mt-6 text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
+          <div className="h-full text-center">
             <span>Walking over...</span>
           </div>
         </a>
@@ -178,12 +178,12 @@ export default function PlayerDetails({
       {inConversationWithMe && (
         <a
           className={
-            'mt-6 button text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
+            'mt-6  text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
             pendingSuffix('leaveConversation')
           }
           onClick={onLeaveConversation}
         >
-          <div className="h-full bg-clay-700 text-center">
+          <div className="h-full  text-center">
             <span>Leave conversation</span>
           </div>
         </a>
@@ -192,12 +192,12 @@ export default function PlayerDetails({
         <>
           <a
             className={
-              'mt-6 button text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
+              'mt-6  text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
               pendingSuffix('acceptInvite')
             }
             onClick={onAcceptInvite}
           >
-            <div className="h-full bg-clay-700 text-center">
+            <div className="h-full text-center">
               <span>Accept</span>
             </div>
           </a>
@@ -208,7 +208,7 @@ export default function PlayerDetails({
             }
             onClick={onRejectInvite}
           >
-            <div className="h-full bg-clay-700 text-center">
+            <div className="h-full text-center">
               <span>Reject</span>
             </div>
           </a>
@@ -222,7 +222,7 @@ export default function PlayerDetails({
         </div>
       )}
       <div className="desc">
-        <p className="leading-tight -m-4 text-base sm:text-sm" style={{ color: '#2E1F1D'}}>
+        <p className="  text-base sm:text-sm" style={{ color: '#2E1F1D'}}>
           {!isMe && playerDescription?.description}
           {isMe && <i>This is you!</i>}
           {!isMe && inConversationWithMe && (
@@ -246,7 +246,7 @@ export default function PlayerDetails({
       {!playerConversation && previousConversation && (
         <>
           <div className="box flex-grow">
-            <h2 className="bg-brown-700 text-lg text-center">Previous conversation</h2>
+            <h2 className=" text-lg text-center">Previous conversation</h2>
           </div>
           <Messages
             worldId={worldId}

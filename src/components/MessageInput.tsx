@@ -74,7 +74,7 @@ export function MessageInput({
     });
   };
   return (
-    <div className="leading-tight mb-6">
+    <div className=" mb-6">
       <div className="flex gap-4">
         <span className="uppercase flex-grow">{humanName}</span>
       </div>

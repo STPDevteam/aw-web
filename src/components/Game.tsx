@@ -49,7 +49,7 @@ export default function Game() {
       <div className=' lg:grow max-w-[1800px] mx-auto w-full max-w grid lg:grid-cols-[1fr_auto] lg:grow' style={{ zIndex: 2,position:'relative', width: '100%', display: 'flex', gridTemplateColumns: '6.92fr 3.08fr',flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <div />
       
-        <div className='' style={{ marginRight: '136px' }}>
+        <div className='' style={{ marginRight: '5%' }}>
           <img src={logoImg} style={{  width: '390px', height: '153px'}}/>
         </div> 
       </div>
@@ -74,11 +74,9 @@ export default function Game() {
         
         {/* Right column area */}
         <div
-          className="  flex flex-col  overflow-y-auto shrink-0 px-4 py-6 sm:px-6 lg:w-96 xl:pr-6 text-brown-100"
-         
+          className=" flex flex-col  overflow-y-auto shrink-0 px-4 py-6 sm:px-6 lg:w-96 xl:pr-6 text-brown-100"
           ref={scrollViewRef}
-          // padding: '120px 56px 56px 56px', 
-          style={{ zIndex: 2, width: '100%', paddingLeft: '24px' }}
+          style={{ zIndex: 2,}}
         >
           <PlayerDetails
             worldId={worldId}
