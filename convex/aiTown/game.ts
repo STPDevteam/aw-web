@@ -209,7 +209,7 @@ export class Game extends AbstractGame {
       engineId: this.engine._id,
       engineUpdate,
       worldId: this.worldId,
-      worldDiff: diff,
+      worldDiff: diff,   
     });
   }
 
@@ -244,6 +244,22 @@ export class Game extends AbstractGame {
       result.worldMap = this.worldMap.serialize();
       this.descriptionsModified = false;
     }
+
+    // ------------------------------
+     // 下面计算并打印 result 各部分数据的大小，单位为 MiB
+     // ------------------------------
+     // 辅助函数：将字节数转换为 MiB
+     const bytesToMiB = (bytes: number) => bytes / (1024 * 1024);
+     // 使用 TextEncoder 替换 Buffer 来计算字符串的字节数
+     const textEncoder = new TextEncoder();
+   
+     // 计算 agentOperations 部分的大小（MiB）
+     const agentOperationsStr = JSON.stringify(result.agentOperations);
+     const agentOperationsBytes = textEncoder.encode(agentOperationsStr).length;
+     console.debug(`result.agentOperations 的大小: ${bytesToMiB(agentOperationsBytes).toFixed(4)} MiB`);
+   
+     // ------------------------------
+
     return result;
   }
 

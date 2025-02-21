@@ -46,3 +46,4 @@ convex_local*
 
 convex/README.md
 convex/tsconfig.json
+.env.local

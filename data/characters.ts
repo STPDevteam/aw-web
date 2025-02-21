@@ -1,5 +1,4 @@
 import { data as f0SpritesheetData } from './spritesheets/f0';
-import { data as f6SpritesheetData } from './spritesheets/f6';
 
 // 辅助函数，用于随机生成名称、描述和计划
 function getRandomName(id: number): string {
@@ -132,7 +131,7 @@ const fixedCharacters = [
   {
     name: 'f6',
     textureUrl: '/ai-town/assets/6.png',
-    spritesheetData: f6SpritesheetData,
+    spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
@@ -150,7 +149,7 @@ const fixedCharacters = [
 ];
 
 // 随机生成 5 个描述对象（编号从 f9 到 f13）
-const randomCount = 10;
+const randomCount = 6;
 const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
   const id = i + 9;
   const randomName = getRandomName(id);
@@ -172,7 +171,7 @@ const originalAssets = [
   { textureUrl: '/ai-town/assets/3.png', spritesheetData: f0SpritesheetData },
   { textureUrl: '/ai-town/assets/4.png', spritesheetData: f0SpritesheetData },
   { textureUrl: '/ai-town/assets/5.png', spritesheetData: f0SpritesheetData },
-  { textureUrl: '/ai-town/assets/6.png', spritesheetData: f6SpritesheetData },
+  { textureUrl: '/ai-town/assets/6.png', spritesheetData: f0SpritesheetData },
   { textureUrl: '/ai-town/assets/7.png', spritesheetData: f0SpritesheetData },
   { textureUrl: '/ai-town/assets/8.png', spritesheetData: f0SpritesheetData },
 ];
