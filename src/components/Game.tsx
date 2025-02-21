@@ -47,11 +47,11 @@ export default function Game() {
     < >
       {SHOW_DEBUG_UI && <DebugTimeManager timeManager={timeManager} width={200} height={100} />}
       <div className=' lg:grow max-w-[1800px] mx-auto w-full max-w grid lg:grid-cols-[1fr_auto] lg:grow' style={{ zIndex: 2,position:'relative', width: '100%', display: 'flex', gridTemplateColumns: '6.92fr 3.08fr',flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div />
+        {/* <div /> */}
       
-        <div className='' style={{ marginRight: '5%' }}>
+        {/* <div className='' style={{ marginRight: '5%' }}>
           <img src={logoImg} style={{  width: '390px', height: '153px'}}/>
-        </div> 
+        </div>  */}
       </div>
       <div  style={{ display: 'grid', gridTemplateColumns: '6.92fr 3.08fr', width: '100%', marginTop: '-75px', }} 
         className="  mx-auto w-full max-w grid lg:grid-cols-[1fr_auto] lg:grow max-w-[1800px] min-h-[480px] game-frame">
