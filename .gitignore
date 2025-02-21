@@ -40,3 +40,9 @@ convex-local*
 convex_local*
 
 .yarn.lock
+
+.env.local
+
+
+convex/README.md
+convex/tsconfig.json
