@@ -1,18 +1,53 @@
-
-
 import { data as f0SpritesheetData } from './spritesheets/f0';
-import { data as f6SpritesheetData } from './spritesheets/f06';
+import { data as f6SpritesheetData } from './spritesheets/f6';
 
-export const Descriptions = [
-  // {
-  //   name: 'Alex',
-  //   character: 'f5',
-  //   identity: `You are a fictional character whose name is Alex.  You enjoy painting,
-  //     programming and reading sci-fi books.  You are currently talking to a human who
-  //     is very interested to get to know you. You are kind but can be sarcastic. You
-  //     dislike repetitive questions. You get SUPER excited about books.`,
-  //   plan: 'You want to find love.',
-  // },
+// 辅助函数，用于随机生成名称、描述和计划
+function getRandomName(id: number): string {
+  const names = [
+    "Max", "Luna", "Leo", "Mia", "Evan", "Zara", "Ryan", "Nina", "Ian", "Sophie", 
+    "Kai", "Ivy", "Oscar", "Ella", "Eli", "Nova", "Finn", "Ruby"
+  ];
+  return names[Math.floor(Math.random() * names.length)] + '_' + id;
+}
+
+function randomIdentity(name: string): string {
+  const hobbies = [
+    "painting", "programming", "reading sci-fi books", "gardening", 
+    "traveling", "cooking", "exploring"
+  ];
+  const adjectives = [
+    "curious", "passionate", "mysterious", "witty",
+    "enthusiastic", "thoughtful", "creative"
+  ];
+  const hobby = hobbies[Math.floor(Math.random() * hobbies.length)];
+  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  return `${name} is a ${adjective} individual who loves ${hobby} and is always ready for a new adventure.`;
+}
+
+function randomPlan(): string {
+  const plans = [
+    "find true love",
+    "conquer new horizons",
+    "uncover life's mysteries",
+    "spread wisdom",
+    "inspire creativity",
+    "explore unknown realms",
+    "live life to the fullest"
+  ];
+  return 'You want to ' + plans[Math.floor(Math.random() * plans.length)] + '.';
+}
+
+// 固定的 8 个描述对象
+const fixedDescriptions = [
+  {
+    name: 'Alex',
+    character: 'f5',
+    identity: `You are a fictional character whose name is Alex.  You enjoy painting,
+      programming and reading sci-fi books.  You are currently talking to a human who
+      is very interested to get to know you. You are kind but can be sarcastic. You
+      dislike repetitive questions. You get SUPER excited about books.`,
+    plan: 'You want to find love.',
+  },
   {
     name: 'Lucky',
     character: 'f1',
@@ -31,14 +66,14 @@ export const Descriptions = [
     identity: `Stella can never be trusted. she tries to trick people all the time. normally into giving her money, or doing things that will make her money. she's incredibly charming and not afraid to use her charm. she's a sociopath who has no empathy. but hides it well.`,
     plan: 'You want to take advantage of others as much as possible.',
   },
-  // {
-  //   name: 'Kurt',
-  //   character: 'f2',
-  //   identity: `Kurt knows about everything, including science and
-  //     computers and politics and history and biology. He loves talking about
-  //     everything, always injecting fun facts about the topic of discussion.`,
-  //   plan: 'You want to spread knowledge.',
-  // },
+  {
+    name: 'Kurt',
+    character: 'f2',
+    identity: `Kurt knows about everything, including science and
+      computers and politics and history and biology. He loves talking about
+      everything, always injecting fun facts about the topic of discussion.`,
+    plan: 'You want to spread knowledge.',
+  },
   {
     name: 'Alice',
     character: 'f3',
@@ -51,18 +86,19 @@ export const Descriptions = [
     identity: `Pete is deeply religious and sees the hand of god or of the work of the devil everywhere. He can't have a conversation without bringing up his deep faith. Or warning others about the perils of hell.`,
     plan: 'You want to convert everyone to your religion.',
   },
-  // {
-  //   name: 'Kira',
-  //   character: 'f8',
-  //   identity: `Kira wants everyone to think she is happy. But deep down,
-  //     she's incredibly depressed. She hides her sadness by talking about travel,
-  //     food, and yoga. But often she can't keep her sadness in and will start crying.
-  //     Often it seems like she is close to having a mental breakdown.`,
-  //   plan: 'You want find a way to be happy.',
-  // },
+  {
+    name: 'Kira',
+    character: 'f8',
+    identity: `Kira wants everyone to think she is happy. But deep down,
+      she's incredibly depressed. She hides her sadness by talking about travel,
+      food, and yoga. But often she can't keep her sadness in and will start crying.
+      Often it seems like she is close to having a mental breakdown.`,
+    plan: 'You want find a way to be happy.',
+  },
 ];
 
-export const characters = [
+// 固定的 8 个角色对象
+const fixedCharacters = [
   {
     name: 'f1',
     textureUrl: '/ai-town/assets/1.png',
@@ -112,6 +148,48 @@ export const characters = [
     speed: 0.1,
   },
 ];
+
+// 随机生成 5 个描述对象（编号从 f9 到 f13）
+const randomCount = 10;
+const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
+  const id = i + 9;
+  const randomName = getRandomName(id);
+  return {
+    name: randomName,
+    character: `f${id}`,
+    identity: randomIdentity(randomName),
+    plan: randomPlan(),
+  };
+});
+
+// 合并固定与随机生成的描述对象
+export const Descriptions = fixedDescriptions.concat(randomDescriptions);
+
+// 随机生成 5 个角色对象（编号从 f9 到 f13），复用原有的 8 个角色纹理资源
+const originalAssets = [
+  { textureUrl: '/ai-town/assets/1.png', spritesheetData: f0SpritesheetData },
+  { textureUrl: '/ai-town/assets/2.png', spritesheetData: f0SpritesheetData },
+  { textureUrl: '/ai-town/assets/3.png', spritesheetData: f0SpritesheetData },
+  { textureUrl: '/ai-town/assets/4.png', spritesheetData: f0SpritesheetData },
+  { textureUrl: '/ai-town/assets/5.png', spritesheetData: f0SpritesheetData },
+  { textureUrl: '/ai-town/assets/6.png', spritesheetData: f6SpritesheetData },
+  { textureUrl: '/ai-town/assets/7.png', spritesheetData: f0SpritesheetData },
+  { textureUrl: '/ai-town/assets/8.png', spritesheetData: f0SpritesheetData },
+];
+
+const randomCharacters = Array.from({ length: randomCount }, (_, i) => {
+  const id = i + 9;
+  const asset = originalAssets[Math.floor(Math.random() * originalAssets.length)];
+  return {
+    name: `f${id}`,                                                                                                                                                                               
+    textureUrl: asset.textureUrl,
+    spritesheetData: asset.spritesheetData,
+    speed: 0.1,
+  };
+});
+
+// 合并固定与随机生成的角色对象
+export const characters = fixedCharacters.concat(randomCharacters);
 
 // Characters move at 0.75 tiles per second.
 export const movementSpeed = 0.75;
