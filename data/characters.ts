@@ -132,7 +132,7 @@ const fixedCharacters = [
   {
     name: 'f6',
     textureUrl: '/ai-town/assets/6.png',
-    spritesheetData: f6SpritesheetData,
+    spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
