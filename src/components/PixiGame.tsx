@@ -95,29 +95,29 @@ export const PixiGame = (props: {
 
 
 
-  const distance = (a: any, b: any) => 
-    Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+  // const distance = (a: any, b: any) => 
+  //   Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 
 
 
-  players.forEach((p) => {
-    const MIN_DISTANCE = 1.1; 
-    const newPos = { ...p.position };
-    let adjustmentCount = 0;
+  // players.forEach((p) => {
+  //   const MIN_DISTANCE = 1.1; 
+  //   const newPos = { ...p.position };
+  //   let adjustmentCount = 0;
     
-    players.forEach(other => {
-      if (other.id === p.id) return;
+  //   players.forEach(other => {
+  //     if (other.id === p.id) return;
       
     
-      if (distance(p.position, other.position) < MIN_DISTANCE) {
-        newPos.x += (p.position.x > other.position.x) ? MIN_DISTANCE : -MIN_DISTANCE;
-        newPos.y += (p.position.y > other.position.y) ? MIN_DISTANCE : -MIN_DISTANCE;
-        adjustmentCount++;  
-        if (adjustmentCount > 3) return;
-      }
-    });
-    p.position = newPos; 
-  });
+  //     if (distance(p.position, other.position) < MIN_DISTANCE) {
+  //       newPos.x += (p.position.x > other.position.x) ? MIN_DISTANCE : -MIN_DISTANCE;
+  //       newPos.y += (p.position.y > other.position.y) ? MIN_DISTANCE : -MIN_DISTANCE;
+  //       adjustmentCount++;  
+  //       if (adjustmentCount > 3) return;
+  //     }
+  //   });
+  //   p.position = newPos; 
+  // });
 
 
  

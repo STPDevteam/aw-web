@@ -100,49 +100,49 @@ const fixedDescriptions = [
 const fixedCharacters = [
   {
     name: 'f1',
-    textureUrl: '/ai-town/assets/1.png',
+    textureUrl: '/ai-town/assets/avatar/1.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f2',
-    textureUrl: '/ai-town/assets/2.png',
+    textureUrl: '/ai-town/assets/avatar/2.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f3',
-    textureUrl: '/ai-town/assets/3.png',
+    textureUrl: '/ai-town/assets/avatar/3.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f4',
-    textureUrl: '/ai-town/assets/4.png',
+    textureUrl: '/ai-town/assets/avatar/4.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f5',
-    textureUrl: '/ai-town/assets/5.png',
+    textureUrl: '/ai-town/assets/avatar/5.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f6',
-    textureUrl: '/ai-town/assets/6.png',
+    textureUrl: '/ai-town/assets/avatar/6.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f7',
-    textureUrl: '/ai-town/assets/7.png',
+    textureUrl: '/ai-town/assets/avatar/7.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f8',
-    textureUrl: '/ai-town/assets/8.png',
+    textureUrl: '/ai-town/assets/avatar/8.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
@@ -164,25 +164,12 @@ const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
 // Merge fixed and randomly generated description objects
 export const Descriptions = fixedDescriptions.concat(randomDescriptions);
 
-// Randomly generate 5 character objects (numbered f9 to f13), reusing the original 8 character texture resources
-const originalAssets = [
-  { textureUrl: '/ai-town/assets/1.png', spritesheetData: f0SpritesheetData },
-  { textureUrl: '/ai-town/assets/2.png', spritesheetData: f0SpritesheetData },
-  { textureUrl: '/ai-town/assets/3.png', spritesheetData: f0SpritesheetData },
-  { textureUrl: '/ai-town/assets/4.png', spritesheetData: f0SpritesheetData },
-  { textureUrl: '/ai-town/assets/5.png', spritesheetData: f0SpritesheetData },
-  { textureUrl: '/ai-town/assets/6.png', spritesheetData: f0SpritesheetData },
-  { textureUrl: '/ai-town/assets/7.png', spritesheetData: f0SpritesheetData },
-  { textureUrl: '/ai-town/assets/8.png', spritesheetData: f0SpritesheetData },
-];
-
 const randomCharacters = Array.from({ length: randomCount }, (_, i) => {
   const id = i + 9;
-  const asset = originalAssets[Math.floor(Math.random() * originalAssets.length)];
   return {
     name: `f${id}`,                                                                                                                                                                               
-    textureUrl: asset.textureUrl,
-    spritesheetData: asset.spritesheetData,
+    textureUrl: `/ai-town/assets/avatar/${id}.png`,
+    spritesheetData: f0SpritesheetData,
     speed: 0.1,
   };
 });
