@@ -6,6 +6,7 @@ import {
   MutationCtx,
   internalMutation,
   internalQuery,
+  query,
 } from '../_generated/server';
 import { World, serializedWorld } from './world';
 import { WorldMap, serializedWorldMap } from './worldMap';
@@ -244,22 +245,6 @@ export class Game extends AbstractGame {
       result.worldMap = this.worldMap.serialize();
       this.descriptionsModified = false;
     }
-
-    // ------------------------------
-     // 下面计算并打印 result 各部分数据的大小，单位为 MiB
-     // ------------------------------
-     // 辅助函数：将字节数转换为 MiB
-     const bytesToMiB = (bytes: number) => bytes / (1024 * 1024);
-     // 使用 TextEncoder 替换 Buffer 来计算字符串的字节数
-     const textEncoder = new TextEncoder();
-   
-     // 计算 agentOperations 部分的大小（MiB）
-     const agentOperationsStr = JSON.stringify(result.agentOperations);
-     const agentOperationsBytes = textEncoder.encode(agentOperationsStr).length;
-     console.debug(`result.agentOperations 的大小: ${bytesToMiB(agentOperationsBytes).toFixed(4)} MiB`);
-   
-     // ------------------------------
-
     return result;
   }
 
@@ -383,5 +368,12 @@ export const saveWorld = internalMutation({
   handler: async (ctx, args) => {
     await applyEngineUpdate(ctx, args.engineId, args.engineUpdate);
     await Game.saveDiff(ctx, args.worldId, args.worldDiff);
+  },
+});
+
+export const getFirstMap = internalQuery({
+  handler: async (ctx) => {
+    const maps = await ctx.db.query("maps").take(1);
+    return maps[0];
   },
 });

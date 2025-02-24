@@ -86,7 +86,7 @@ export class Agent {
           )
           .map((p) => p.serialize()),
         agent: this.serialize(),
-        map: game.worldMap.serialize(),
+        mapId: game.worldMap.id!,
       });
       return;
     }

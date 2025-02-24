@@ -1,6 +1,6 @@
-import { v } from 'convex/values';
-import { internalAction } from '../_generated/server';
-import { WorldMap, serializedWorldMap } from './worldMap';
+import { v, Infer } from 'convex/values';
+import { internalAction, internalMutation } from '../_generated/server';
+import { WorldMap, serializedWorldMap, SerializedWorldMap } from './worldMap';
 import { rememberConversation } from '../agent/memory';
 import { GameId, agentId, conversationId, playerId } from './ids';
 import {
@@ -14,6 +14,7 @@ import { ACTIVITIES, ACTIVITY_COOLDOWN, CONVERSATION_COOLDOWN } from '../constan
 import { api, internal } from '../_generated/api';
 import { sleep } from '../util/sleep';
 import { serializedPlayer } from './player';
+import { Id } from '../_generated/dataModel';
 
 export const agentRememberConversation = internalAction({
   args: {
@@ -94,14 +95,21 @@ export const agentDoSomething = internalAction({
   args: {
     worldId: v.id('worlds'),
     player: v.object(serializedPlayer),
-    agent: v.object(serializedAgent),
-    map: v.object(serializedWorldMap),
     otherFreePlayers: v.array(v.object(serializedPlayer)),
+    agent: v.object(serializedAgent),
+    mapId: v.optional(v.id('maps')),
     operationId: v.string(),
   },
   handler: async (ctx, args) => {
     const { player, agent } = args;
-    const map = new WorldMap(args.map);
+    // const MAP_ID = 'jx7944nx0cme54084c3s1mmpqs7ashcj';
+    // const mapId = args.mapId ?? MAP_ID as Id<'maps'>;
+    const mapData = await ctx.runQuery(internal.aiTown.game.getFirstMap);
+    if (!mapData) {
+      console.error('Failed to fetch map data: no maps found');
+      throw new Error('No maps found in database');
+    }
+    const map = new WorldMap(mapData as SerializedWorldMap);
     const now = Date.now();
     // Don't try to start a new conversation if we were just in one.
     const justLeftConversation =

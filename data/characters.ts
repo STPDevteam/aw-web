@@ -1,6 +1,6 @@
 import { data as f0SpritesheetData } from './spritesheets/f0';
 
-// 辅助函数，用于随机生成名称、描述和计划
+// Helper functions for randomly generating names, descriptions and plans
 function getRandomName(id: number): string {
   const names = [
     "Max", "Luna", "Leo", "Mia", "Evan", "Zara", "Ryan", "Nina", "Ian", "Sophie", 
@@ -26,7 +26,7 @@ function randomIdentity(name: string): string {
 function randomPlan(): string {
   const plans = [
     "find true love",
-    "conquer new horizons",
+    "conquer new horizons", 
     "uncover life's mysteries",
     "spread wisdom",
     "inspire creativity",
@@ -36,7 +36,7 @@ function randomPlan(): string {
   return 'You want to ' + plans[Math.floor(Math.random() * plans.length)] + '.';
 }
 
-// 固定的 8 个描述对象
+// 8 fixed description objects
 const fixedDescriptions = [
   {
     name: 'Alex',
@@ -96,7 +96,7 @@ const fixedDescriptions = [
   },
 ];
 
-// 固定的 8 个角色对象
+// 8 fixed character objects
 const fixedCharacters = [
   {
     name: 'f1',
@@ -148,8 +148,8 @@ const fixedCharacters = [
   },
 ];
 
-// 随机生成 5 个描述对象（编号从 f9 到 f13）
-const randomCount = 6;
+// random count
+const randomCount = 10;
 const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
   const id = i + 9;
   const randomName = getRandomName(id);
@@ -161,10 +161,10 @@ const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
   };
 });
 
-// 合并固定与随机生成的描述对象
+// Merge fixed and randomly generated description objects
 export const Descriptions = fixedDescriptions.concat(randomDescriptions);
 
-// 随机生成 5 个角色对象（编号从 f9 到 f13），复用原有的 8 个角色纹理资源
+// Randomly generate 5 character objects (numbered f9 to f13), reusing the original 8 character texture resources
 const originalAssets = [
   { textureUrl: '/ai-town/assets/1.png', spritesheetData: f0SpritesheetData },
   { textureUrl: '/ai-town/assets/2.png', spritesheetData: f0SpritesheetData },
@@ -187,7 +187,7 @@ const randomCharacters = Array.from({ length: randomCount }, (_, i) => {
   };
 });
 
-// 合并固定与随机生成的角色对象
+// Merge fixed and randomly generated character objects
 export const characters = fixedCharacters.concat(randomCharacters);
 
 // Characters move at 0.75 tiles per second.

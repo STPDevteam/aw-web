@@ -1,4 +1,5 @@
 import { Infer, ObjectType, v } from 'convex/values';
+import { Id } from '../_generated/dataModel';
 
 // `layer[position.x][position.y]` is the tileIndex or -1 if empty.
 const tileLayer = v.array(v.array(v.number()));
@@ -16,6 +17,7 @@ const animatedSprite = {
 export type AnimatedSprite = ObjectType<typeof animatedSprite>;
 
 export const serializedWorldMap = {
+  id: v.optional(v.id('maps')),
   width: v.number(),
   height: v.number(),
 
@@ -33,6 +35,7 @@ export const serializedWorldMap = {
 export type SerializedWorldMap = ObjectType<typeof serializedWorldMap>;
 
 export class WorldMap {
+  id: Id<'maps'> | undefined;
   width: number;
   height: number;
 
@@ -47,6 +50,7 @@ export class WorldMap {
   animatedSprites: AnimatedSprite[];
 
   constructor(serialized: SerializedWorldMap) {
+    this.id = serialized.id;
     this.width = serialized.width;
     this.height = serialized.height;
     this.tileSetUrl = serialized.tileSetUrl;
@@ -60,6 +64,7 @@ export class WorldMap {
 
   serialize(): SerializedWorldMap {
     return {
+      id: this.id,
       width: this.width,
       height: this.height,
       tileSetUrl: this.tileSetUrl,

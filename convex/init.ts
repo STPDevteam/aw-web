@@ -67,7 +67,7 @@ async function getOrCreateDefaultWorld(ctx: MutationCtx) {
     worldId: worldId,
   });
   worldStatus = (await ctx.db.get(worldStatusId))!;
-  await ctx.db.insert('maps', {
+  const mapId = await ctx.db.insert('maps', {
     worldId,
     width: map.mapwidth,
     height: map.mapheight,
