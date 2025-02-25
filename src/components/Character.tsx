@@ -102,7 +102,7 @@ export const Character = ({
   }
 
   const emojiText = (e:string, x?: number) => (
-    <Text x={ x || 36} y={-72} scale={{ x: 2, y: 2 }} text={e} anchor={{ x: 0.5, y: 0.5 }} />
+    <Text x={x || 18} y={-48} scale={{ x: 1.5, y: 1.5 }} text={e} anchor={{ x: 0.5, y: 0.5 }} />
   )
   return (
     <Container x={x} y={y} interactive={true} pointerdown={onClick} cursor="pointer">
@@ -121,7 +121,7 @@ export const Character = ({
         textures={spriteSheet.animations[direction]}
         animationSpeed={speed}
         anchor={{ x: 0.5, y: 0.5 }}
-        scale={{ x: 2, y: 2 }} 
+        scale={{ x: 1.5, y: 1.5 }} 
       />
       {emoji && (
         <>{emojiText(emoji)}</>
