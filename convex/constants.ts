@@ -13,7 +13,7 @@ export const PATHFINDING_BACKOFF = 1000;
 export const CONVERSATION_DISTANCE = 1.3;
 export const MIDPOINT_THRESHOLD = 4;
 export const TYPING_TIMEOUT = 15 * 1000;
-export const COLLISION_THRESHOLD = 2.25;
+export const COLLISION_THRESHOLD = 1.75;
 
 // How many human players can be in a world at once.
 export const MAX_HUMAN_PLAYERS = 100;
