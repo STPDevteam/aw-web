@@ -4,7 +4,7 @@ import { Id } from '../_generated/dataModel';
 
 export const updateVisibleAgents = mutation({
   args: {
-    agentIds: v.array(v.id('agents')),
+    agentIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();

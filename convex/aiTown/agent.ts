@@ -63,11 +63,7 @@ export class Agent {
       const isVisible = visibleAgentIds.has(this.id);
 
       if (!isVisible) {
-        this.tickCounter++;
-        if (this.tickCounter < 20) {
-          return;
-        }
-        this.tickCounter = 0;
+        return;
       }
     }
 

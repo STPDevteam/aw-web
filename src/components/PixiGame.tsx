@@ -101,7 +101,7 @@ export const PixiGame = (props: {
   };
  
 
-  // Zoom on the user’s avatar when it is created
+  // Zoom on the user's avatar when it is created
   useEffect(() => {
     if (!viewportRef.current || humanPlayerId === undefined) return;
 
@@ -113,23 +113,27 @@ export const PixiGame = (props: {
   }, [humanPlayerId]);
 
 
-  
 
-  const computedIds = useMemo(() => {
-    return players
-      .filter((player) => {
-        const { x: X, y: Y } = player.position
-        return X > 0 && X < 85 && Y > 0 && Y < 68
-      })
-      .map((player) => player.id)
-  }, [players])
-  
- 
-  const debouncedIds = useDebounceValue(computedIds, 3000)
-  
   useEffect(() => {
-    !!debouncedIds.length && updateVisibleAgents({ agentIds: debouncedIds as any[] })
-  }, [debouncedIds])
+    if (!viewportRef.current) return;
+
+    const viewport = viewportRef.current;
+  
+    const visiblePlayers = players.filter((player) => {
+        const { x: X, y: Y } = player.position
+        return (X > 0 && X < 85 && Y > 0 && Y < 68)
+    });
+  
+    const visibleAgentIds = [...props.game.world.agents.values()]
+        .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
+        .map(agent => agent.id);
+    
+ 
+    !!visibleAgentIds.length && updateVisibleAgents({ agentIds: visibleAgentIds });
+
+}, [players, props.game.world.agents])
+
+
 
   return (
     <PixiViewport

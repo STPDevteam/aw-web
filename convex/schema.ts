@@ -26,7 +26,7 @@ export default defineSchema({
   ...engineTables,
 
   visibleAgents: defineTable({
-    agentIds: v.array(v.id('agents')),
+    agentIds: v.array(v.string()),
     updatedAt: v.number(),
   }),
 });
