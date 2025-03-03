@@ -10,6 +10,7 @@ import { useHistoricalValue } from '../hooks/useHistoricalValue.ts';
 import { PlayerDescription } from '../../convex/aiTown/playerDescription.ts';
 import { WorldMap } from '../../convex/aiTown/worldMap.ts';
 import { ServerGame } from '../hooks/serverGame.ts';
+import { useSendInput } from '../hooks/sendInput.ts';
 
 export type SelectElement = (element?: { kind: 'player'; id: GameId<'players'> }) => void;
 
@@ -21,7 +22,9 @@ export const Player = ({
   player,
   onClick,
   historicalTime,
+  engineId,
 }: {
+  engineId: Id<'engines'>,
   game: ServerGame;
   isViewer: boolean;
   player: ServerPlayer;
@@ -34,6 +37,8 @@ export const Player = ({
     throw new Error(`Player ${player.id} has no character`);
   }
   const character = characters.find((c) => c.name === playerCharacter);
+
+  const moveTo = useSendInput(engineId, 'moveTo');
 
   // console.log('character', character)
   const locationBuffer = game.world.historicalLocations?.get(player.id);
@@ -84,7 +89,8 @@ export const Player = ({
         spritesheetData={character.spritesheetData}
         speed={character.speed}
         onClick={() => {
-          onClick({ kind: 'player', id: player.id });
+          // moveTo({ playerId: 'p:10', destination: { x: 5, y: 10} })
+          onClick({ kind: 'player', id: player.id });          
         }}
       />
     </>

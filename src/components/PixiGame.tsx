@@ -6,7 +6,7 @@ import { PixiStaticMap } from './PixiStaticMap.tsx';
 import PixiViewport from './PixiViewport.tsx';
 import { Viewport } from 'pixi-viewport';
 import { Id } from '../../convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
+import { useQuery, useMutation} from 'convex/react';
 import { api } from '../../convex/_generated/api.js';
 import { useSendInput } from '../hooks/sendInput.ts';
 import { toastOnError } from '../toasts.ts';
@@ -14,6 +14,8 @@ import { DebugPath } from './DebugPath.tsx';
 import { PositionIndicator } from './PositionIndicator.tsx';
 import { SHOW_DEBUG_UI } from './Game.tsx';
 import { ServerGame } from '../hooks/serverGame.ts';
+import { agentId } from '../../convex/aiTown/ids.ts';
+
 
 export const PixiGame = (props: {
   worldId: Id<'worlds'>;
@@ -27,17 +29,27 @@ export const PixiGame = (props: {
   // PIXI setup.
   const pixiApp = useApp();
   const viewportRef = useRef<Viewport | undefined>();
-
+  const [visibleAgents, setVisibleAgents] = useState<any[]>([]);
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId: props.worldId }) ?? null;
   const humanPlayerId = [...props.game.world.players.values()].find(
     (p) => p.human === humanTokenIdentifier,
   )?.id;
 
+  const updateVisibleAgents = useMutation(api.aiTown.updateVisibleAgents())
+
+
   const moveTo = useSendInput(props.engineId, 'moveTo');
 
   // Interaction for clicking on the world to navigate.
   const dragStart = useRef<{ screenX: number; screenY: number } | null>(null);
+  const { width, height, tileDim } = props.game.worldMap;
+  const players = [...props.game.world.players.values()];
+
+
+
+
   const onMapPointerDown = (e: any) => {
+
     // https://pixijs.download/dev/docs/PIXI.FederatedPointerEvent.html
     dragStart.current = { screenX: e.screenX, screenY: e.screenY };
   };
@@ -48,10 +60,14 @@ export const PixiGame = (props: {
     t: number;
   } | null>(null);
   const onMapPointerUp = async (e: any) => {
+    
     if (dragStart.current) {
       const { screenX, screenY } = dragStart.current;
       dragStart.current = null;
+ 
       const [dx, dy] = [screenX - e.screenX, screenY - e.screenY];
+
+     
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist > 10) {
         console.log(`Skipping navigation on drag event (${dist}px)`);
@@ -79,8 +95,7 @@ export const PixiGame = (props: {
     console.log(`Moving to ${JSON.stringify(roundedTiles)}`);
     await toastOnError(moveTo({ playerId: humanPlayerId, destination: roundedTiles }));
   };
-  const { width, height, tileDim } = props.game.worldMap;
-  const players = [...props.game.world.players.values()];
+ 
 
   // Zoom on the user’s avatar when it is created
   useEffect(() => {
@@ -94,33 +109,24 @@ export const PixiGame = (props: {
   }, [humanPlayerId]);
 
 
-
-  // const distance = (a: any, b: any) => 
-  //   Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+  
 
 
+  useEffect(() => {
+      if (!viewportRef.current) return;
 
-  // players.forEach((p) => {
-  //   const MIN_DISTANCE = 1.1; 
-  //   const newPos = { ...p.position };
-  //   let adjustmentCount = 0;
-    
-  //   players.forEach(other => {
-  //     if (other.id === p.id) return;
-      
-    
-  //     if (distance(p.position, other.position) < MIN_DISTANCE) {
-  //       newPos.x += (p.position.x > other.position.x) ? MIN_DISTANCE : -MIN_DISTANCE;
-  //       newPos.y += (p.position.y > other.position.y) ? MIN_DISTANCE : -MIN_DISTANCE;
-  //       adjustmentCount++;  
-  //       if (adjustmentCount > 3) return;
-  //     }
-  //   });
-  //   p.position = newPos; 
-  // });
-
-
+      const viewport = viewportRef.current;
+      const { x: viewportX, y: viewportY, width: viewportWidth, height: viewportHeight } = viewport;
  
+      const ids = players.filter((player) => {
+        const { x: X, y: Y } = player.position
+        return (X > 0 && X < 85 && Y > 0 && Y < 68)
+      }).map((player) => player.id)
+
+      updateVisibleAgents({ agentId: ids })
+
+    }, [players])
+
 
   return (
     <PixiViewport
@@ -147,6 +153,7 @@ export const PixiGame = (props: {
       {
       players.map((p) => (
         <Player
+          engineId={props.engineId}
           key={`player-${p.id}`}
           game={props.game}
           player={p}
