@@ -149,7 +149,7 @@ const fixedCharacters = [
 ];
 
 // random count
-const randomCount = 0;
+const randomCount = 492;
 const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
   const id = i + 9;
   const randomName = getRandomName(id);
