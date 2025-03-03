@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { useApp } from '@pixi/react';
 import { Player, SelectElement } from './Player.tsx';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo} from 'react';
 import { PixiStaticMap } from './PixiStaticMap.tsx';
 import PixiViewport from './PixiViewport.tsx';
 import { Viewport } from 'pixi-viewport';
@@ -14,7 +14,7 @@ import { DebugPath } from './DebugPath.tsx';
 import { PositionIndicator } from './PositionIndicator.tsx';
 import { SHOW_DEBUG_UI } from './Game.tsx';
 import { ServerGame } from '../hooks/serverGame.ts';
-import { agentId } from '../../convex/aiTown/ids.ts';
+import { useDebounceValue } from '../hooks/useDebounceValue.ts'
 
 
 export const PixiGame = (props: {
@@ -39,16 +39,17 @@ export const PixiGame = (props: {
 
   const updateVisibleAgents = useMutation(api.aiTown.updateVisibleAgents.updateVisibleAgents)
   
-
+ 
 
   const moveTo = useSendInput(props.engineId, 'moveTo');
+
 
   // Interaction for clicking on the world to navigate.
   const dragStart = useRef<{ screenX: number; screenY: number } | null>(null);
   const { width, height, tileDim } = props.game.worldMap;
   const players = [...props.game.world.players.values()];
 
-
+  const debouncedPlayers = useDebounceValue(players, 3000)
 
 
   const onMapPointerDown = (e: any) => {
@@ -67,7 +68,7 @@ export const PixiGame = (props: {
     if (dragStart.current) {
       const { screenX, screenY } = dragStart.current;
       dragStart.current = null;
- 
+      
       const [dx, dy] = [screenX - e.screenX, screenY - e.screenY];
 
      
@@ -112,29 +113,26 @@ export const PixiGame = (props: {
   }, [humanPlayerId]);
 
 
-  
-
 
   useEffect(() => {
     if (!viewportRef.current) return;
 
     const viewport = viewportRef.current;
-    
-    // 1. Find players within the viewport range
+  
     const visiblePlayers = players.filter((player) => {
         const { x: X, y: Y } = player.position
         return (X > 0 && X < 85 && Y > 0 && Y < 68)
     });
-    
-    // 2. Find the agents corresponding to these players (if any)
+  
     const visibleAgentIds = [...props.game.world.agents.values()]
         .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
         .map(agent => agent.id);
     
-    // 3. Update the visible agents list
-    updateVisibleAgents({ agentIds: visibleAgentIds });
+ 
+    !!visibleAgentIds.length && updateVisibleAgents({ agentIds: visibleAgentIds });
 
 }, [players, props.game.world.agents])
+
 
 
   return (
