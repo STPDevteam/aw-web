@@ -33,9 +33,12 @@ export const PixiGame = (props: {
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId: props.worldId }) ?? null;
   const humanPlayerId = [...props.game.world.players.values()].find(
     (p) => p.human === humanTokenIdentifier,
-  )?.id;
+  )?.id;  
 
-  const updateVisibleAgents = useMutation(api.aiTown.updateVisibleAgents())
+
+
+  const updateVisibleAgents = useMutation(api.aiTown.updateVisibleAgents.updateVisibleAgents)
+  
 
 
   const moveTo = useSendInput(props.engineId, 'moveTo');
@@ -123,7 +126,7 @@ export const PixiGame = (props: {
         return (X > 0 && X < 85 && Y > 0 && Y < 68)
       }).map((player) => player.id)
 
-      updateVisibleAgents({ agentId: ids })
+      updateVisibleAgents({ agentIds: ids as any[] })
 
     }, [players])
 
