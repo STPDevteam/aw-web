@@ -34,6 +34,7 @@ export class Agent {
     operationId: string;
     started: number;
   };
+  tickCounter: number = 0;
 
   constructor(serialized: SerializedAgent) {
     const { id, lastConversation, lastInviteAttempt, inProgressOperation } = serialized;
@@ -49,11 +50,27 @@ export class Agent {
     this.inProgressOperation = inProgressOperation;
   }
 
-  tick(game: Game, now: number) {
+  async tick(game: Game, now: number, ctx?: MutationCtx) {
     const player = game.world.players.get(this.playerId);
     if (!player) {
       throw new Error(`Invalid player ID ${this.playerId}`);
     }
+
+    if (ctx) {
+      const visibleRecord = await ctx.db.query('visibleAgents').first();
+      const visibleAgentIds = visibleRecord ? new Set(visibleRecord.agentIds) : new Set();
+
+      const isVisible = visibleAgentIds.has(this.id);
+
+      if (!isVisible) {
+        this.tickCounter++;
+        if (this.tickCounter < 20) {
+          return;
+        }
+        this.tickCounter = 0;
+      }
+    }
+
     if (this.inProgressOperation) {
       if (now < this.inProgressOperation.started + ACTION_TIMEOUT) {
         // Wait on the operation to finish.
