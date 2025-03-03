@@ -377,3 +377,9 @@ export const getFirstMap = internalQuery({
     return maps[0];
   },
 });
+
+export const getVisibleAgents = internalQuery({
+  handler: async (ctx) => {
+    return await ctx.db.query('visibleAgents').first();
+  },
+});

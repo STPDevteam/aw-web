@@ -102,8 +102,16 @@ export const agentDoSomething = internalAction({
   },
   handler: async (ctx, args) => {
     const { player, agent } = args;
-    // const MAP_ID = 'jx7944nx0cme54084c3s1mmpqs7ashcj';
-    // const mapId = args.mapId ?? MAP_ID as Id<'maps'>;
+
+    // Added: Check if agent is in the visibleAgents table
+    const visibleAgentsRecord = await ctx.runQuery(internal.aiTown.game.getVisibleAgents);
+    const visibleAgentIds = visibleAgentsRecord ? new Set(visibleAgentsRecord.agentIds) : new Set();
+
+    if (!visibleAgentIds.has(agent.id)) {
+      console.log(`Agent ${agent.id} is not in visible range, skipping automatic behavior`);
+      return; // Don't execute any automatic behavior
+    }
+
     const mapData = await ctx.runQuery(internal.aiTown.game.getFirstMap);
     if (!mapData) {
       console.error('Failed to fetch map data: no maps found');
