@@ -17,7 +17,7 @@ import { ServerGame } from '../hooks/serverGame.ts';
 import { useDebounceValue } from '../hooks/useDebounceValue.ts'
 
 
-const ZOOM = 1.5
+const ZOOM = 1.2
 
 export const PixiGame = (props: {
   worldId: Id<'worlds'>;
@@ -127,33 +127,31 @@ export const PixiGame = (props: {
     const viewport = viewportRef.current;
 
     if(viewport) {
-      const { x, y, width, height } = viewport
-      const gameSpacePx = viewport.toWorld(Math.abs(x), Math.abs(y));
-      const gameSpaceWH = viewport.toWorld(width, height);
+      const visibleBounds = viewport.getVisibleBounds();
+      const { x, y, width, height } = visibleBounds
 
-      const gameWHTiles = {
-        x: gameSpaceWH.x / tileDim / ZOOM,
-        y: gameSpaceWH.y / tileDim / ZOOM,
-      };
     
+      const viewableAreaWidth = width  / tileDim / ZOOM
+      const viewableAreaHeight = height / tileDim / ZOOM
+   
+   
 
       const gameSpaceTiles = {
-        x: gameSpacePx.x / tileDim / ZOOM,
-        y: gameSpacePx.y / tileDim / ZOOM,
+        x: x / tileDim / ZOOM ,
+        y: y / tileDim / ZOOM ,
       };
 
-      // console.log('gameWHTiles', gameWHTiles)
 
       const visiblePlayers = players.filter((player) => {
         const { x: X, y: Y } = player.position;
-        return X > gameSpaceTiles.x && X < (gameSpaceTiles.x + gameWHTiles.x)  && Y > gameSpaceTiles.y && Y < (gameSpaceTiles.y + gameWHTiles.y);
+        return X > gameSpaceTiles.x && X < (gameSpaceTiles.x + viewableAreaWidth)  && Y > gameSpaceTiles.y && Y < (gameSpaceTiles.y + viewableAreaHeight);
       });
       
-    
+      const idsList = visiblePlayers.map(item => item.id) 
+      // console.log('idsList',  idsList)
       return [...props.game.world.agents.values()]
         .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
         .map(agent => agent.id);
-
 
     }
 
@@ -167,7 +165,8 @@ export const PixiGame = (props: {
   useEffect(() => {
     const viewport = viewportRef.current
     if (!viewport) return;
-    
+
+   
     if (debouncedVisibleAgentIds && !!debouncedVisibleAgentIds.length) {
       updateVisibleAgents({ agentIds: debouncedVisibleAgentIds });
     }
@@ -198,7 +197,7 @@ const px2Positon = () => {
        x: gameSpacePx.x / tileDim,
        y: gameSpacePx.y / tileDim,
      };
-     console.log('gameSpaceTiles',  gameSpaceTiles)
+    //  console.log('gameSpaceTiles',  gameSpaceTiles)
      return gameSpaceTiles
   }
 }
