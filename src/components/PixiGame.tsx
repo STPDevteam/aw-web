@@ -100,7 +100,7 @@ export const PixiGame = (props: {
   };
  
 
-  // Zoom on the user’s avatar when it is created
+  // Zoom on the user's avatar when it is created
   useEffect(() => {
     if (!viewportRef.current || humanPlayerId === undefined) return;
 
@@ -116,19 +116,25 @@ export const PixiGame = (props: {
 
 
   useEffect(() => {
-      if (!viewportRef.current) return;
+    if (!viewportRef.current) return;
 
-      const viewport = viewportRef.current;
-      const { x: viewportX, y: viewportY, width: viewportWidth, height: viewportHeight } = viewport;
- 
-      const ids = players.filter((player) => {
+    const viewport = viewportRef.current;
+    
+    // 1. Find players within the viewport range
+    const visiblePlayers = players.filter((player) => {
         const { x: X, y: Y } = player.position
         return (X > 0 && X < 85 && Y > 0 && Y < 68)
-      }).map((player) => player.id)
+    });
+    
+    // 2. Find the agents corresponding to these players (if any)
+    const visibleAgentIds = [...props.game.world.agents.values()]
+        .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
+        .map(agent => agent.id);
+    
+    // 3. Update the visible agents list
+    updateVisibleAgents({ agentIds: visibleAgentIds });
 
-      updateVisibleAgents({ agentIds: ids as any[] })
-
-    }, [players])
+}, [players, props.game.world.agents])
 
 
   return (
