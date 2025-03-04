@@ -108,7 +108,7 @@ export const agentDoSomething = internalAction({
     const visibleAgentIds = visibleAgentsRecord ? new Set(visibleAgentsRecord.agentIds) : new Set();
 
     if (!visibleAgentIds.has(agent.id)) {
-      console.log(`Agent ${agent.id} is not in visible range, skipping automatic behavior`);
+      // console.log(`Agent ${agent.id} is not in visible range, skipping automatic behavior`);
       return; // Don't execute any automatic behavior
     }
 
