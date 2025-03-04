@@ -1,6 +1,6 @@
-import { v, Infer } from 'convex/values';
-import { internalAction, internalMutation } from '../_generated/server';
-import { WorldMap, serializedWorldMap, SerializedWorldMap } from './worldMap';
+import { v } from 'convex/values';
+import { internalAction } from '../_generated/server';
+import { SerializedWorldMap, WorldMap, serializedWorldMap } from './worldMap';
 import { rememberConversation } from '../agent/memory';
 import { GameId, agentId, conversationId, playerId } from './ids';
 import {
@@ -14,7 +14,6 @@ import { ACTIVITIES, ACTIVITY_COOLDOWN, CONVERSATION_COOLDOWN } from '../constan
 import { api, internal } from '../_generated/api';
 import { sleep } from '../util/sleep';
 import { serializedPlayer } from './player';
-import { Id } from '../_generated/dataModel';
 
 export const agentRememberConversation = internalAction({
   args: {
@@ -103,14 +102,6 @@ export const agentDoSomething = internalAction({
   handler: async (ctx, args) => {
     const { player, agent } = args;
 
-    // Added: Check if agent is in the visibleAgents table
-    const visibleAgentsRecord = await ctx.runQuery(internal.aiTown.game.getVisibleAgents);
-    const visibleAgentIds = visibleAgentsRecord ? new Set(visibleAgentsRecord.agentIds) : new Set();
-
-    if (!visibleAgentIds.has(agent.id)) {
-      // console.log(`Agent ${agent.id} is not in visible range, skipping automatic behavior`);
-      return; // Don't execute any automatic behavior
-    }
 
     const mapData = await ctx.runQuery(internal.aiTown.game.getFirstMap);
     if (!mapData) {

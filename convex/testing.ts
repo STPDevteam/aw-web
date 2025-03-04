@@ -31,17 +31,6 @@ export const wipeAllTables = internalMutation({
   },
 });
 
-// 指定需要删除的表名
-const targetTables: Array<TableNames> = ["playerDescriptions", "agentDescriptions","archivedConversations","participatedTogether"];
-
-export const wipeTargetTables = internalMutation({
-  handler: async (ctx) => {
-    for (const tableName of targetTables) {
-      await ctx.scheduler.runAfter(0, internal.testing.deletePage, { tableName, cursor: null });
-    }
-  },
-});
-
 export const deletePage = internalMutation({
   args: {
     tableName: v.string(),
