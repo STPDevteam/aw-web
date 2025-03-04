@@ -110,16 +110,11 @@ export const PixiGame = (props: {
     const humanPlayer = props.game.world.players.get(humanPlayerId)!;
     viewportRef.current.animate({
       position: new PIXI.Point(humanPlayer.position.x * tileDim, humanPlayer.position.y * tileDim),
-      scale: 1.5,
+      scale: ZOOM,
     });
   }, [humanPlayerId]);
 
-
-  
-
-
-  
-
+ 
 
   const computedVisibleAgentIds = useMemo(() => {
 
@@ -127,20 +122,20 @@ export const PixiGame = (props: {
     const viewport = viewportRef.current;
 
     if(viewport) {
-      const visibleBounds = viewport.getVisibleBounds();
-      const { x, y, width, height } = visibleBounds
-
     
-      const viewableAreaWidth = width  / tileDim / ZOOM
-      const viewableAreaHeight = height / tileDim / ZOOM
+      const x =  Math.abs(viewport.position.x) 
+      const y =  Math.abs(viewport.position.y) 
+      const viewableAreaWidth = viewport.worldScreenWidth  / tileDim / ZOOM
+      const viewableAreaHeight = viewport.worldScreenHeight / tileDim / ZOOM
    
-   
+      
 
       const gameSpaceTiles = {
-        x: x / tileDim / ZOOM ,
-        y: y / tileDim / ZOOM ,
+        x: x / tileDim / ZOOM,
+        y: y / tileDim / ZOOM,
       };
 
+    
 
       const visiblePlayers = players.filter((player) => {
         const { x: X, y: Y } = player.position;
@@ -149,28 +144,29 @@ export const PixiGame = (props: {
       
       const idsList = visiblePlayers.map(item => item.id) 
       // console.log('idsList',  idsList)
-      return [...props.game.world.agents.values()]
+      const agents = [...props.game.world.agents.values()]
+      
+      return agents
         .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
         .map(agent => agent.id);
 
     }
 
 
-  }, [players, props.game.world.agents]); 
+  }, [props.game.world.agents]);  // players, 
 
 
   const debouncedVisibleAgentIds = useDebounceValue(computedVisibleAgentIds, 3000);
 
 
   useEffect(() => {
-    const viewport = viewportRef.current
-    if (!viewport) return;
+    
 
    
-    if (debouncedVisibleAgentIds && !!debouncedVisibleAgentIds.length) {
-      updateVisibleAgents({ agentIds: debouncedVisibleAgentIds });
+    if (computedVisibleAgentIds && !!computedVisibleAgentIds.length) {
+      updateVisibleAgents({ agentIds: computedVisibleAgentIds });
     }
-  }, [debouncedVisibleAgentIds]);
+  }, [computedVisibleAgentIds]);
 
 
 
@@ -197,7 +193,6 @@ const px2Positon = () => {
        x: gameSpacePx.x / tileDim,
        y: gameSpacePx.y / tileDim,
      };
-    //  console.log('gameSpaceTiles',  gameSpaceTiles)
      return gameSpaceTiles
   }
 }
