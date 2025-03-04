@@ -39,7 +39,7 @@ export const PixiGame = (props: {
 
 
 
-  const updateVisibleAgents = useMutation(api.aiTown.updateVisibleAgents.updateVisibleAgents)
+  // const updateVisibleAgents = useMutation(api.aiTown.updateVisibleAgents.updateVisibleAgents)
   
  
 
@@ -116,86 +116,86 @@ export const PixiGame = (props: {
 
  
 
-  const computedVisibleAgentIds = useMemo(() => {
+//   const computedVisibleAgentIds = useMemo(() => {
 
     
-    const viewport = viewportRef.current;
+//     const viewport = viewportRef.current;
 
-    if(viewport) {
+//     if(viewport) {
     
-      const x =  Math.abs(viewport.position.x) 
-      const y =  Math.abs(viewport.position.y) 
-      const viewableAreaWidth = viewport.worldScreenWidth  / tileDim / ZOOM
-      const viewableAreaHeight = viewport.worldScreenHeight / tileDim / ZOOM
+//       const x =  Math.abs(viewport.position.x) 
+//       const y =  Math.abs(viewport.position.y) 
+//       const viewableAreaWidth = viewport.worldScreenWidth  / tileDim / ZOOM
+//       const viewableAreaHeight = viewport.worldScreenHeight / tileDim / ZOOM
    
       
 
-      const gameSpaceTiles = {
-        x: x / tileDim / ZOOM,
-        y: y / tileDim / ZOOM,
-      };
+//       const gameSpaceTiles = {
+//         x: x / tileDim / ZOOM,
+//         y: y / tileDim / ZOOM,
+//       };
 
     
 
-      const visiblePlayers = players.filter((player) => {
-        const { x: X, y: Y } = player.position;
-        return X > gameSpaceTiles.x && X < (gameSpaceTiles.x + viewableAreaWidth)  && Y > gameSpaceTiles.y && Y < (gameSpaceTiles.y + viewableAreaHeight);
-      });
+//       const visiblePlayers = players.filter((player) => {
+//         const { x: X, y: Y } = player.position;
+//         return X > gameSpaceTiles.x && X < (gameSpaceTiles.x + viewableAreaWidth)  && Y > gameSpaceTiles.y && Y < (gameSpaceTiles.y + viewableAreaHeight);
+//       });
       
-      const idsList = visiblePlayers.map(item => item.id) 
-      // console.log('idsList',  idsList)
-      const agents = [...props.game.world.agents.values()]
+//       const idsList = visiblePlayers.map(item => item.id) 
+//       // console.log('idsList',  idsList)
+//       const agents = [...props.game.world.agents.values()]
       
-      return agents
-        .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
-        .map(agent => agent.id);
+//       return agents
+//         .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
+//         .map(agent => agent.id);
 
-    }
-
-
-  }, [props.game.world.agents]);  // players, 
+//     }
 
 
-  const debouncedVisibleAgentIds = useDebounceValue(computedVisibleAgentIds, 3000);
+//   }, [props.game.world.agents]);  // players, 
 
 
-  useEffect(() => {
+//   const debouncedVisibleAgentIds = useDebounceValue(computedVisibleAgentIds, 3000);
+
+
+//   useEffect(() => {
     
 
    
-    if (computedVisibleAgentIds && !!computedVisibleAgentIds.length) {
-      updateVisibleAgents({ agentIds: computedVisibleAgentIds });
-    }
-  }, [computedVisibleAgentIds]);
+//     if (computedVisibleAgentIds && !!computedVisibleAgentIds.length) {
+//       updateVisibleAgents({ agentIds: computedVisibleAgentIds });
+//     }
+//   }, [computedVisibleAgentIds]);
 
 
 
 
-useEffect(() => {
-  if (viewportRef.current) {
+// useEffect(() => {
+//   if (viewportRef.current) {
 
-    viewportRef.current.animate({
-      position: {x: 20 * tileDim,y: 26 * tileDim},
-      scale: ZOOM,
-    });  
-    viewportRef.current.plugins.remove('wheel');
-    viewportRef.current.plugins.remove('pinch');
-  } 
-}, []);
+//     viewportRef.current.animate({
+//       position: {x: 20 * tileDim,y: 26 * tileDim},
+//       scale: ZOOM,
+//     });  
+//     viewportRef.current.plugins.remove('wheel');
+//     viewportRef.current.plugins.remove('pinch');
+//   } 
+// }, []);
 
-const px2Positon = () => {
-  const viewport = viewportRef.current;
-  if(dragStart.current && viewport) {
-    const { screenX, screenY } = dragStart.current;
-     const gameSpacePx = viewport.toWorld(screenX, screenY);
+// const px2Positon = () => {
+//   const viewport = viewportRef.current;
+//   if(dragStart.current && viewport) {
+//     const { screenX, screenY } = dragStart.current;
+//      const gameSpacePx = viewport.toWorld(screenX, screenY);
        
-     const gameSpaceTiles = {
-       x: gameSpacePx.x / tileDim,
-       y: gameSpacePx.y / tileDim,
-     };
-     return gameSpaceTiles
-  }
-}
+//      const gameSpaceTiles = {
+//        x: gameSpacePx.x / tileDim,
+//        y: gameSpacePx.y / tileDim,
+//      };
+//      return gameSpaceTiles
+//   }
+// }
 
 
 
