@@ -24,9 +24,4 @@ export default defineSchema({
   ...agentTables,
   ...aiTownTables,
   ...engineTables,
-
-  visibleAgents: defineTable({
-    agentIds: v.array(v.string()),
-    updatedAt: v.number(),
-  }),
 });

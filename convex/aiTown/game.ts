@@ -6,7 +6,6 @@ import {
   MutationCtx,
   internalMutation,
   internalQuery,
-  query,
 } from '../_generated/server';
 import { World, serializedWorld } from './world';
 import { WorldMap, serializedWorldMap } from './worldMap';
@@ -210,7 +209,7 @@ export class Game extends AbstractGame {
       engineId: this.engine._id,
       engineUpdate,
       worldId: this.worldId,
-      worldDiff: diff,   
+      worldDiff: diff,
     });
   }
 
@@ -378,8 +377,3 @@ export const getFirstMap = internalQuery({
   },
 });
 
-export const getVisibleAgents = internalQuery({
-  handler: async (ctx) => {
-    return await ctx.db.query('visibleAgents').first();
-  },
-});
