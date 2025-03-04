@@ -17,6 +17,8 @@ import { ServerGame } from '../hooks/serverGame.ts';
 import { useDebounceValue } from '../hooks/useDebounceValue.ts'
 
 
+const ZOOM = 1.2
+
 export const PixiGame = (props: {
   worldId: Id<'worlds'>;
   engineId: Id<'engines'>;
@@ -49,13 +51,12 @@ export const PixiGame = (props: {
   const { width, height, tileDim } = props.game.worldMap;
   const players = [...props.game.world.players.values()];
 
-  const debouncedPlayers = useDebounceValue(players, 3000)
 
 
   const onMapPointerDown = (e: any) => {
-
     // https://pixijs.download/dev/docs/PIXI.FederatedPointerEvent.html
     dragStart.current = { screenX: e.screenX, screenY: e.screenY };
+    // px2Positon()
   };
 
   const [lastDestination, setLastDestination] = useState<{
@@ -86,7 +87,6 @@ export const PixiGame = (props: {
       return;
     }
     const gameSpacePx = viewport.toWorld(e.screenX, e.screenY);
-    const tileDim = props.game.worldMap.tileDim;
     const gameSpaceTiles = {
       x: gameSpacePx.x / tileDim,
       y: gameSpacePx.y / tileDim,
@@ -101,6 +101,8 @@ export const PixiGame = (props: {
   };
  
 
+  
+  
   // Zoom on the user's avatar when it is created
   useEffect(() => {
     if (!viewportRef.current || humanPlayerId === undefined) return;
@@ -113,25 +115,94 @@ export const PixiGame = (props: {
   }, [humanPlayerId]);
 
 
+  
 
-  useEffect(() => {
-    if (!viewportRef.current) return;
 
+  
+
+
+  const computedVisibleAgentIds = useMemo(() => {
+
+    
     const viewport = viewportRef.current;
-  
-    const visiblePlayers = players.filter((player) => {
-        const { x: X, y: Y } = player.position
-        return (X > 0 && X < 85 && Y > 0 && Y < 68)
-    });
-  
-    const visibleAgentIds = [...props.game.world.agents.values()]
+
+    if(viewport) {
+      const visibleBounds = viewport.getVisibleBounds();
+      const { x, y, width, height } = visibleBounds
+
+    
+      const viewableAreaWidth = width  / tileDim / ZOOM
+      const viewableAreaHeight = height / tileDim / ZOOM
+   
+   
+
+      const gameSpaceTiles = {
+        x: x / tileDim / ZOOM ,
+        y: y / tileDim / ZOOM ,
+      };
+
+
+      const visiblePlayers = players.filter((player) => {
+        const { x: X, y: Y } = player.position;
+        return X > gameSpaceTiles.x && X < (gameSpaceTiles.x + viewableAreaWidth)  && Y > gameSpaceTiles.y && Y < (gameSpaceTiles.y + viewableAreaHeight);
+      });
+      
+      const idsList = visiblePlayers.map(item => item.id) 
+      // console.log('idsList',  idsList)
+      return [...props.game.world.agents.values()]
         .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
         .map(agent => agent.id);
-    
- 
-    !!visibleAgentIds.length && updateVisibleAgents({ agentIds: visibleAgentIds });
 
-}, [players, props.game.world.agents])
+    }
+
+
+  }, [players, props.game.world.agents]); 
+
+
+  const debouncedVisibleAgentIds = useDebounceValue(computedVisibleAgentIds, 3000);
+
+
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport) return;
+
+   
+    if (debouncedVisibleAgentIds && !!debouncedVisibleAgentIds.length) {
+      updateVisibleAgents({ agentIds: debouncedVisibleAgentIds });
+    }
+  }, [debouncedVisibleAgentIds]);
+
+
+
+
+useEffect(() => {
+  if (viewportRef.current) {
+
+    viewportRef.current.animate({
+      position: {x: 20 * tileDim,y: 26 * tileDim},
+      scale: ZOOM,
+    });  
+    viewportRef.current.plugins.remove('wheel');
+    viewportRef.current.plugins.remove('pinch');
+  } 
+}, []);
+
+const px2Positon = () => {
+  const viewport = viewportRef.current;
+  if(dragStart.current && viewport) {
+    const { screenX, screenY } = dragStart.current;
+     const gameSpacePx = viewport.toWorld(screenX, screenY);
+       
+     const gameSpaceTiles = {
+       x: gameSpacePx.x / tileDim,
+       y: gameSpacePx.y / tileDim,
+     };
+    //  console.log('gameSpaceTiles',  gameSpaceTiles)
+     return gameSpaceTiles
+  }
+}
+
+
 
 
 
