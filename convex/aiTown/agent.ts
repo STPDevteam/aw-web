@@ -5,6 +5,7 @@ import { serializedPlayer } from './player';
 import { Game } from './game';
 import {
   ACTION_TIMEOUT,
+  ACTIVE_AGENTS_PERCENTAGE,
   AWKWARD_CONVERSATION_TIMEOUT,
   CONVERSATION_COOLDOWN,
   CONVERSATION_DISTANCE,
@@ -35,6 +36,13 @@ export class Agent {
     started: number;
   };
 
+  // 检查代理是否为活跃代理
+  // Check if the agent is an active agent
+  isActiveAgent(): boolean {
+    const agentIdNumber = parseInt(this.id.split(':')[1]);
+    return agentIdNumber % 100 < ACTIVE_AGENTS_PERCENTAGE;
+  }
+
   constructor(serialized: SerializedAgent) {
     const { id, lastConversation, lastInviteAttempt, inProgressOperation } = serialized;
     const playerId = parseGameId('players', serialized.playerId);
@@ -50,10 +58,26 @@ export class Agent {
   }
 
   tick(game: Game, now: number) {
+    // 使用函数判断是否为活跃代理
+    // Use function to determine if this is an active agent
+    const isActiveAgent = this.isActiveAgent();
+    
+    // 如果不是活跃代理，除非正在对话中，否则不执行任何操作
+    // If not an active agent, don't execute any operations unless in a conversation
     const player = game.world.players.get(this.playerId);
     if (!player) {
       throw new Error(`Invalid player ID ${this.playerId}`);
     }
+    
+    const conversation = game.world.playerConversation(player);
+    
+    // 非活跃代理只处理现有对话，不执行其他操作
+    // Non-active agents only handle existing conversations, not other operations
+    if (!isActiveAgent && !conversation) {
+      return;
+    }
+    
+    // 以下是现有代码
     if (this.inProgressOperation) {
       if (now < this.inProgressOperation.started + ACTION_TIMEOUT) {
         // Wait on the operation to finish.
@@ -62,7 +86,7 @@ export class Agent {
       console.log(`Timing out ${JSON.stringify(this.inProgressOperation)}`);
       delete this.inProgressOperation;
     }
-    const conversation = game.world.playerConversation(player);
+    
     const member = conversation?.participants.get(player.id);
 
     const recentlyAttemptedInvite =
@@ -71,11 +95,13 @@ export class Agent {
     if (doingActivity && (conversation || player.pathfinding)) {
       player.activity!.until = now;
     }
+    // 只有活跃代理才能主动做事情
+    // Only active agents can proactively do things
     // If we're not in a conversation, do something.
     // If we aren't doing an activity or moving, do something.
     // If we have been wandering but haven't thought about something to do for
     // a while, do something.
-    if (!conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite)) {
+    if (isActiveAgent && !conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite)) {
       this.startOperation(game, now, 'agentDoSomething', {
         worldId: game.worldId,
         player: player.serialize(),
@@ -92,14 +118,20 @@ export class Agent {
     }
     // Check to see if we have a conversation we need to remember.
     if (this.toRemember) {
-      // Fire off the action to remember the conversation.
-      console.log(`Agent ${this.id} remembering conversation ${this.toRemember}`);
-      this.startOperation(game, now, 'agentRememberConversation', {
-        worldId: game.worldId,
-        playerId: this.playerId,
-        agentId: this.id,
-        conversationId: this.toRemember,
-      });
+      // 只有活跃代理才记忆对话
+      // Only active agents will remember conversations
+      if (isActiveAgent) {
+        // Fire off the action to remember the conversation.
+        console.log(`Agent ${this.id} remembering conversation ${this.toRemember}`);
+        this.startOperation(game, now, 'agentRememberConversation', {
+          worldId: game.worldId,
+          playerId: this.playerId,
+          agentId: this.id,
+          conversationId: this.toRemember,
+        });
+      }
+      // 无论是否是活跃代理，都清除toRemember标记
+      // Clear the toRemember flag regardless of whether it's an active agent or not
       delete this.toRemember;
       return;
     }
@@ -241,13 +273,34 @@ export class Agent {
     name: Name,
     args: Omit<FunctionArgs<AgentOperations[Name]>, 'operationId'>,
   ) {
+    // 检查是否为活跃代理
+    // Check if this is an active agent
+    const isActiveAgent = this.isActiveAgent();
+    
+    // 如果不是活跃代理，只允许处理对话相关的操作
+    // If not an active agent, only allow conversation-related operations
+    if (!isActiveAgent) {
+      // 对话相关的操作可以执行
+      // Conversation-related operations can be executed
+      const conversationOps = [
+        'agentGenerateMessage',
+        // 允许处理的其他对话相关操作...
+        // Other conversation-related operations that are allowed...
+      ];
+      
+      if (!conversationOps.includes(name as string)) {
+        console.log(`Agent ${this.id} is not active, skipping operation: ${name}`);
+        return;
+      }
+    }
+    
     if (this.inProgressOperation) {
       throw new Error(
         `Agent ${this.id} already has an operation: ${JSON.stringify(this.inProgressOperation)}`,
       );
     }
     const operationId = game.allocId('operations');
-    console.log(`Agent ${this.id} starting operation ${name} (${operationId})`);
+    console.log(`Agent ${this.id}${isActiveAgent ? ' (active)' : ' (passive)'} starting operation ${name} (${operationId})`);
     game.scheduleOperation(name, { operationId, ...args } as any);
     this.inProgressOperation = {
       name,

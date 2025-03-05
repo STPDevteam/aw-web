@@ -62,6 +62,9 @@ export class Game extends AbstractGame {
 
   numPathfinds: number;
 
+  // 用于记录是否已经打印了活跃代理统计信息
+  private static loggedActiveAgents = false;
+
   constructor(
     engine: Doc<'engines'>,
     public worldId: Id<'worlds'>,
@@ -163,6 +166,23 @@ export class Game extends AbstractGame {
   }
 
   beginStep(_now: number) {
+    // 每次步骤开始时统计活跃代理数量（仅在首次运行时）
+    // Count active agents at the beginning of each step (only on first run)
+    if (!Game.loggedActiveAgents) {
+      let activeAgents = 0;
+      let totalAgents = 0;
+      
+      for (const agent of this.world.agents.values()) {
+        totalAgents++;
+        if (agent.isActiveAgent()) {
+          activeAgents++;
+        }
+      }
+      
+      console.log(`Active agents stats: ${activeAgents}/${totalAgents} (${(activeAgents/totalAgents*100).toFixed(1)}%)`);
+      Game.loggedActiveAgents = true;
+    }
+    
     // Store the current location of all players in the history tracking buffer.
     this.historicalLocations.clear();
     for (const player of this.world.players.values()) {
@@ -171,6 +191,9 @@ export class Game extends AbstractGame {
         new HistoricalObject(locationFields, playerLocation(player)),
       );
     }
+    
+    // 更新游戏中的路径查找数量
+    // Update the pathfinding count in the game
     this.numPathfinds = 0;
   }
 

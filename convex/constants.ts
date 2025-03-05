@@ -8,18 +8,18 @@ export const MAX_STEP = 10 * 60 * 1000;
 export const TICK = 16;
 export const STEP_INTERVAL = 1000;
 
-export const PATHFINDING_TIMEOUT = 60 * 1000;
-export const PATHFINDING_BACKOFF = 1000;
+export const PATHFINDING_TIMEOUT = 30 * 1000;
+export const PATHFINDING_BACKOFF = 2000;
 export const CONVERSATION_DISTANCE = 1.3;
 export const MIDPOINT_THRESHOLD = 4;
 export const TYPING_TIMEOUT = 15 * 1000;
-export const COLLISION_THRESHOLD = 1.75;
+export const COLLISION_THRESHOLD = 1.5;
 
 // How many human players can be in a world at once.
-export const MAX_HUMAN_PLAYERS = 8;
+export const MAX_HUMAN_PLAYERS = 500;
 
-// Don't talk to anyone for 150s after having a conversation.
-export const CONVERSATION_COOLDOWN = 150000;
+// Don't talk to anyone for 1500s after having a conversation.
+export const CONVERSATION_COOLDOWN = 1500000;
 
 // Don't do another activity for 10s after doing one.
 export const ACTIVITY_COOLDOWN = 10_000;
@@ -42,7 +42,7 @@ export const MAX_CONVERSATION_DURATION = 10 * 60_000; // more time locally
 // export const MAX_CONVERSATION_DURATION = 2 * 60_000;
 
 // Leave a conversation if it has more than 8 messages;
-export const MAX_CONVERSATION_MESSAGES = 8;
+export const MAX_CONVERSATION_MESSAGES = 2;
 
 // Wait for 1s after sending an input to the engine. We can remove this
 // once we can await on an input being processed.
@@ -73,6 +73,9 @@ export const ACTIVITIES = [
 export const ENGINE_ACTION_DURATION = 30000;
 
 // Bound the number of pathfinding searches we do per game step.
-export const MAX_PATHFINDS_PER_STEP = 16;
+export const MAX_PATHFINDS_PER_STEP = 32;
 
 export const DEFAULT_NAME = 'Me';
+
+// 控制活跃代理的百分比（0-100）
+export const ACTIVE_AGENTS_PERCENTAGE = 5;
