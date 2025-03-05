@@ -35,12 +35,7 @@ export const PixiGame = (props: {
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId: props.worldId }) ?? null;
   const humanPlayerId = [...props.game.world.players.values()].find(
     (p) => p.human === humanTokenIdentifier,
-  )?.id;  
-
-
-
-  // const updateVisibleAgents = useMutation(api.aiTown.updateVisibleAgents.updateVisibleAgents)
-  
+  )?.id;    
  
 
   const moveTo = useSendInput(props.engineId, 'moveTo');
@@ -114,93 +109,29 @@ export const PixiGame = (props: {
     });
   }, [humanPlayerId]);
 
- 
 
-//   const computedVisibleAgentIds = useMemo(() => {
-
-    
-//     const viewport = viewportRef.current;
-
-//     if(viewport) {
-    
-//       const x =  Math.abs(viewport.position.x) 
-//       const y =  Math.abs(viewport.position.y) 
-//       const viewableAreaWidth = viewport.worldScreenWidth  / tileDim / ZOOM
-//       const viewableAreaHeight = viewport.worldScreenHeight / tileDim / ZOOM
-   
-      
-
-//       const gameSpaceTiles = {
-//         x: x / tileDim / ZOOM,
-//         y: y / tileDim / ZOOM,
-//       };
-
-    
-
-//       const visiblePlayers = players.filter((player) => {
-//         const { x: X, y: Y } = player.position;
-//         return X > gameSpaceTiles.x && X < (gameSpaceTiles.x + viewableAreaWidth)  && Y > gameSpaceTiles.y && Y < (gameSpaceTiles.y + viewableAreaHeight);
-//       });
-      
-//       const idsList = visiblePlayers.map(item => item.id) 
-//       // console.log('idsList',  idsList)
-//       const agents = [...props.game.world.agents.values()]
-      
-//       return agents
-//         .filter(agent => visiblePlayers.some(p => p.id === agent.playerId))
-//         .map(agent => agent.id);
-
-//     }
+  const memoizedPositionIndicator = useMemo(() => {
+    return lastDestination ? <PositionIndicator destination={lastDestination} tileDim={tileDim} /> : null;
+  }, [lastDestination, tileDim]);
 
 
-//   }, [props.game.world.agents]);  // players, 
+  const memoizedPlayers = useMemo(() => {
+    const {  engineId, game, setSelectedElement, historicalTime } = props
+    return players.map((p) => (
+      <Player
+        engineId={engineId}
+        key={`player-${p.id}`}
+        game={game}
+        player={p}
+        isViewer={p.id === humanPlayerId}
+        onClick={setSelectedElement}
+        historicalTime={historicalTime}
+      />
+    ));
+  }, [players, props, humanPlayerId]);
 
-
-//   const debouncedVisibleAgentIds = useDebounceValue(computedVisibleAgentIds, 3000);
-
-
-//   useEffect(() => {
-    
-
-   
-//     if (computedVisibleAgentIds && !!computedVisibleAgentIds.length) {
-//       updateVisibleAgents({ agentIds: computedVisibleAgentIds });
-//     }
-//   }, [computedVisibleAgentIds]);
-
-
-
-
-// useEffect(() => {
-//   if (viewportRef.current) {
-
-//     viewportRef.current.animate({
-//       position: {x: 20 * tileDim,y: 26 * tileDim},
-//       scale: ZOOM,
-//     });  
-//     viewportRef.current.plugins.remove('wheel');
-//     viewportRef.current.plugins.remove('pinch');
-//   } 
-// }, []);
-
-// const px2Positon = () => {
-//   const viewport = viewportRef.current;
-//   if(dragStart.current && viewport) {
-//     const { screenX, screenY } = dragStart.current;
-//      const gameSpacePx = viewport.toWorld(screenX, screenY);
-       
-//      const gameSpaceTiles = {
-//        x: gameSpacePx.x / tileDim,
-//        y: gameSpacePx.y / tileDim,
-//      };
-//      return gameSpaceTiles
-//   }
-// }
-
-
-
-
-
+  
+  
   return (
     <PixiViewport
       app={pixiApp}
@@ -215,26 +146,16 @@ export const PixiGame = (props: {
         onpointerup={onMapPointerUp}
         onpointerdown={onMapPointerDown}
       />
-      {players.map(
+      {/* {players.map(
         (p) =>
           // Only show the path for the human player in non-debug mode.
           (SHOW_DEBUG_UI || p.id === humanPlayerId) && (
             <DebugPath key={`path-${p.id}`} player={p} tileDim={tileDim} />
           ),
-      )}
+      )} */}
+      {memoizedPositionIndicator}
+      {memoizedPlayers}
       {lastDestination && <PositionIndicator destination={lastDestination} tileDim={tileDim} />}
-      {
-      players.map((p) => (
-        <Player
-          engineId={props.engineId}
-          key={`player-${p.id}`}
-          game={props.game}
-          player={p}
-          isViewer={p.id === humanPlayerId}
-          onClick={props.setSelectedElement}
-          historicalTime={props.historicalTime}
-        />
-      ))}
     </PixiViewport>
   );
 };
