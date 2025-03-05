@@ -18,8 +18,8 @@ export const COLLISION_THRESHOLD = 1.5;
 // How many human players can be in a world at once.
 export const MAX_HUMAN_PLAYERS = 500;
 
-// Don't talk to anyone for 1500s after having a conversation.
-export const CONVERSATION_COOLDOWN = 1500000;
+// Don't talk to anyone for 150s after having a conversation.
+export const CONVERSATION_COOLDOWN = 150000;
 
 // Don't do another activity for 10s after doing one.
 export const ACTIVITY_COOLDOWN = 10_000;
@@ -79,3 +79,12 @@ export const DEFAULT_NAME = 'Me';
 
 // 控制活跃代理的百分比（0-100）
 export const ACTIVE_AGENTS_PERCENTAGE = 5;
+
+// Percentage of passive agents that will move each tick
+export const PASSIVE_AGENT_MOVE_CHANCE = 0.5; // 50% chance per agent
+
+// Cooldown for passive agent movement to avoid too many inputs (90 seconds)
+export const PASSIVE_AGENT_MOVE_COOLDOWN = 90_000;
+
+// Maximum number of passive agents that can move per step to avoid inputs table congestion
+export const MAX_PASSIVE_AGENTS_PER_STEP = 10;
