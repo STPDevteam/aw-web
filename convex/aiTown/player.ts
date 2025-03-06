@@ -31,10 +31,6 @@ const pathfinding = v.object({
       kind: v.literal('moving'),
       path,
     }),
-    v.object({
-      kind: v.literal('unreachable'),
-      retryAfter: v.number(),
-    })
   ),
 });
 export type Pathfinding = Infer<typeof pathfinding>;
@@ -101,57 +97,12 @@ export class Player {
     // Stop pathfinding if we've reached our destination.
     if (pathfinding.state.kind === 'moving' && pointsEqual(pathfinding.destination, position)) {
       stopPlayer(this);
-      return;
-    }
-
-    // 如果目标被标记为不可达，检查是否已经到了重试时间
-    if (pathfinding.state.kind === 'unreachable') {
-      if (pathfinding.state.retryAfter < now) {
-        // 重置为需要路径状态
-        pathfinding.state = { kind: 'needsPath' };
-      } else {
-        // 仍在等待重试
-        return;
-      }
     }
 
     // Stop pathfinding if we've timed out.
     if (pathfinding.started + PATHFINDING_TIMEOUT < now) {
       console.warn(`Timing out pathfinding for ${this.id}`);
-      
-      // 检查是否为非人类玩家，如果是，则随机生成一个新目标点
-      if (!this.human) {
-        // 只有5%的概率重新生成目标，这样可以避免所有代理同时重试
-        if (Math.random() < 0.05) {
-          // 为NPC生成一个随机的新目标
-          const randomDest = {
-            x: Math.floor(Math.random() * game.worldMap.width),
-            y: Math.floor(Math.random() * game.worldMap.height),
-          };
-          
-          // 确保新目标不在障碍上
-          if (!blocked(game, now, randomDest)) {
-            console.log(`为代理 ${this.id} 重新生成随机目标: ${JSON.stringify(randomDest)}`);
-            pathfinding.destination = randomDest;
-            pathfinding.started = now;
-            pathfinding.state = { kind: 'needsPath' };
-            return;
-          }
-        } else {
-          // 将目标标记为不可达，并设置重试时间
-          const retryDelay = 5000 + Math.random() * 10000; // 5-15秒后重试
-          pathfinding.state = { 
-            kind: 'unreachable', 
-            retryAfter: now + retryDelay 
-          };
-          console.log(`将目标标记为不可达，${Math.floor(retryDelay/1000)}秒后重试: ${this.id}`);
-          return;
-        }
-      }
-      
-      // 如果上述逻辑没有处理，则停止寻路
       stopPlayer(this);
-      return;
     }
 
     // Transition from "waiting" to "needsPath" if we're past the deadline.
@@ -164,24 +115,11 @@ export class Player {
       game.numPathfinds++;
       if (game.numPathfinds === MAX_PATHFINDS_PER_STEP) {
         console.warn(`Reached max pathfinds for this step`);
-        return; // 达到当前步骤的最大寻路数量，下一次再尝试
       }
-      
       const route = findRoute(game, now, this, pathfinding.destination);
       if (route === null) {
         console.log(`Failed to route to ${JSON.stringify(pathfinding.destination)}`);
-        
-        // 如果是非人类玩家，标记为不可达并设置重试时间
-        if (!this.human) {
-          const retryDelay = 5000 + Math.random() * 10000; // 5-15秒后重试
-          pathfinding.state = { 
-            kind: 'unreachable', 
-            retryAfter: now + retryDelay 
-          };
-          console.log(`寻路失败，将目标标记为不可达: ${this.id}`);
-        } else {
-          stopPlayer(this);
-        }
+        stopPlayer(this);
       } else {
         if (route.newDestination) {
           console.warn(
