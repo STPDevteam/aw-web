@@ -137,12 +137,10 @@ export async function engineInsertInput(
   args: any,
 ): Promise<Id<'inputs'>> {
   const now = Date.now();
-  const prevInput = await ctx.db
-    .query('inputs')
-    .withIndex('byInputNumber', (q) => q.eq('engineId', engineId))
-    .order('desc')
-    .first();
-  const number = prevInput ? prevInput.number + 1 : 0;
+  const timestamp = now;
+  const randomOffset = Math.floor(Math.random() * 1000);
+  const number = timestamp * 1000 + randomOffset;
+  
   const inputId = await ctx.db.insert('inputs', {
     engineId,
     number,
