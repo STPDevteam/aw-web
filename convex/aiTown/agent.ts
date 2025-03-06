@@ -16,9 +16,6 @@ import {
   MESSAGE_COOLDOWN,
   MIDPOINT_THRESHOLD,
   PLAYER_CONVERSATION_COOLDOWN,
-  PASSIVE_AGENT_MOVE_CHANCE,
-  PASSIVE_AGENT_MOVE_COOLDOWN,
-  MAX_PASSIVE_AGENTS_PER_STEP,
 } from '../constants';
 import { FunctionArgs } from 'convex/server';
 import { MutationCtx, internalMutation, internalQuery } from '../_generated/server';
@@ -61,10 +58,12 @@ export class Agent {
   }
 
   tick(game: Game, now: number) {
+    // 使用函数判断是否为活跃代理
     // Use function to determine if this is an active agent
     const isActiveAgent = this.isActiveAgent();
     
-    // Get the player object
+    // 如果不是活跃代理，除非正在对话中，否则不执行任何操作
+    // If not an active agent, don't execute any operations unless in a conversation
     const player = game.world.players.get(this.playerId);
     if (!player) {
       throw new Error(`Invalid player ID ${this.playerId}`);
@@ -72,44 +71,13 @@ export class Agent {
     
     const conversation = game.world.playerConversation(player);
     
-    // For non-active agents, handle passive movement but don't do other operations
+    // 非活跃代理只处理现有对话，不执行其他操作
+    // Non-active agents only handle existing conversations, not other operations
     if (!isActiveAgent && !conversation) {
-      // Only allow a limited number of passive agents to move per step to avoid input table congestion
-      // Use the agent ID to distribute movement attempts evenly
-      const agentIdNumber = parseInt(this.id.split(':')[1]);
-      const shouldConsiderMoving = (agentIdNumber % 100) < (PASSIVE_AGENT_MOVE_CHANCE * 100);
-      
-      // Only move if we're not already pathfinding and we should consider moving
-      if (shouldConsiderMoving && !player.pathfinding && game.numPathfinds < MAX_PASSIVE_AGENTS_PER_STEP) {
-        // Check if this agent has moved recently by checking the lastInput time
-        const moveRecently = player.lastInput && (now - player.lastInput < PASSIVE_AGENT_MOVE_COOLDOWN);
-        
-        if (!moveRecently) {
-          // Generate a random destination
-          const randomDestination = {
-            x: 1 + Math.floor(Math.random() * (game.worldMap.width - 2)),
-            y: 1 + Math.floor(Math.random() * (game.worldMap.height - 2)),
-          };
-          
-          // Simple move directly instead of using the complex operation system
-          // This avoids overhead and potential input congestion
-          game.numPathfinds++;
-          console.log(`Passive agent ${this.id} is randomly moving to [${randomDestination.x}, ${randomDestination.y}]`);
-          
-          // Update lastInput time to track when this agent last moved
-          player.lastInput = now;
-          
-          // Start moving the player
-          movePlayer(game, now, player, randomDestination);
-          
-          return;
-        }
-      }
-      
       return;
     }
     
-    // Below is the existing code for active agents
+    // 以下是现有代码
     if (this.inProgressOperation) {
       if (now < this.inProgressOperation.started + ACTION_TIMEOUT) {
         // Wait on the operation to finish.
