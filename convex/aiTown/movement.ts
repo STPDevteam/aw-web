@@ -1,12 +1,30 @@
-import { movementSpeed } from '../../data/characters';
-import { COLLISION_THRESHOLD } from '../constants';
+import { ObjectType, v } from 'convex/values';
+import { GameId, parseGameId } from './ids';
+import { agentId, conversationId, playerId } from './ids';
+import { serializedPlayer } from './player';
+import { Game } from './game';
+import {
+  ACTION_TIMEOUT,
+  AWKWARD_CONVERSATION_TIMEOUT,
+  COLLISION_THRESHOLD,
+  CONVERSATION_COOLDOWN,
+  CONVERSATION_DISTANCE,
+  INVITE_ACCEPT_PROBABILITY,
+  INVITE_TIMEOUT,
+  MAX_CONVERSATION_DURATION,
+  MAX_CONVERSATION_MESSAGES,
+  MESSAGE_COOLDOWN,
+  MIDPOINT_THRESHOLD,
+  PLAYER_CONVERSATION_COOLDOWN,
+} from '../constants';
+import { FunctionArgs } from 'convex/server';
+import { MutationCtx, internalMutation, internalQuery } from '../_generated/server';
 import { compressPath, distance, manhattanDistance, pointsEqual } from '../util/geometry';
 import { MinHeap } from '../util/minheap';
-import { Point, Vector } from '../util/types';
-import { Game } from './game';
-import { GameId } from './ids';
+import { Path, PathComponent, Point, Vector } from '../util/types';
 import { Player } from './player';
 import { WorldMap } from './worldMap';
+import { characters, movementSpeed } from '../../data/characters';
 
 type PathCandidate = {
   position: Point;
@@ -55,135 +73,89 @@ export function movePlayer(
 }
 
 export function findRoute(game: Game, now: number, player: Player, destination: Point) {
-  const minDistances: PathCandidate[][] = [];
-  const explore = (current: PathCandidate): Array<PathCandidate> => {
-    const { x, y } = current.position;
-    const neighbors = [];
-
-    // If we're not on a grid point, first try to move horizontally
-    // or vertically to a grid point. Note that this can create very small
-    // deltas between the current position and the nearest grid point so
-    // be careful to preserve the `facing` vectors rather than trying to
-    // derive them anew.
-    if (x !== Math.floor(x)) {
-      neighbors.push(
-        { position: { x: Math.floor(x), y }, facing: { dx: -1, dy: 0 } },
-        { position: { x: Math.floor(x) + 1, y }, facing: { dx: 1, dy: 0 } },
-      );
-    }
-    if (y !== Math.floor(y)) {
-      neighbors.push(
-        { position: { x, y: Math.floor(y) }, facing: { dx: 0, dy: -1 } },
-        { position: { x, y: Math.floor(y) + 1 }, facing: { dx: 0, dy: 1 } },
-      );
-    }
-    // Otherwise, just move to adjacent grid points.
-    if (x == Math.floor(x) && y == Math.floor(y)) {
-      neighbors.push(
-        { position: { x: x + 1, y }, facing: { dx: 1, dy: 0 } },
-        { position: { x: x - 1, y }, facing: { dx: -1, dy: 0 } },
-        { position: { x, y: y + 1 }, facing: { dx: 0, dy: 1 } },
-        { position: { x, y: y - 1 }, facing: { dx: 0, dy: -1 } },
-      );
-    }
-    const next = [];
-    for (const { position, facing } of neighbors) {
-      const segmentLength = distance(current.position, position);
-      const length = current.length + segmentLength;
-      if (blocked(game, now, position, player.id)) {
-        continue;
-      }
-      const remaining = manhattanDistance(position, destination);
-      const path = {
-        position,
-        facing,
-        // Movement speed is in tiles per second.
-        t: current.t + (segmentLength / movementSpeed) * 1000,
-        length,
-        cost: length + remaining,
-        prev: current,
-      };
-      const existingMin = minDistances[position.y]?.[position.x];
-      if (existingMin && existingMin.cost <= path.cost) {
-        continue;
-      }
-      minDistances[position.y] ??= [];
-      minDistances[position.y][position.x] = path;
-      next.push(path);
-    }
-    return next;
-  };
-
-  const startingLocation = player.position;
-  const startingPosition = { x: startingLocation.x, y: startingLocation.y };
-  let current: PathCandidate | undefined = {
-    position: startingPosition,
-    facing: player.facing,
-    t: now,
-    length: 0,
-    cost: manhattanDistance(startingPosition, destination),
-    prev: undefined,
-  };
-  let bestCandidate = current;
-  const minheap = MinHeap<PathCandidate>((p0, p1) => p0.cost > p1.cost);
-  while (current) {
-    if (pointsEqual(current.position, destination)) {
-      break;
-    }
-    if (
-      manhattanDistance(current.position, destination) <
-      manhattanDistance(bestCandidate.position, destination)
-    ) {
-      bestCandidate = current;
-    }
-    for (const candidate of explore(current)) {
-      minheap.push(candidate);
-    }
-    current = minheap.pop();
-  }
-  let newDestination = null;
-  if (!current) {
-    if (bestCandidate.length === 0) {
+  try {
+    // 首先检查目标点是否在地图边界内
+    if (destination.x < 0 || destination.y < 0 || 
+        destination.x >= game.worldMap.width || 
+        destination.y >= game.worldMap.height) {
+      console.warn(`Destination out of bounds: ${JSON.stringify(destination)}`);
       return null;
     }
-    current = bestCandidate;
-    newDestination = current.position;
+    
+    // 简化寻路：只使用直线路径连接当前位置和目标位置
+    const startTime = now;
+    const straightLineDistance = Math.sqrt(
+      Math.pow(player.position.x - destination.x, 2) + 
+      Math.pow(player.position.y - destination.y, 2)
+    );
+    
+    // 计算到达时间 (时间 = 距离 / 速度)
+    const endTime = startTime + (straightLineDistance / movementSpeed) * 1000;
+    
+    // 计算朝向
+    const dx = destination.x - player.position.x;
+    const dy = destination.y - player.position.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const normalizedDx = length > 0 ? dx / length : 0;
+    const normalizedDy = length > 0 ? dy / length : 0;
+    
+    // 创建直线路径
+    const directPath: PathComponent[] = [
+      {
+        position: { x: player.position.x, y: player.position.y },
+        facing: { dx: normalizedDx, dy: normalizedDy },
+        t: startTime
+      },
+      {
+        position: { x: destination.x, y: destination.y },
+        facing: { dx: normalizedDx, dy: normalizedDy },
+        t: endTime
+      }
+    ];
+    
+    // 如果距离很远，添加一些中间点，使移动更加平滑
+    if (straightLineDistance > 4) {
+      const numIntermediatePoints = Math.min(Math.floor(straightLineDistance / 2), 5);
+      const updatedPath: PathComponent[] = [directPath[0]];
+      
+      for (let i = 1; i <= numIntermediatePoints; i++) {
+        const ratio = i / (numIntermediatePoints + 1);
+        const intermediateX = player.position.x + dx * ratio;
+        const intermediateY = player.position.y + dy * ratio;
+        const intermediateTime = startTime + (endTime - startTime) * ratio;
+        
+        updatedPath.push({
+          position: { x: intermediateX, y: intermediateY },
+          facing: { dx: normalizedDx, dy: normalizedDy },
+          t: intermediateTime
+        });
+      }
+      
+      updatedPath.push(directPath[1]);
+      return { path: compressPath(updatedPath), newDestination: null };
+    }
+    
+    return { path: compressPath(directPath), newDestination: null };
+  } catch (e) {
+    console.error(`Error in findRoute: ${e}`);
+    return null;
   }
-  const densePath = [];
-  let facing = current.facing!;
-  while (current) {
-    densePath.push({ position: current.position, t: current.t, facing });
-    facing = current.facing!;
-    current = current.prev;
-  }
-  densePath.reverse();
-
-  return { path: compressPath(densePath), newDestination };
 }
 
 export function blocked(game: Game, now: number, pos: Point, playerId?: GameId<'players'>) {
-  const otherPositions = [...game.world.players.values()]
-    .filter((p) => p.id !== playerId)
-    .map((p) => p.position);
-  return blockedWithPositions(pos, otherPositions, game.worldMap);
+  // 完全禁用碰撞检测，总是返回null（表示没有障碍）
+  // 只检查是否越界，其他都不检查
+  if (pos.x < 0 || pos.y < 0 || pos.x >= game.worldMap.width || pos.y >= game.worldMap.height) {
+    return 'out of bounds';
+  }
+  return null;
 }
 
 export function blockedWithPositions(position: Point, otherPositions: Point[], map: WorldMap) {
-  if (isNaN(position.x) || isNaN(position.y)) {
-    throw new Error(`NaN position in ${JSON.stringify(position)}`);
-  }
+  // 完全禁用碰撞检测，只保留地图边界检查
   if (position.x < 0 || position.y < 0 || position.x >= map.width || position.y >= map.height) {
     return 'out of bounds';
   }
-  for (const layer of map.objectTiles) {
-    if (layer[Math.floor(position.x)][Math.floor(position.y)] !== -1) {
-      return 'world blocked';
-    }
-  }
-  for (const otherPosition of otherPositions) {
-    if (distance(otherPosition, position) < COLLISION_THRESHOLD) {
-      return 'player';
-    }
-  }
+  // 不再检查物体层和其他玩家的碰撞
   return null;
 }

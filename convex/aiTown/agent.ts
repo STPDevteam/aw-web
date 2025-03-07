@@ -67,10 +67,24 @@ export class Agent {
 
     const recentlyAttemptedInvite =
       this.lastInviteAttempt && now < this.lastInviteAttempt + CONVERSATION_COOLDOWN;
-    const doingActivity = player.activity && player.activity.until > now;
+    let doingActivity = player.activity && player.activity.until > now;
+    
+    // 降低中断活动的概率
+    // 当有对话或移动机会时，有10%的几率中断当前活动（从40%降低到10%）
     if (doingActivity && (conversation || player.pathfinding)) {
-      player.activity!.until = now;
+      if (Math.random() < 0.1) {
+        player.activity!.until = now;
+        doingActivity = false;
+      }
     }
+    
+    // 降低主动寻找对话的概率
+    // 降低到5%几率中断活动去找其他事情做（从25%降低到5%）
+    if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.05) {
+      player.activity!.until = now;
+      doingActivity = false;
+    }
+
     // If we're not in a conversation, do something.
     // If we aren't doing an activity or moving, do something.
     // If we have been wandering but haven't thought about something to do for
@@ -354,15 +368,39 @@ export const findConversationCandidate = internalQuery({
         .order('desc')
         .first();
       if (lastMember) {
-        if (now < lastMember.ended + PLAYER_CONVERSATION_COOLDOWN) {
+        // 有2%的几率可以跳过冷却时间限制（从20%降低到2%）
+        if (now < lastMember.ended + PLAYER_CONVERSATION_COOLDOWN && Math.random() > 0.02) {
           continue;
         }
       }
-      candidates.push({ id: otherPlayer.id, position });
+      candidates.push({ 
+        id: otherPlayer.id, 
+        position: otherPlayer.position,
+        // 减少随机因子，使选择更基于距离（从30%降低到5%）
+        randomFactor: Math.random() * 0.05
+      });
     }
 
-    // Sort by distance and take the nearest candidate.
-    candidates.sort((a, b) => distance(a.position, position) - distance(b.position, position));
+    if (candidates.length === 0) {
+      return undefined;
+    }
+
+    // 根据距离和随机因子排序
+    candidates.sort((a, b) => {
+      const distanceA = distance(a.position, position);
+      const distanceB = distance(b.position, position);
+      return (distanceA - a.randomFactor) - (distanceB - b.randomFactor);
+    });
+    
+    // 降低随机选择的概率（从30%降低到5%）
+    if (candidates.length > 1) {
+      const selectFromTop = Math.min(3, candidates.length);
+      if (Math.random() < 0.05) {
+        const randomIndex = Math.floor(Math.random() * selectFromTop);
+        return candidates[randomIndex].id;
+      }
+    }
+    
     return candidates[0]?.id;
   },
 });

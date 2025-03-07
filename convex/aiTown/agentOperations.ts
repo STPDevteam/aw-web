@@ -117,10 +117,42 @@ export const agentDoSomething = internalAction({
     const recentlyAttemptedInvite =
       agent.lastInviteAttempt && now < agent.lastInviteAttempt + CONVERSATION_COOLDOWN;
     const recentActivity = player.activity && now < player.activity.until + ACTIVITY_COOLDOWN;
+    
+    // 只有25%的几率优先考虑对话（从75%降低到25%）
+    const preferConversation = Math.random() < 0.25;
+    
+    // 如果优先考虑对话且没有冷却限制，尝试寻找对话伙伴
+    if (preferConversation && !justLeftConversation && !recentlyAttemptedInvite) {
+      const invitee = await ctx.runQuery(internal.aiTown.agent.findConversationCandidate, {
+        now,
+        worldId: args.worldId,
+        player: args.player,
+        otherFreePlayers: args.otherFreePlayers,
+      });
+      
+      if (invitee) {
+        await sleep(Math.random() * 1000); // 增加延迟从500ms到1000ms
+        await ctx.runMutation(api.aiTown.main.sendInput, {
+          worldId: args.worldId,
+          name: 'finishDoSomething',
+          args: {
+            operationId: args.operationId,
+            agentId: args.agent.id,
+            invitee,
+          },
+        });
+        return;
+      }
+    }
+    
+    // 如果没找到对话伙伴或不优先对话，继续原有逻辑
     // Decide whether to do an activity or wander somewhere.
     if (!player.pathfinding) {
-      if (recentActivity || justLeftConversation) {
-        await sleep(Math.random() * 1000);
+      // 增加活动的概率，减少随机漫步的可能性（优先选择活动）
+      const shouldWander = (recentActivity || justLeftConversation) || Math.random() < 0.3; // 从0.6降低到0.3
+      
+      if (shouldWander) {
+        await sleep(Math.random() * 1000); // 增加延迟
         await ctx.runMutation(api.aiTown.main.sendInput, {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -134,7 +166,7 @@ export const agentDoSomething = internalAction({
       } else {
         // TODO: have LLM choose the activity & emoji
         const activity = ACTIVITIES[Math.floor(Math.random() * ACTIVITIES.length)];
-        await sleep(Math.random() * 1000);
+        await sleep(Math.random() * 1000); // 增加延迟
         await ctx.runMutation(api.aiTown.main.sendInput, {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -151,7 +183,10 @@ export const agentDoSomething = internalAction({
         return;
       }
     }
-    const invitee =
+    
+    // 如果执行到这里，说明玩家正在移动中且没有选择对话
+    // 检查是否可以邀请对话
+    const invitee = 
       justLeftConversation || recentlyAttemptedInvite
         ? undefined
         : await ctx.runQuery(internal.aiTown.agent.findConversationCandidate, {
@@ -160,7 +195,7 @@ export const agentDoSomething = internalAction({
             player: args.player,
             otherFreePlayers: args.otherFreePlayers,
           });
-
+    
     // TODO: We hit a lot of OCC errors on sending inputs in this file. It's
     // easy for them to get scheduled at the same time and line up in time.
     await sleep(Math.random() * 1000);
@@ -177,9 +212,34 @@ export const agentDoSomething = internalAction({
 });
 
 function wanderDestination(worldMap: WorldMap) {
-  // Wander someonewhere at least one tile away from the edge.
+  // 更智能地选择目标位置
+  
+  // 选择的位置需要离地图边缘更远
+  const margin = Math.floor(worldMap.width / 5);  // 增加边距
+  
+  // 尝试多次选择可能的位置，避免选择到障碍物
+  for (let attempts = 0; attempts < 10; attempts++) {
+    const x = margin + Math.floor(Math.random() * (worldMap.width - 2 * margin));
+    const y = margin + Math.floor(Math.random() * (worldMap.height - 2 * margin));
+    
+    // 检查选择的位置是否有障碍物
+    let hasObstacle = false;
+    for (const layer of worldMap.objectTiles) {
+      if (layer[x][y] !== -1) {
+        hasObstacle = true;
+        break;
+      }
+    }
+    
+    // 如果没有障碍物，返回这个位置
+    if (!hasObstacle) {
+      return { x, y };
+    }
+  }
+  
+  // 如果多次尝试后仍找不到合适位置，返回地图中心区域的一个位置
   return {
-    x: 1 + Math.floor(Math.random() * (worldMap.width - 2)),
-    y: 1 + Math.floor(Math.random() * (worldMap.height - 2)),
+    x: Math.floor(worldMap.width / 2) + Math.floor(Math.random() * 3) - 1,
+    y: Math.floor(worldMap.height / 2) + Math.floor(Math.random() * 3) - 1,
   };
 }

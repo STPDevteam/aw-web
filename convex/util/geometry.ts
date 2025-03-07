@@ -27,34 +27,75 @@ export function pathPosition(
   path: Path,
   time: number,
 ): { position: Point; facing: Vector; velocity: number } {
-  if (path.length < 2) {
-    throw new Error(`Invalid path: ${JSON.stringify(path)}`);
+  if (!path || !Array.isArray(path) || path.length < 2) {
+    console.error(`Invalid path format: ${JSON.stringify(path)}`);
+    return { 
+      position: { x: 0, y: 0 }, 
+      facing: { dx: 0, dy: 0 },
+      velocity: 0 
+    };
   }
-  const first = queryPath(path, 0);
-  if (time < first.t) {
-    return { position: first.position, facing: first.facing, velocity: 0 };
-  }
-  const last = queryPath(path, path.length - 1);
-  if (last.t < time) {
-    return { position: last.position, facing: last.facing, velocity: 0 };
-  }
-  for (let i = 0; i < path.length - 1; i++) {
-    const segmentStart = queryPath(path, i);
-    const segmentEnd = queryPath(path, i + 1);
-    if (segmentStart.t <= time && time <= segmentEnd.t) {
-      const interp = (time - segmentStart.t) / (segmentEnd.t - segmentStart.t);
-      return {
-        position: {
-          x: segmentStart.position.x + interp * (segmentEnd.position.x - segmentStart.position.x),
-          y: segmentStart.position.y + interp * (segmentEnd.position.y - segmentStart.position.y),
-        },
-        facing: segmentStart.facing,
-        velocity:
-          distance(segmentStart.position, segmentEnd.position) / (segmentEnd.t - segmentStart.t),
+  
+  for (let i = 0; i < path.length; i++) {
+    const segment = path[i];
+    if (!Array.isArray(segment) || segment.length !== 5 || 
+        typeof segment[0] !== 'number' || typeof segment[1] !== 'number' || 
+        typeof segment[2] !== 'number' || typeof segment[3] !== 'number' || 
+        typeof segment[4] !== 'number') {
+      console.error(`Invalid path segment at index ${i}: ${JSON.stringify(segment)}`);
+      return { 
+        position: { x: 0, y: 0 }, 
+        facing: { dx: 0, dy: 0 },
+        velocity: 0 
       };
     }
   }
-  throw new Error(`Timestamp checks not exhaustive?`);
+  
+  try {
+    const first = queryPath(path, 0);
+    if (time < first.t) {
+      return { position: first.position, facing: first.facing, velocity: 0 };
+    }
+    const last = queryPath(path, path.length - 1);
+    if (last.t < time) {
+      return { position: last.position, facing: last.facing, velocity: 0 };
+    }
+    for (let i = 0; i < path.length - 1; i++) {
+      const segmentStart = queryPath(path, i);
+      const segmentEnd = queryPath(path, i + 1);
+      
+      if (segmentEnd.t - segmentStart.t <= 0) {
+        continue;
+      }
+      
+      if (segmentStart.t <= time && time <= segmentEnd.t) {
+        const interp = (time - segmentStart.t) / (segmentEnd.t - segmentStart.t);
+        return {
+          position: {
+            x: segmentStart.position.x + interp * (segmentEnd.position.x - segmentStart.position.x),
+            y: segmentStart.position.y + interp * (segmentEnd.position.y - segmentStart.position.y),
+          },
+          facing: segmentStart.facing,
+          velocity:
+            distance(segmentStart.position, segmentEnd.position) / (segmentEnd.t - segmentStart.t),
+        };
+      }
+    }
+  } catch (e) {
+    console.error(`Error in pathPosition: ${e}`);
+    return { 
+      position: { x: 0, y: 0 }, 
+      facing: { dx: 0, dy: 0 },
+      velocity: 0 
+    };
+  }
+  
+  console.warn(`Could not find path segment for time ${time}`);
+  return { 
+    position: { x: 0, y: 0 }, 
+    facing: { dx: 0, dy: 0 },
+    velocity: 0 
+  };
 }
 
 export const EPSILON = 0.0001;
@@ -91,42 +132,82 @@ export function orientationDegrees(vector: Vector): number {
 }
 
 export function compressPath(densePath: PathComponent[]): Path {
-  const packed = densePath.map(packPathComponent);
-  if (densePath.length <= 2) {
-    return densePath.map(packPathComponent);
+  if (!densePath || !Array.isArray(densePath) || densePath.length === 0) {
+    console.error('Invalid densePath provided to compressPath:', densePath);
+    return [[0, 0, 0, 0, 0], [1, 1, 0, 0, 1]];
   }
-  const out = [packPathComponent(densePath[0])];
-  let last = densePath[0];
-  let candidate;
-  for (const point of densePath.slice(1)) {
-    if (!candidate) {
-      candidate = point;
-      continue;
+  
+  for (let i = 0; i < densePath.length; i++) {
+    const component = densePath[i];
+    if (!component || typeof component.position?.x !== 'number' || 
+        typeof component.position?.y !== 'number' || 
+        typeof component.facing?.dx !== 'number' || 
+        typeof component.facing?.dy !== 'number' || 
+        typeof component.t !== 'number' ||
+        isNaN(component.position?.x) || 
+        isNaN(component.position?.y) ||
+        isNaN(component.facing?.dx) || 
+        isNaN(component.facing?.dy) || 
+        isNaN(component.t)) {
+      console.error(`Invalid path component at index ${i}:`, component);
+      return [[0, 0, 0, 0, 0], [1, 1, 0, 0, 1]];
     }
-    // We can skip `candidate` if it interpolates cleanly between
-    // `last` and `point`.
-    const { position, facing } = pathPosition(
-      [packPathComponent(last), packPathComponent(point)],
-      candidate.t,
-    );
-    const positionCloseEnough = distance(position, candidate.position) < EPSILON;
-    const facingDifference = {
-      dx: facing.dx - candidate.facing.dx,
-      dy: facing.dy - candidate.facing.dy,
-    };
-    const facingCloseEnough = vectorLength(facingDifference) < EPSILON;
-
-    if (positionCloseEnough && facingCloseEnough) {
-      candidate = point;
-      continue;
+  }
+  
+  try {
+    if (densePath.length <= 2) {
+      return densePath.map(packPathComponent);
     }
+    
+    const out = [packPathComponent(densePath[0])];
+    let last = densePath[0];
+    let candidate;
+    
+    for (const point of densePath.slice(1)) {
+      if (!candidate) {
+        candidate = point;
+        continue;
+      }
+      
+      try {
+        const { position, facing } = pathPosition(
+          [packPathComponent(last), packPathComponent(point)],
+          candidate.t,
+        );
+        
+        const positionCloseEnough = distance(position, candidate.position) < EPSILON;
+        const facingDifference = {
+          dx: facing.dx - candidate.facing.dx,
+          dy: facing.dy - candidate.facing.dy,
+        };
+        const facingCloseEnough = vectorLength(facingDifference) < EPSILON;
 
-    out.push(packPathComponent(candidate));
-    last = candidate;
-    candidate = point;
+        if (positionCloseEnough && facingCloseEnough) {
+          candidate = point;
+          continue;
+        }
+      } catch (e) {
+        console.error('Error during path interpolation:', e);
+      }
+
+      out.push(packPathComponent(candidate));
+      last = candidate;
+      candidate = point;
+    }
+    
+    if (candidate) {
+      out.push(packPathComponent(candidate));
+    }
+    
+    if (out.length < 2) {
+      console.warn('Path too short after compression, adding endpoint');
+      const lastPoint = out[0];
+      out.push([lastPoint[0] + 1, lastPoint[1] + 1, lastPoint[2], lastPoint[3], lastPoint[4] + 1000]);
+    }
+    
+    return out;
+  } catch (e) {
+    console.error('Error in compressPath:', e);
+    return [[0, 0, 0, 0, 0], [1, 1, 0, 0, 1]];
   }
-  if (candidate) {
-    out.push(packPathComponent(candidate));
-  }
-  return out;
 }
