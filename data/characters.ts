@@ -1,4 +1,6 @@
 import { data as f0SpritesheetData } from './spritesheets/f0';
+import {  SimulatedAgent } from '../src/components/createSimulatedAgentSprite';
+
 
 // Helper functions for randomly generating names, descriptions and plans
 function getRandomName(id: number): string {
@@ -97,7 +99,7 @@ const fixedDescriptions = [
 ];
 
 // 8 fixed character objects
-const fixedCharacters = [
+export const fixedCharacters = [
   {
     name: 'f1',
     textureUrl: '/ai-town/assets/avatar/1.png',
@@ -164,7 +166,7 @@ const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
 // Merge fixed and randomly generated description objects
 export const Descriptions = fixedDescriptions.concat(randomDescriptions);
 
-const randomCharacters = Array.from({ length: randomCount }, (_, i) => {
+export const randomCharacters = Array.from({ length: randomCount }, (_, i) => {
   const id = i + 9;
   return {
     name: `f${id}`,                                                                                                                                                                               
@@ -173,9 +175,54 @@ const randomCharacters = Array.from({ length: randomCount }, (_, i) => {
     speed: 0.1,
   };
 });
-
 // Merge fixed and randomly generated character objects
 export const characters = fixedCharacters.concat(randomCharacters);
 
 // Characters move at 0.75 tiles per second.
 export const movementSpeed = 0.75;
+
+
+
+
+function getRandomNumber(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
+
+
+export function getRandomDirection(): { dx: number; dy: number } {
+  const directions = [
+    { dx: -1, dy: -1 },
+    { dx: -1, dy:  0 },
+    { dx: -1, dy:  1 },
+    { dx:  0, dy: -1 },
+    { dx:  0, dy:  1 },
+    { dx:  1, dy: -1 },
+    { dx:  1, dy:  0 },
+    { dx:  1, dy:  1 },
+  ];
+  const index = Math.floor(Math.random() * directions.length);
+  return directions[index];
+}
+
+
+export const mockAgents = () => {
+
+  return Array.from({ length: 400 }, (_, i) => {
+    const num = 500 - i;
+    return {
+      activity: { description: 'reading a book', emoji: '📖', until: 0 },
+      facing: getRandomDirection(),
+      human: undefined,
+      id: `p:${num}`,
+      lastInput: 0,
+      pathfinding: undefined,
+ 
+      position: { x: getRandomNumber(4, 205), y: getRandomNumber(4, 197) },
+      speed: 0.1,
+      textureUrl: `/ai-town/assets/avatar/${(i % 10) + 10}.png`,
+      spritesheetData: f0SpritesheetData,
+    };
+  });
+};

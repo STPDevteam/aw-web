@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { useApp } from '@pixi/react';
 import { Player, SelectElement } from './Player.tsx';
-import { useEffect, useRef, useState, useMemo} from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { PixiStaticMap } from './PixiStaticMap.tsx';
 import PixiViewport from './PixiViewport.tsx';
 import { Viewport } from 'pixi-viewport';
@@ -16,8 +16,9 @@ import { SHOW_DEBUG_UI } from './Game.tsx';
 import { ServerGame } from '../hooks/serverGame.ts';
 import { useDebounceValue } from '../hooks/useDebounceValue.ts'
 
+import SimulatedAgents from './SimulatedAgents'; 
 
-const ZOOM = 1.2
+const ZOOM = 0.8
 
 export const PixiGame = (props: {
   worldId: Id<'worlds'>;
@@ -36,7 +37,8 @@ export const PixiGame = (props: {
   const humanPlayerId = [...props.game.world.players.values()].find(
     (p) => p.human === humanTokenIdentifier,
   )?.id;    
- 
+  
+
 
   const moveTo = useSendInput(props.engineId, 'moveTo');
 
@@ -105,7 +107,7 @@ export const PixiGame = (props: {
     const humanPlayer = props.game.world.players.get(humanPlayerId)!;
     viewportRef.current.animate({
       position: new PIXI.Point(humanPlayer.position.x * tileDim, humanPlayer.position.y * tileDim),
-      scale: ZOOM,
+      scale: 1.5,
     });
   }, [humanPlayerId]);
 
@@ -115,7 +117,11 @@ export const PixiGame = (props: {
   }, [lastDestination, tileDim]);
 
 
+
+
+
   const memoizedPlayers = useMemo(() => {
+    
     const {  engineId, game, setSelectedElement, historicalTime } = props
     return players.map((p) => (
       <Player
@@ -128,9 +134,25 @@ export const PixiGame = (props: {
         historicalTime={historicalTime}
       />
     ));
-  }, [players, props, humanPlayerId]);
+  }, [ props, humanPlayerId]);
 
-  
+
+
+  const px2Positon = () => {
+    const viewport = viewportRef.current;
+    if(dragStart.current && viewport) {
+      const { screenX, screenY } = dragStart.current;
+       const gameSpacePx = viewport.toWorld(screenX, screenY);
+         
+       const gameSpaceTiles = {
+         x: gameSpacePx.x / tileDim,
+         y: gameSpacePx.y / tileDim,
+       };
+       return gameSpaceTiles
+    }
+  } 
+
+
   
   return (
     <PixiViewport
@@ -154,6 +176,9 @@ export const PixiGame = (props: {
           ),
       )} */}
       {memoizedPositionIndicator}
+      {viewportRef.current && (
+        <SimulatedAgents container={viewportRef.current} tileDim={tileDim}/>
+      )}
       {memoizedPlayers}
       {lastDestination && <PositionIndicator destination={lastDestination} tileDim={tileDim} />}
     </PixiViewport>
