@@ -191,20 +191,18 @@ function getRandomNumber(min: number, max: number): number {
 
 
 
+
+
 export function getRandomDirection(): { dx: number; dy: number } {
   const directions = [
-    { dx: -1, dy: -1 },
-    { dx: -1, dy:  0 },
-    { dx: -1, dy:  1 },
-    { dx:  0, dy: -1 },
-    { dx:  0, dy:  1 },
-    { dx:  1, dy: -1 },
-    { dx:  1, dy:  0 },
-    { dx:  1, dy:  1 },
+    { dx: 1, dy: 0 },  // to right
+    { dx: -1, dy: 0 }, // to left
+    { dx: 0, dy: 1 },  // to footer
+    { dx: 0, dy: -1 }, // to up
   ];
-  const index = Math.floor(Math.random() * directions.length);
-  return directions[index];
+  return directions[Math.floor(Math.random() * directions.length)];
 }
+
 
 
 export const mockAgents = () => {

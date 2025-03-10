@@ -12,17 +12,10 @@ type SimulatedAgentsProps = {
 };
 
 const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container, tileDim }) => {
-  const simulatedContainerRef = useRef<PIXI.Container | null>(null);
+const simulatedContainerRef = useRef<PIXI.Container | null>(null);
 
 
-function getRandomWaypoint(minX: number, maxX: number, minY: number, maxY: number) {
-    return {
-      x: Math.random() * (maxX - minX) + minX,
-      y: Math.random() * (maxY - minY) + minY,
-    };
-  }
-  
-  function animateMovement(
+function animateMovement(
     sprite: PIXI.Sprite | PIXI.AnimatedSprite,
     startPos: { x: number; y: number },
     endPos: { x: number; y: number },
@@ -42,44 +35,7 @@ function getRandomWaypoint(minX: number, maxX: number, minY: number, maxY: numbe
       }
     }
     update();
-  }
-
-
-
-function animateMovementRandom(
-    sprite: PIXI.Sprite | PIXI.AnimatedSprite,
-    startPos: { x: number; y: number },
-    speed: number,
-    minDistance: number,
-    maxDistance: number,
-    onComplete: () => void
-  ) {
-  
-    const distance = Math.random() * (maxDistance - minDistance) + minDistance;
-   
-    const angle = Math.random() * Math.PI * 2;
-  
-    const endPos = {
-      x: startPos.x + Math.cos(angle) * distance,
-      y: startPos.y + Math.sin(angle) * distance,
-    };
-
-    const duration = (distance / speed) * 1000;
-    const startTime = Date.now();
-    
-    function update() {
-      const now = Date.now();
-      const progress = Math.min((now - startTime) / duration, 1);
-      sprite.x = startPos.x + (endPos.x - startPos.x) * progress;
-      sprite.y = startPos.y + (endPos.y - startPos.y) * progress;
-      if (progress < 1) {
-        requestAnimationFrame(update);
-      } else {
-        onComplete();
-      }
-    }
-    update();
-  }
+}
   
 
   function animateAgent(
@@ -87,54 +43,49 @@ function animateMovementRandom(
     container: PIXI.Container,
     speed: number,
     minDistance: number,
-    maxDistance: number
+    maxDistance: number,
+    agentFacing: { dx: number; dy: number }
   ) {
-   
     const startPos = { x: sprite.x, y: sprite.y };
-    
-
-    const minX = 0, minY = 0;
-    const maxX = container.width, maxY = container.height;
-
-    
-    animateMovementRandom(
-      sprite,
-      startPos,
-      speed,
-      minDistance,
-      maxDistance,
-      () => {
-     
-        animateAgent(sprite, container, speed, minDistance, maxDistance);
-      }
-    );
+    const angle = Math.atan2(agentFacing.dy, agentFacing.dx);
+    const distance = Math.random() * (maxDistance - minDistance) + minDistance;
+    const endPos = {
+      x: startPos.x + Math.cos(angle) * distance,
+      y: startPos.y + Math.sin(angle) * distance,
+    };
+    const duration = (distance / speed) * 1000;
+    animateMovement(sprite, startPos, endPos, duration, () => {
+      animateAgent(sprite, container, speed, minDistance, maxDistance, agentFacing);
+    });
   }
-
   
-
   useEffect(() => {
     if (!container) return;
     if (!simulatedContainerRef.current) {
-        
-        const simulatedContainer = new PIXI.Container();
-        simulatedContainer.name = "simulatedAgentsContainer";
-        simulatedContainerRef.current = simulatedContainer;
-        const agentsData: SimulatedAgent[] = mockAgents();
-     
-        Promise.all(agentsData.map((agent) => 
-            createSimulatedAgentSprite(agent, tileDim))).then((sprites) => {
-                    sprites.forEach((sprite) => {
-                        simulatedContainer.addChild(sprite);
-                      
-                        animateAgent(sprite, simulatedContainer, 32, 0, container.height);
-                    });
-            }).catch((error) => {
-                console.error("Error creating simulated agent sprites:", error);
-            });
-     
-        container.addChild(simulatedContainer);
+      const simulatedContainer = new PIXI.Container();
+      simulatedContainer.name = "simulatedAgentsContainer";
+      simulatedContainerRef.current = simulatedContainer;
+      const agentsData: SimulatedAgent[] = mockAgents();
+  
+      Promise.all(agentsData.map((agent) => createSimulatedAgentSprite(agent, tileDim)))
+        .then((sprites) => {
+          sprites.forEach((sprite, idx) => {
+            simulatedContainer.addChild(sprite);
+            animateAgent(
+              sprite,
+              simulatedContainer,
+              tileDim, 
+              0,  
+              container.height, 
+              agentsData[idx].facing 
+            );
+          });
+        })
+        .catch((error) => {
+          console.error("Error creating simulated agent sprites:", error);
+        });
+      container.addChild(simulatedContainer);
     }
-    
     return () => {
       if (simulatedContainerRef.current) {
         container.removeChild(simulatedContainerRef.current);
@@ -143,7 +94,6 @@ function animateMovementRandom(
       }
     };
   }, [container, tileDim]);
-
   return null;
 });
 
