@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { Spritesheet, BaseTexture } from 'pixi.js';
-import { orientationDegrees } from '../../convex/util/geometry.ts';
+import { orientationDegrees } from '../../convex/util/geometry';
 
 export type SimulatedAgent = {
     id: string;

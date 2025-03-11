@@ -1,21 +1,20 @@
-
 import React, { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
 import { createSimulatedAgentSprite, SimulatedAgent } from './createSimulatedAgentSprite';
-import { mockAgents } from '../../data/characters'; 
+import { mockAgents } from '../../data/characters';
+import * as map from '../../data/gentle';
 
 
 type SimulatedAgentsProps = {
   container: PIXI.Container; 
   tileDim: number;
- 
 };
 
 const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container, tileDim }) => {
-const simulatedContainerRef = useRef<PIXI.Container | null>(null);
+  const simulatedContainerRef = useRef<PIXI.Container | null>(null);
 
 
-function animateMovement(
+  function animateMovement(
     sprite: PIXI.Sprite | PIXI.AnimatedSprite,
     startPos: { x: number; y: number },
     endPos: { x: number; y: number },
@@ -35,30 +34,73 @@ function animateMovement(
       }
     }
     update();
-}
-  
+  }
+
+  function isTileBlocked(tileX: number, tileY: number, objmap: number[][][]): boolean {
+    for (const layer of objmap) {
+      if (layer[Math.floor(tileX)] && layer[Math.floor(tileX)][Math.floor(tileY)] !== -1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   function animateAgent(
     sprite: PIXI.Sprite | PIXI.AnimatedSprite,
     container: PIXI.Container,
-    speed: number,
-    minDistance: number,
-    maxDistance: number,
-    agentFacing: { dx: number; dy: number }
+    speed: number,            
+    minDistanceTiles: number,  
+    maxDistanceTiles: number,   
+    agentFacing: { dx: number; dy: number },
+    allSprites: Array<PIXI.Sprite | PIXI.AnimatedSprite>,
+    tileDim: number,
+    objmap: number[][][]
   ) {
     const startPos = { x: sprite.x, y: sprite.y };
-    const angle = Math.atan2(agentFacing.dy, agentFacing.dx);
-    const distance = Math.random() * (maxDistance - minDistance) + minDistance;
-    const endPos = {
-      x: startPos.x + Math.cos(angle) * distance,
-      y: startPos.y + Math.sin(angle) * distance,
-    };
+  
+  
+    let { dx, dy } = agentFacing;
+    if (dx !== 0 && dy !== 0) {
+      if (Math.random() < 0.5) {
+        dy = 0;
+      } else {
+        dx = 0;
+      }
+    }
+  
+
+    const maxAttempts = 10;
+    let attempts = 0;
+    let distanceTiles: number, distance: number, endPos: { x: number; y: number }, targetTileX: number, targetTileY: number;
+    do {
+      distanceTiles = Math.random() * (maxDistanceTiles - minDistanceTiles) + minDistanceTiles;
+      distance = distanceTiles * tileDim;
+      endPos = {
+        x: startPos.x + (dx !== 0 ? Math.sign(dx) * distance : 0),
+        y: startPos.y + (dy !== 0 ? Math.sign(dy) * distance : 0),
+      };
+      targetTileX = endPos.x / tileDim;
+      targetTileY = endPos.y / tileDim;
+      attempts++;
+    } while (isTileBlocked(targetTileX, targetTileY, objmap) && attempts < maxAttempts);
+  
+
+    if (isTileBlocked(targetTileX, targetTileY, objmap)) {
+      setTimeout(() => {
+        animateAgent(sprite, container, speed, minDistanceTiles, maxDistanceTiles, agentFacing, allSprites, tileDim, objmap);
+      }, 100);
+      return;
+    }
+  
+ 
     const duration = (distance / speed) * 1000;
     animateMovement(sprite, startPos, endPos, duration, () => {
-      animateAgent(sprite, container, speed, minDistance, maxDistance, agentFacing);
+      animateAgent(sprite, container, speed, minDistanceTiles, maxDistanceTiles, agentFacing, allSprites, tileDim, objmap);
     });
   }
   
+
   useEffect(() => {
     if (!container) return;
     if (!simulatedContainerRef.current) {
@@ -69,15 +111,19 @@ function animateMovement(
   
       Promise.all(agentsData.map((agent) => createSimulatedAgentSprite(agent, tileDim)))
         .then((sprites) => {
+          const allSprites = sprites;
           sprites.forEach((sprite, idx) => {
             simulatedContainer.addChild(sprite);
             animateAgent(
               sprite,
               simulatedContainer,
               tileDim, 
-              0,  
-              container.height, 
-              agentsData[idx].facing 
+              0, 
+              container.height / tileDim, 
+              agentsData[idx].facing,
+              allSprites,
+              tileDim,
+              map.objmap  
             );
           });
         })
@@ -94,8 +140,9 @@ function animateMovement(
       }
     };
   }, [container, tileDim]);
+  
+
   return null;
 });
-
 
 export default SimulatedAgents;
