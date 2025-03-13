@@ -90,7 +90,7 @@ export const Player = ({
         speed={character.speed}
         onClick={() => {
           
-          console.log("当前position",player.id , player.position )
+          // console.log("当前position",player.id , player.position )
           // moveTo({ playerId: player.id, destination: { x: 51, y: 52} })
 
           onClick({ kind: 'player', id: player.id });          

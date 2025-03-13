@@ -32,7 +32,7 @@ export const PixiGame = (props: {
   // PIXI setup.
   const pixiApp = useApp();
   const viewportRef = useRef<Viewport | undefined>();
-  const [visibleAgents, setVisibleAgents] = useState<any[]>([]);
+ 
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId: props.worldId }) ?? null;
   const humanPlayerId = [...props.game.world.players.values()].find(
     (p) => p.human === humanTokenIdentifier,
@@ -168,13 +168,7 @@ export const PixiGame = (props: {
         onpointerup={onMapPointerUp}
         onpointerdown={onMapPointerDown}
       />
-      {/* {players.map(
-        (p) =>
-          // Only show the path for the human player in non-debug mode.
-          (SHOW_DEBUG_UI || p.id === humanPlayerId) && (
-            <DebugPath key={`path-${p.id}`} player={p} tileDim={tileDim} />
-          ),
-      )} */}
+   
       {memoizedPositionIndicator}
       {viewportRef.current && (
         <SimulatedAgents container={viewportRef.current} tileDim={tileDim}/>

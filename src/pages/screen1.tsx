@@ -14,7 +14,7 @@ export const Screen1 = () => {
       bgPosition='center'
       bgRepeat="no-repeat"     
     >
-        <h1>111</h1>
+        <h1></h1>
     </Box>
   )
 }

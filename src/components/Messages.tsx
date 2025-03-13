@@ -6,6 +6,7 @@ import { MessageInput } from './MessageInput';
 import { Player } from '../../convex/aiTown/player';
 import { Conversation } from '../../convex/aiTown/conversation';
 import { useEffect, useRef } from 'react';
+import { Box, Image, Text  } from '@chakra-ui/react'
 
 export function Messages({
   worldId,
@@ -72,8 +73,8 @@ export function Messages({
     const node = (
       <div key={`text-${m._id}`} className=" mb-6 ">
         <div className="flex gap-4">
-          <span className="uppercase flex-grow">{m.authorName}</span>
-          <time dateTime={m._creationTime.toString()}>
+          <span className="uppercase flex-grow gray">{m.authorName}</span>
+          <time dateTime={m._creationTime.toString()} className='gray1'>
             {new Date(m._creationTime).toLocaleString()}
           </time>
         </div>
@@ -99,7 +100,7 @@ export function Messages({
         membershipNodes.push({
           node: (
             <div key={`joined-${playerId}`} className="mb-6">
-              <p className="text-brown-700 text-center">{playerName} joined the conversation.</p>
+              <p className="gray1 text-center">{playerName} joined the conversation.</p>
             </div>
           ),
           time: started,
@@ -114,7 +115,7 @@ export function Messages({
       membershipNodes.push({
         node: (
           <div key={`joined-${playerId}`} className=" mb-6">
-            <p className="text-brown-700 text-center">{playerName} joined the conversation.</p>
+            <p className="gray1 text-center">{playerName} joined the conversation.</p>
           </div>
         ),
         time: started,
@@ -123,7 +124,7 @@ export function Messages({
       membershipNodes.push({
         node: (
           <div key={`left-${playerId}`} className=" mb-6">
-            <p className="text-brown-700 text-center">{playerName} left the conversation.</p>
+            <p className="gray1 text-center">{playerName} left the conversation.</p>
           </div>
         ),
         // Always sort all "left" messages after the last message.
@@ -135,13 +136,13 @@ export function Messages({
   const nodes = [...messageNodes, ...membershipNodes];
   nodes.sort((a, b) => a.time - b.time);
   return (
-    <div className="text-base sm:text-sm ">
+    <Box className="text-base sm:text-sm" >
       <div className="text-black p-2">
         {nodes.length > 0 && nodes.map((n) => n.node)}
         {currentlyTyping && currentlyTyping.playerId !== humanPlayerId && (
           <div key="typing" className=" mb-6">
             <div className="flex gap-4">
-              <span className="uppercase flex-grow">{currentlyTypingName}</span>
+              <span className="uppercase flex-grow ">{currentlyTypingName}</span>
               <time dateTime={currentlyTyping.since.toString()}>
                 {new Date(currentlyTyping.since).toLocaleString()}
               </time>
@@ -162,6 +163,6 @@ export function Messages({
           />
         )}
       </div>
-    </div>
+    </Box>
   );
 }

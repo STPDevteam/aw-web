@@ -6,7 +6,7 @@ import { Text, Link, Box, Image } from '@chakra-ui/react'
 import { Screen2Bg } from '@/images'
 import { GeneralButton, Notification, BasePopup, CreateInput } from '@/components'
 import { ConnectWallet } from './ConnectWallet'
-import { AgentList } from './AgentList'
+
 
 interface iInput {
     value: string

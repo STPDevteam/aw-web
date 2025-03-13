@@ -1,8 +1,6 @@
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
-import closeImg from '../../assets/ui/close.png';
-
 import { SelectElement } from './Player';
 import { Messages } from './Messages';
 import { toastOnError } from '../toasts';
@@ -149,53 +147,12 @@ export default function PlayerDetails({
         <Image src={Close} w="50px" h="50px" className='click' onClick={() => setSelectedElement(undefined)}/>
       </Box>
 
-      {canInvite && <Box  onClick={onStartConversation} className='click'>{descriptionFun('Start conversation')}</Box>
-        // <a
-        //   className={
-        //     'mt-6 text-white text-xl cursor-pointer pointer-events-auto' +
-        //     pendingSuffix('startConversation')
-        //   }
-        //   onClick={onStartConversation}
-        // >
-        //   <div className="h-full text-center">
-        //     <span>Start conversation</span>
-        //   </div>
-        // </a>
-        
-      }
+      {canInvite && <Box  onClick={onStartConversation} className='click'>{descriptionFun('Start conversation')}</Box> }
       {waitingForAccept && descriptionFun('Waiting for accept...')
-      // ( 
-      //   <a className="mt-6 text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
-      //     <div className="h-full  text-center">
-      //       <span>Waiting for accept...</span>
-      //     </div>
-      //   </a>
-      // )
+     
       }
-      {waitingForNearby && descriptionFun('Walking over...')
-      // (
-      //   <a className="mt-6 text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
-      //     <div className="h-full text-center">
-      //       <span>Walking over...</span>
-      //     </div>
-      //   </a>
-      // )
-      }
-      {inConversationWithMe && <Box className='click' onClick={onLeaveConversation}>{descriptionFun('Leave conversation')}</Box>
-      // (
-      //   <a
-      //     className={
-      //       'mt-6  text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
-      //       pendingSuffix('leaveConversation')
-      //     }
-      //     onClick={onLeaveConversation}
-      //   >
-      //     <div className="h-full  text-center">
-      //       <span>Leave conversation</span>
-      //     </div>
-      //   </a>
-      // )
-      }
+      {waitingForNearby && descriptionFun('Walking over...')}
+      {inConversationWithMe && <Box className='click' onClick={onLeaveConversation}>{descriptionFun('Leave conversation')}</Box>}
       {haveInvite && (
         <>
           <a
@@ -240,9 +197,8 @@ export default function PlayerDetails({
       )}
       {!playerConversation && previousConversation && (
         <div style={{ }} className=''>
-          <div className="box flex-grow">
-            <h2 className=" text-lg text-center">Previous conversation</h2>
-          </div>
+          { descriptionFun('Previous conversation')}
+
           <Messages
             worldId={worldId}
             engineId={engineId}

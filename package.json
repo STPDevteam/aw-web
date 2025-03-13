@@ -22,10 +22,12 @@
     "@fullpage/react-fullpage": "^0.1.47",
     "@pixi/react": "^7.1.0",
     "@pixi/sound": "^5.2.0",
+    "@rainbow-me/rainbowkit": "^2.2.4",
     "@solana/wallet-adapter-phantom": "^0.9.24",
     "@solana/wallet-adapter-react": "^0.15.35",
     "@solana/web3.js": "^1.98.0",
     "@tailwindcss/forms": "^0.5.3",
+    "@tanstack/react-query": "^5.67.3",
     "@types/node": "20.2.5",
     "@types/react": "18.2.8",
     "@types/react-dom": "18.2.4",
@@ -51,6 +53,8 @@
     "update-browserslist-db": "^1.1.2",
     "uplot": "^1.6.25",
     "usehooks-ts": "^2.9.1",
+    "viem": "^2.23.10",
+    "wagmi": "^2.14.13",
     "web3-react-phantom": "^1.0.4"
   },
   "devDependencies": {
