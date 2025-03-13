@@ -1,16 +1,35 @@
 
 
 
-import React, { FC, useState, useEffect } from 'react'
+import React, { FC, useState, useMemo } from 'react'
 import { Text, Link, Box, Image } from '@chakra-ui/react'
 import { Transform, X, XHover, PopupDropdown, ButtonBgMd, ButtonBgMdHover } from '@/images'
 import { GeneralButton, ClickButtonWrapper } from '@/components'
+import { api } from '../../../convex/_generated/api.js'
+import {  Id } from '../../../convex/_generated/dataModel'
+import { useMutation, useQuery } from 'convex/react';
 
-export const AgentList = () => {
+export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
     const [visible, setVisible] = useState<boolean>(false)
 
-    
-    
+    const agents = useQuery(api.world.paginatedPlayerDescriptions, { 
+            worldId,
+            paginationOpts: {
+                numItems: 100,
+                cursor: null,
+            }
+    })
+
+    const renderedAgents = useMemo(() => {
+        return (
+          !!agents?.page &&
+          agents.page.length > 0 &&
+          agents.page.map((item, idx) => (
+            <ListItem item={item} key={item._id} idx={idx} />
+          ))
+        )
+      }, [agents])
+
     return(
         <Box>
             <ClickButtonWrapper onClick={() => setVisible(!visible)} disable={false} clickableDisabled={true}>
@@ -45,20 +64,15 @@ export const AgentList = () => {
                     bgRepeat="no-repeat"    
                     h='397px'
                     w="331px"
+                    pt="22px"
                 >
                     <Box
-                        px="30px"
                         overflowY='scroll'
                         h="calc(100% - 22px)"
-                        pt="44px"
-                        className='w100 fx-col jc-ct'
+                        px="30px"
+                        className='w100 '
                     >
-
-                        {
-                            [1,2,3,4,5,6,7,8,9,10,11,12,13].map(item => (
-                                <ListItem item={item} key={item}/>
-                            ))
-                        }
+                        { renderedAgents }
                     </Box>
                 </Box>           
             }
@@ -67,27 +81,27 @@ export const AgentList = () => {
 }
 
 
-
-const ListItem = ({ item }:any) => {
-    const [isHovered, setIsHovered] = useState(false);
+const ListItem:FC<{ item:any, idx: number}>= ({ item,idx}) => {
+    const [isHovered, setIsHovered] = useState(false)
     return (
       <Box 
         className={`fx-row ai-ct jc-sb click  ${isHovered ? 'box_clip' : ''}`}
-        h="44px"
         color="#E0E0E0"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        h="44px"
         px="20px"
         _hover={{
           bgColor: '#838B8D',
           color: '#293033'
         }}
       >
-        <Text className="fz20">{item}</Text>
+        <Text className="fz20">{item.name}</Text>
         {
-            item < 6 && 
+            idx < 5 && 
             <Image src={isHovered ? XHover : X} w="24px" h="20px" />
         }
       </Box>
-    );
-  };
+    )
+}
+

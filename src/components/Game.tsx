@@ -55,7 +55,7 @@ export default function Game() {
       pos='relative'
     >
       <Box pos='absolute' left="50px" top="44px" zIndex={99}> 
-        <AgentList/>
+        <AgentList  worldId={worldId}/>
       </Box> 
       <Box
         bgImage={GameLeftBorder}
