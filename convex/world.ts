@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values';
 import { internalMutation, mutation, query } from './_generated/server';
+import { paginationOptsValidator } from 'convex/server';
 import { characters } from '../data/characters';
 import { insertInput } from './aiTown/insertInput';
 import {
@@ -253,5 +254,26 @@ export const previousConversation = query({
       }
     }
     return null;
+  },
+});
+
+export const paginatedPlayerDescriptions = query({
+  args: {
+    worldId: v.id('worlds'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    // Ensure at least 10 items per page
+    const numItems = Math.max(args.paginationOpts.numItems ?? 10, 10);
+    
+    // Build the query
+    const paginationResult = await ctx.db
+      .query('playerDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      // Use default sorting
+      .order('asc')
+      .paginate({ ...args.paginationOpts, numItems });
+    
+    return paginationResult;
   },
 });
