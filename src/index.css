@@ -1,6 +1,9 @@
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 @font-face {
   font-family: 'Upheaval Pro';
@@ -11,7 +14,9 @@
   font-family: 'VCR OSD Mono';
   src: url(/assets/fonts/vcr_osd_mono.ttf);
 }
-
+.fp-watermark {
+  display: none !important;
+}  
 .font-display {
   font-family: 'Upheaval Pro', 'sans-serif';
 }
@@ -210,16 +215,3 @@ p[contenteditable='true']:empty::before {
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
-
-.bd1 {
-  border: 2px solid red;
-}
-.bd2 {
-  border: 2px solid blue;
-}
-.bd3 {
-  border: 2px solid green;
-}
-.bd4 {
-  border: 2px solid #fff;
-}

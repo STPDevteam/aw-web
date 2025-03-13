@@ -1,0 +1,532 @@
+.opacity0-1 {
+  opacity: 0;
+  animation: opacity0-1_name 1s linear forwards;
+}
+
+@keyframes opacity0-1_name {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+
+.opacity1-0 {
+  opacity: 1;
+  animation: opacity1-0_name 1s linear forwards;
+}
+
+@keyframes opacity0-1_name {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+
+.loading {
+  animation: loading_name 0.5s linear infinite;
+}
+@keyframes loading_name {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  25% {
+    -webkit-transform: rotate(90deg);
+  }
+  50% {
+    -webkit-transform: rotate(180deg);
+  }
+  75% {
+    -webkit-transform: rotate(270deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+.loadingSkeletonAnimation {
+  animation-name: skeleton;
+  animation-duration: 2s;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  background: linear-gradient(143deg, rgba(142, 44, 227, 0.3) -4.18%, rgba(75, 0, 223, 0.3) 92.28%);
+}
+@keyframes skeleton {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.1;
+  }
+}
+
+.type_animation {
+  overflow: hidden;
+  border-right: 0.15em solid orange;
+  white-space: nowrap;
+  width: 0;
+  animation: typing 3s steps(25, end) forwards infinite;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+@keyframes blink {
+  from {
+    border-color: transparent;
+  }
+  to {
+    border-color: orange;
+  }
+}
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rotation_animation{
+  animation: rotation 2s linear infinite;
+}
+
+
+
+.circular_motion {
+  position: absolute;
+  top: 47%;
+  left: 45%;
+  transform: translate(-50%, -50%);
+  animation: circular_motion_animation 6s linear infinite;
+  z-index: 2;
+}
+
+@keyframes circular_motion_animation {
+  0% {
+    transform: rotate(0deg) translate(var(--screen4-translate-value)) rotate(120deg);
+  }
+  100% {
+    transform: rotate(360deg) translate(var(--screen4-translate-value)) rotate(-240deg);
+  }
+}
+
+
+/*4-0.5 4   4+0.5*/
+@keyframes fadeAnimation1 {
+  0% {
+    opacity: 0.2;  
+  }
+  58.3% { 
+    opacity: 0.2; 
+  }
+  66.7% { 
+    opacity: 1; 
+  }
+  75% { 
+    opacity: 0.2; 
+  }
+  100% {
+    opacity: 0.2;   
+  }
+}
+
+.fade1 {
+  animation: fadeAnimation1 6s ease-in-out infinite;
+}
+
+
+/* 0.5-0.5 0.5  0.5+0.5 */
+@keyframes fadeAnimation2 {
+  0% {
+    opacity: 0.2;  
+  }
+  8.3% { 
+    opacity: 1; 
+  }
+  16.7% { 
+    opacity: 0.2; 
+  }
+  25% { 
+    opacity: 0.2; 
+  }
+  100% {
+    opacity: 0.2;   
+  }
+}
+
+.fade2 {
+  animation: fadeAnimation2 6s ease-in-out infinite;
+}
+
+/* 2-0.5  2 2+0.5 */
+@keyframes fadeAnimation3 {
+  0% {
+    opacity: 0.2;  
+  }
+  25% { 
+    opacity: 0.2; 
+  }
+  33.3% { 
+    opacity: 1; 
+  }
+  41.7% { 
+    opacity: 0.2; 
+  }
+  100% {
+    opacity: 0.2;   
+  }
+}
+
+.fade3 {
+  animation: fadeAnimation3 6s ease-in-out infinite;
+}
+
+
+@keyframes fadeTextAnimation {
+  0% {
+    opacity: 0.2;  
+  }
+  100% {
+    opacity: 1;   
+  }
+}
+
+.fadeText {
+  animation: fadeTextAnimation 1s ease-in-out forwards;
+}
+
+
+
+@keyframes translateFade {
+  0% {
+    opacity: 0.3;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-200px) scale(1);
+  }
+}
+
+@keyframes scaleUp {
+  0% {
+    transform: translateX(-200px) scale(1);
+  }
+  100% {
+    transform: translateX(-200px) scale(1.2);
+  }
+}
+
+.isCenterRight1_ani {
+  animation: 
+    translateFade 1s ease-in-out forwards,  
+    scaleUp 0.5s ease-in-out 1s forwards;    
+}
+
+@keyframes carousel_container_ani {
+  0% {
+    transform: translateX(0) ;
+  }
+  100% {
+ 
+    transform: translateX(-339px);
+  }
+}
+.carousel_container {
+  animation: carousel_container_ani 1s ease-in-out forwards;
+  animation-delay: 2s;
+  animation-iteration-count: infinite;
+  /* animation-timing-function: steps(1, end); */
+}
+
+
+
+
+/* screen2 */
+.scaling0 {
+  /* opacity: 0.4; */
+  /* margin-top: 128px; */
+  /* transform: scale(0.722); */
+  animation: scaleAnimation0 1s ease-in-out forwards; 
+  background-color: blue;
+  margin-left: -68px;
+  margin-right: -68px;
+}
+@keyframes scaleAnimation0 {
+  0% {
+    transform: scale(0.722);
+    opacity: 0.4;
+    margin-top: 128px;
+  }
+  100% {
+    transform: scale(0.722);
+    opacity: 0.4;
+    margin-top: 128px;
+  }
+}
+
+
+.scaling1 {
+  margin-left: -20px;
+  background-color:aliceblue;
+  
+  animation: scaleAnimation1 1s ease-in-out forwards; 
+}
+@keyframes scaleAnimation1 {
+  0% {
+    transform: scale(0.885);
+    opacity: 0.7;
+    margin-top: 42px;
+  
+  }
+  100% {
+    transform: scale(0.722);
+    opacity: 0.4;
+    margin-top: 128px;
+   
+  }
+}
+
+.scaling2 {
+  margin-left: -68px;
+
+
+  animation: scaleAnimation2 1s ease-in-out forwards; 
+}
+@keyframes scaleAnimation2 {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    margin-top: 0px;
+ 
+  }
+  100% {
+    transform: scale(0.885); 
+    opacity: 0.7;
+    margin-top: 42px;
+   
+  }
+}
+
+
+.scaling3 {
+  margin-left: -20px;
+  margin-right: -20px;
+
+  animation: scaleAnimation3 1s ease-in-out forwards; 
+}
+
+@keyframes scaleAnimation3 {
+  0% {
+    transform: scale(0.885);
+    opacity: 0.7;
+    margin-top: 42px;
+
+  }
+  100% {
+    transform: scale(1); 
+    opacity: 1;
+    margin-top: 0;
+   
+
+  }
+}
+
+.scaling4 {
+ 
+  animation: scaleAnimation4 1s ease-in-out forwards; 
+}
+@keyframes scaleAnimation4 {
+  0% {
+    transform: scale(0.722); 
+    opacity: 0.4;
+    margin-top: 128px;
+    
+  }
+  100% {
+    transform: scale(0.885); 
+    opacity: 0.7;
+    margin-top: 42px;
+   
+
+
+  }
+}
+
+
+
+
+
+
+
+
+
+@keyframes moveLeftIn {
+  from {
+    transform: translateY(-50%) translateX(-510px);
+  }
+  to {
+    transform: translateY(-50%) translateX(0);
+  }
+}
+@keyframes moveLeftInMobile {
+  from {
+    transform: translateY(-50%) translateX(-270px); 
+  }
+  to {
+    transform: translateY(-50%) translateX(0); 
+  }
+}
+@keyframes moveLeftOut {
+  from {
+    transform: translateY(-50%) translateX(0); 
+  }
+  to {
+    transform: translateY(-50%) translateX(-510px); 
+  }
+}
+@keyframes moveLeftOutMobile {
+  from {
+    transform: translateY(-50%) translateX(0);
+  }
+  to {
+    transform: translateY(-50%) translateX(-270px); 
+  }
+}
+
+
+@keyframes moveRightIn {
+  from {
+    transform: translateY(-50%) translateX(510px); 
+  }
+  to {
+    transform: translateY(-50%) translateX(0);
+  }
+}
+@keyframes moveRightInMobile {
+  from {
+    transform: translateY(-50%) translateX(270px); 
+  }
+  to {
+    transform: translateY(-50%) translateX(0);
+  }
+}
+@keyframes moveRightOut {
+  from {
+    transform: translateY(-50%) translateX(0); 
+  }
+  to {
+    transform: translateY(-50%) translateX(510px); 
+  }
+}
+@keyframes moveRightOutMobile {
+  from {
+    transform: translateY(-50%) translateX(0); 
+  }
+  to {
+    transform: translateY(-50%) translateX(270px); 
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1; 
+  }
+  to {
+    opacity: 0
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0; 
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes breathingAnimation {
+  0% {
+    transform: scale(1); 
+
+  }
+  50% {
+    transform: scale(1.1);
+
+  }
+  100% {
+    transform: scale(1);
+
+  }
+}
+
+
+.animated-box {
+  position: absolute;
+  left: 0;
+  bottom: 300px;
+  width: 50px;
+  height: 50px;
+  background-color: #4caf50;
+}
+
+
+@keyframes hoverEffect {
+  0%, 100% {
+    transform: translateY(-50%) translateX(0);
+  }
+  50% {
+    transform: translateY(-50%) translateX(20px); 
+  }
+}
+
+
+
+
+
+
+
+
+@keyframes arrow-left-move {
+  0%, 100% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(-8px); 
+  }
+}
+
+@keyframes arrow-right-move {
+  0%, 100% {
+    transform: translateX(0px); 
+  }
+  50% {
+    transform: translateX(8px); 
+  }
+}
+
+/* 左箭头动画 */
+.custom-arrow-left {
+  animation: arrow-left-move 1.5s ease-in-out infinite;
+  width: 35px;
+  height: 108px;
+}
+
+/* 右箭头动画 */
+.custom-arrow-right {
+  animation: arrow-right-move 1.5s ease-in-out infinite;
+  width: 35px;
+  height: 108px;
+}

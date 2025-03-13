@@ -1,0 +1,65 @@
+.agent_input {
+    width: 553px;
+    height: 60px;
+    background-color: #838B8D;
+    font-size: 20px;
+    font-weight: 400;
+    color: #E0E0E0;
+    margin-top: 10px;
+
+    clip-path: polygon(
+        10px 0, 
+        calc(100% - 10px) 0, 
+        100% 10px, 
+        100% calc(100% - 10px), 
+        calc(100% - 10px) 100%, 
+        10px 100%, 
+        0 calc(100% - 10px), 
+        0 10px
+    );
+
+}
+.agent_input:focus {
+    outline: none;
+    border: 1px solid transparent;
+}
+   
+.agent_input::placeholder {
+    color: #293033;
+    font-size: 20px;
+} 
+
+
+.agent_textarea {
+   
+
+
+    width: 553px;
+    height: 116px;
+    background-color: #838B8D;
+    font-size: 20px;
+    font-weight: 400;
+    color: #E0E0E0;
+    margin-top: 10px;
+
+    clip-path: polygon(
+        10px 0, 
+        calc(100% - 10px) 0, 
+        100% 10px, 
+        100% calc(100% - 10px), 
+        calc(100% - 10px) 100%, 
+        10px 100%, 
+        0 calc(100% - 10px), 
+        0 10px
+    );
+
+
+}
+.agent_textarea:focus {
+    outline: none;
+    border: 1px solid transparent;
+}
+.agent_textarea::placeholder {
+    color: #293033;
+    font-size: 20px;
+}

@@ -39,7 +39,7 @@ export const Player = ({
   const character = characters.find((c) => c.name === playerCharacter);
 
   const moveTo = useSendInput(engineId, 'moveTo');
-
+  
   // console.log('character', character)
   const locationBuffer = game.world.historicalLocations?.get(player.id);
   const historicalLocation = useHistoricalValue<Location>(
@@ -89,7 +89,10 @@ export const Player = ({
         spritesheetData={character.spritesheetData}
         speed={character.speed}
         onClick={() => {
-          // moveTo({ playerId: 'p:10', destination: { x: 5, y: 10} })
+          
+          console.log("当前position",player.id , player.position )
+          // moveTo({ playerId: player.id, destination: { x: 51, y: 52} })
+
           onClick({ kind: 'player', id: player.id });          
         }}
       />

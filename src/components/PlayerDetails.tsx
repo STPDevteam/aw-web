@@ -10,6 +10,9 @@ import { useSendInput } from '../hooks/sendInput';
 import { Player } from '../../convex/aiTown/player';
 import { GameId } from '../../convex/aiTown/ids';
 import { ServerGame } from '../hooks/serverGame';
+import { Box, Image, Text  } from '@chakra-ui/react'
+import { Title } from '@/components'
+import { Close } from '@/images'
 
 export default function PlayerDetails({
   worldId,
@@ -132,62 +135,67 @@ export default function PlayerDetails({
   //   [...inflightInputs.values()].find((i) => i.name === inputName) ? ' opacity-50' : '';
 
   const pendingSuffix = (s: string) => '';
+
+
+  const descriptionFun = (d: string) => (
+    <Box className='box_clip center ' w="420px" px="20px" py="25px" bgColor='#838B8D' mt="10px">
+      <Text className='gray4 fz16'>{d}</Text>
+    </Box>
+  )
   return (
-    <div className='' style={{  }}>      
-      <div className="flex gap-4"  style={{ marginTop: '120px', maxWidth: '328px', width: '100%'}}>
-        <div className="box  w-3/4 sm:w-full mr-auto">
-          <h2 className=" p-2 font-display text-2xl sm:text-4xl tracking-wider  text-center" style={{ color: '#FFF1D1'}}>
-            {playerDescription?.name}
-          </h2>
-        </div>
-        <a
-          className="text-white shadow-solid text-2xl cursor-pointer pointer-events-auto"
-          onClick={() => setSelectedElement(undefined)}
-          style={{ width: '53px', height: '58px',display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >          
-          <img src={closeImg} />
-        </a>
-      </div>
-      {canInvite && (
-        <a
-          className={
-            'mt-6 text-white text-xl cursor-pointer pointer-events-auto' +
-            pendingSuffix('startConversation')
-          }
-          onClick={onStartConversation}
-        >
-          <div className="h-full text-center">
-            <span>Start conversation</span>
-          </div>
-        </a>
-      )}
-      {waitingForAccept && ( 
-        <a className="mt-6 text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
-          <div className="h-full  text-center">
-            <span>Waiting for accept...</span>
-          </div>
-        </a>
-      )}
-      {waitingForNearby && (
-        <a className="mt-6 text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
-          <div className="h-full text-center">
-            <span>Walking over...</span>
-          </div>
-        </a>
-      )}
-      {inConversationWithMe && (
-        <a
-          className={
-            'mt-6  text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
-            pendingSuffix('leaveConversation')
-          }
-          onClick={onLeaveConversation}
-        >
-          <div className="h-full  text-center">
-            <span>Leave conversation</span>
-          </div>
-        </a>
-      )}
+    <Box className='' w="420px">      
+      <Box className='fx-row ai-ct jc-sb' mt="24px">
+        <Title name={playerDescription?.name || ''} size='md'/>
+        <Image src={Close} w="50px" h="50px" className='click' onClick={() => setSelectedElement(undefined)}/>
+      </Box>
+
+      {canInvite && <Box  onClick={onStartConversation} className='click'>{descriptionFun('Start conversation')}</Box>
+        // <a
+        //   className={
+        //     'mt-6 text-white text-xl cursor-pointer pointer-events-auto' +
+        //     pendingSuffix('startConversation')
+        //   }
+        //   onClick={onStartConversation}
+        // >
+        //   <div className="h-full text-center">
+        //     <span>Start conversation</span>
+        //   </div>
+        // </a>
+        
+      }
+      {waitingForAccept && descriptionFun('Waiting for accept...')
+      // ( 
+      //   <a className="mt-6 text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
+      //     <div className="h-full  text-center">
+      //       <span>Waiting for accept...</span>
+      //     </div>
+      //   </a>
+      // )
+      }
+      {waitingForNearby && descriptionFun('Walking over...')
+      // (
+      //   <a className="mt-6 text-white shadow-solid text-xl cursor-pointer pointer-events-auto opacity-50">
+      //     <div className="h-full text-center">
+      //       <span>Walking over...</span>
+      //     </div>
+      //   </a>
+      // )
+      }
+      {inConversationWithMe && <Box className='click' onClick={onLeaveConversation}>{descriptionFun('Leave conversation')}</Box>
+      // (
+      //   <a
+      //     className={
+      //       'mt-6  text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
+      //       pendingSuffix('leaveConversation')
+      //     }
+      //     onClick={onLeaveConversation}
+      //   >
+      //     <div className="h-full  text-center">
+      //       <span>Leave conversation</span>
+      //     </div>
+      //   </a>
+      // )
+      }
       {haveInvite && (
         <>
           <a
@@ -214,25 +222,12 @@ export default function PlayerDetails({
           </a>
         </>
       )}
-      {!playerConversation && player.activity && player.activity.until > Date.now()  && ( 
-        <div className="box flex-grow mt-6">
-          <h2 className="text-base sm:text-lg text-cente ">
-            {player.activity.description}
-          </h2>
-        </div>
-      )}
-      <div className="desc">
-        <p className="  text-base sm:text-sm" style={{ color: '#2E1F1D'}}>
-          {!isMe && playerDescription?.description}
-          {isMe && <i>This is you!</i>}
-          {!isMe && inConversationWithMe && (
-            <>
-              <br />
-              <br />(<i>Conversing with you!</i>)
-            </>
-          )}
-        </p>
-      </div>
+      { !playerConversation && player.activity && player.activity.until > Date.now()  && descriptionFun(player.activity.description) }
+      
+      { descriptionFun(isMe ? 'This is you!' : (playerDescription?.description || '') ) }
+
+      { !isMe && inConversationWithMe && descriptionFun('Conversing with you!')}
+     
       {!isMe && playerConversation && playerStatus?.kind === 'participating' && (
         <Messages
           worldId={worldId}
@@ -258,6 +253,6 @@ export default function PlayerDetails({
           />
         </div>
       )}
-    </div>
+    </Box>
   );
 }
