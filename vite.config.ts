@@ -10,25 +10,21 @@ export default defineConfig(({ mode }) => {
       hmr: mode === 'development',
       allowedHosts: ['localhost', '127.0.0.1'],
     },
-
-    // define: mode === 'development'
-    //   ? {
-    //       __HMR_CONFIG_NAME__: JSON.stringify("dev-hmr-config"),
-    //     }
-    //   : {},
+    define: {
+      __HMR_CONFIG_NAME__: JSON.stringify(mode === 'development' ? "dev-hmr-config" : ""),
+    },
+    base: '/ai-town',
+    plugins: [react()],
     
-      base: '/ai-town',
-      plugins: [react()],
-     
-      optimizeDeps: {
-        include: ['@chakra-ui/react'],
+    optimizeDeps: {
+      include: ['@chakra-ui/react'],
+    },
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+      alias: {
+        '@': path.resolve(__dirname, './src'),
       },
-      resolve: {
-        dedupe: ['react', 'react-dom'],
-        alias: {
-          '@': path.resolve(__dirname, './src'),
-        },
-      },
+    },
 
   };
 });
