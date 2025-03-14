@@ -39,7 +39,7 @@ dist
 convex-local*
 convex_local*
 
-.yarn.lock
+yarn.lock
 
 .env.local
 
