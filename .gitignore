@@ -46,3 +46,5 @@ convex_local*
 
 convex/README.md
 convex/tsconfig.json
+vite.config.ts
+
