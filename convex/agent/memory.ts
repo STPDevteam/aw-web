@@ -33,6 +33,13 @@ export async function rememberConversation(
     playerId,
     conversationId,
   });
+  
+  // Check if data contains necessary player data
+  if (!data.player || !data.otherPlayer) {
+    console.warn(`Cannot remember conversation ${conversationId} - missing player data`);
+    return;
+  }
+  
   const { player, otherPlayer } = data;
   const messages = await ctx.runQuery(selfInternal.loadMessages, { worldId, conversationId });
   if (!messages.length) {
@@ -112,7 +119,13 @@ export const loadConversation = internalQuery({
       .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('id', args.conversationId))
       .first();
     if (!conversation) {
-      throw new Error(`Conversation ${args.conversationId} not found`);
+      console.warn(`Conversation ${args.conversationId} not found - skipping memory creation`);
+      return {
+        player: null,
+        otherPlayer: null,
+        playerDescription: null,
+        otherPlayerDescription: null
+      };
     }
     const otherParticipator = await ctx.db
       .query('participatedTogether')

@@ -24,22 +24,36 @@ export const agentRememberConversation = internalAction({
     operationId: v.string(),
   },
   handler: async (ctx, args) => {
-    await rememberConversation(
-      ctx,
-      args.worldId,
-      args.agentId as GameId<'agents'>,
-      args.playerId as GameId<'players'>,
-      args.conversationId as GameId<'conversations'>,
-    );
-    await sleep(Math.random() * 1000);
-    await ctx.runMutation(api.aiTown.main.sendInput, {
-      worldId: args.worldId,
-      name: 'finishRememberConversation',
-      args: {
-        agentId: args.agentId,
-        operationId: args.operationId,
-      },
-    });
+    try {
+      await rememberConversation(
+        ctx,
+        args.worldId,
+        args.agentId as GameId<'agents'>,
+        args.playerId as GameId<'players'>,
+        args.conversationId as GameId<'conversations'>,
+      );
+      await sleep(Math.random() * 1000);
+      await ctx.runMutation(api.aiTown.main.sendInput, {
+        worldId: args.worldId,
+        name: 'finishRememberConversation',
+        args: {
+          agentId: args.agentId,
+          operationId: args.operationId,
+        },
+      });
+    } catch (error) {
+      // Capture error, log it but don't affect main flow
+      console.error(`Error in agentRememberConversation for ${args.conversationId}:`, error);
+      // Still mark operation as completed so system can continue
+      await ctx.runMutation(api.aiTown.main.sendInput, {
+        worldId: args.worldId,
+        name: 'finishRememberConversation',
+        args: {
+          agentId: args.agentId,
+          operationId: args.operationId,
+        },
+      });
+    }
   },
 });
 
