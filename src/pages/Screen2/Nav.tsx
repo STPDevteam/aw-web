@@ -6,6 +6,8 @@ import { Text, Link, Box, Image } from '@chakra-ui/react'
 import { Screen2Bg } from '@/images'
 import { GeneralButton, Notification, BasePopup, CreateInput } from '@/components'
 import { ConnectWallet } from './ConnectWallet'
+import { useAppSelector } from '@/redux/hooks'
+import { selectedAgentInfo } from '@/redux/reducer'
 
 
 interface iInput {
@@ -35,6 +37,11 @@ export const Nav = () => {
         msg: '',
         disable: true
     })
+
+
+    // const agentInfo = useAppSelector(selectedAgentInfo)
+  
+    // console.log('222222222222222222222', agentInfo)
 
     const onClaim = () => {
         setClaimOpen(true)

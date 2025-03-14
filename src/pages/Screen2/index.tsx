@@ -6,12 +6,9 @@ import {  Box,  } from '@chakra-ui/react'
 import { Screen2Bg } from '@/images'
 
 import { Nav } from './Nav' 
-import Game from '@/components/Game'
+import { Game } from './Game'
 
-export const Screen2 = () => {
-
-
-  
+export const Screen2 = () => {  
   return(
     <Box 
       className='h-screen' 

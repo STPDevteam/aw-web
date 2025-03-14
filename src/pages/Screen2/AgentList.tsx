@@ -8,9 +8,14 @@ import { GeneralButton, ClickButtonWrapper } from '@/components'
 import { api } from '../../../convex/_generated/api.js'
 import {  Id } from '../../../convex/_generated/dataModel'
 import { useMutation, useQuery } from 'convex/react';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { selectedAgentInfo, selectedAgentInfoAction } from '@/redux/reducer/agentReducer'
 
 export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
     const [visible, setVisible] = useState<boolean>(false)
+
+    const dispatch = useAppDispatch()
+  
 
     const agents = useQuery(api.world.paginatedPlayerDescriptions, { 
             worldId,
@@ -19,13 +24,13 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                 cursor: null,
             }
     })
-
+    
     const renderedAgents = useMemo(() => {
         return (
           !!agents?.page &&
           agents.page.length > 0 &&
           agents.page.map((item, idx) => (
-            <ListItem item={item} key={item._id} idx={idx} />
+            <ListItem item={item} key={item._id} idx={idx} focusAgent={() => dispatch(selectedAgentInfoAction(item))}/>
           ))
         )
       }, [agents])
@@ -53,8 +58,6 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                 </Box>
             </ClickButtonWrapper>
 
-            
-
             {
                 visible && 
                 <Box 
@@ -81,14 +84,16 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
 }
 
 
-const ListItem:FC<{ item:any, idx: number}>= ({ item,idx}) => {
+const ListItem:FC<{ item:any, idx: number, focusAgent:() => void }>= ({ item,idx, focusAgent}) => {
     const [isHovered, setIsHovered] = useState(false)
+    const isSpecialAgent = idx < 5 
     return (
       <Box 
         className={`fx-row ai-ct jc-sb click  ${isHovered ? 'box_clip' : ''}`}
         color="#E0E0E0"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={isSpecialAgent ? () => focusAgent() : () => null }
         h="44px"
         px="20px"
         _hover={{
@@ -98,7 +103,7 @@ const ListItem:FC<{ item:any, idx: number}>= ({ item,idx}) => {
       >
         <Text className="fz20">{item.name}</Text>
         {
-            idx < 5 && 
+            isSpecialAgent && 
             <Image src={isHovered ? XHover : X} w="24px" h="20px" />
         }
       </Box>

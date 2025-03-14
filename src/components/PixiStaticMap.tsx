@@ -31,6 +31,10 @@ export const PixiStaticMap = PixiComponent('StaticMap', {
       scaleMode: PIXI.SCALE_MODES.NEAREST,
     });
 
+    console.log("BaseTexture dimensions:", bt.width, bt.height);
+
+
+
     const tiles = [];
     for (let x = 0; x < numxtiles; x++) {
       for (let y = 0; y < numytiles; y++) {
