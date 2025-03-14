@@ -17,6 +17,9 @@ crons.interval('restart dead worlds', { seconds: 60 }, internal.world.restartDea
 
 crons.daily('vacuum old entries', { hourUTC: 4, minuteUTC: 20 }, internal.crons.vacuumOldEntries);
 
+// Clean up expired authentication challenges every 10 minutes
+crons.interval('clean expired auth challenges', { minutes: 10 }, internal.crons.cleanExpiredAuthChallenges);
+
 export default crons;
 
 const TablesToVacuum: TableNames[] = [
@@ -85,5 +88,42 @@ export const vacuumTable = internalMutation({
     } else {
       console.log(`Vacuumed ${soFar + results.page.length} entries from ${tableName}`);
     }
+  },
+});
+
+/**
+ * Clean up expired authentication challenges
+ * This is run as a scheduled cron job to keep the authChallenges table clean
+ * 
+ * The function processes challenges in batches for better performance and
+ * schedules additional runs if there are more expired challenges to clean up.
+ */
+export const cleanExpiredAuthChallenges = internalMutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    const batchSize = 100; // Process in batches
+    
+    const expiredChallenges = await ctx.db
+      .query('authChallenges')
+      .withIndex('expiration', (q) => q.lt('expiresAt', now))
+      .take(batchSize);
+    
+    let deletedCount = 0;
+    for (const challenge of expiredChallenges) {
+      await ctx.db.delete(challenge._id);
+      deletedCount++;
+    }
+    
+    // If we processed a full batch, there might be more to clean up
+    if (expiredChallenges.length === batchSize) {
+      // Schedule another run after a short delay
+      await ctx.scheduler.runAfter(1, internal.crons.cleanExpiredAuthChallenges);
+    }
+    
+    console.log(`Cleaned up ${deletedCount} expired auth challenges`);
+    return { 
+      deletedCount,
+      scheduledAnotherRun: expiredChallenges.length === batchSize
+    };
   },
 });

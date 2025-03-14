@@ -38,7 +38,11 @@
     "convex": "^1.19.2",
     "dotenv": "^16.1.4",
     "eslint": "8.42.0",
+<<<<<<< HEAD
     "framer-motion": "^12.4.11",
+=======
+    "ethers": "5",
+>>>>>>> f8c4e8f (feat: Add wallet users and authentication challenges to schema)
     "hnswlib-node": "^1.4.2",
     "path": "^0.12.7",
     "pixi-viewport": "^5.0.1",
