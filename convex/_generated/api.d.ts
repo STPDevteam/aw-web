@@ -55,6 +55,7 @@ import type * as util_object from "../util/object.js";
 import type * as util_sleep from "../util/sleep.js";
 import type * as util_types from "../util/types.js";
 import type * as util_xxhash from "../util/xxhash.js";
+import type * as wallet from "../wallet.js";
 import type * as world from "../world.js";
 
 /**
@@ -108,6 +109,7 @@ declare const fullApi: ApiFromModules<{
   "util/sleep": typeof util_sleep;
   "util/types": typeof util_types;
   "util/xxhash": typeof util_xxhash;
+  wallet: typeof wallet;
   world: typeof world;
 }>;
 export declare const api: FilterApi<
