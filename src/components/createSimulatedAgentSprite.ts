@@ -15,33 +15,33 @@ export type SimulatedAgent = {
     speed: number
 }
 
+export interface ExtendedAnimatedSprite extends PIXI.AnimatedSprite {
+    _sheet?: PIXI.Spritesheet;
+}
+
+  
 export async function createSimulatedAgentSprite(
-  agent: SimulatedAgent,
-  tileDim: number
-): Promise<PIXI.AnimatedSprite> {
-
-    const sheet = new Spritesheet(
-        BaseTexture.from(agent.textureUrl, {
-            scaleMode: PIXI.SCALE_MODES.NEAREST,
-        }),
-        agent.spritesheetData,
-    )
+    agent: SimulatedAgent,
+    tileDim: number
+  ): Promise<ExtendedAnimatedSprite> {
+    const baseTexture = PIXI.BaseTexture.from(agent.textureUrl, {
+      scaleMode: PIXI.SCALE_MODES.NEAREST,
+    });
+    const sheet = new PIXI.Spritesheet(baseTexture, agent.spritesheetData);
     await sheet.parse();
-   
-    const orientation = orientationDegrees(agent.facing)
-
+    const orientation = orientationDegrees(agent.facing);
     const roundedOrientation = Math.floor(orientation / 90);
-    const animationName = ['right', 'down', 'left', 'up'][roundedOrientation];
+    const directions = ['right', 'down', 'left', 'up'];
+    const animationName = directions[roundedOrientation];
     const textures = sheet.animations[animationName];
-
-    const animatedSprite = new PIXI.AnimatedSprite(textures);
+    const animatedSprite = new PIXI.AnimatedSprite(textures) as ExtendedAnimatedSprite;
     animatedSprite.anchor.set(0.5);
     animatedSprite.scale.set(1.5);
     animatedSprite.x = agent.position.x * tileDim;
     animatedSprite.y = agent.position.y * tileDim;
     animatedSprite.animationSpeed = agent.speed;
     animatedSprite.play();
-
-    
+    animatedSprite._sheet = sheet;
     return animatedSprite;
-}
+  }
+  
