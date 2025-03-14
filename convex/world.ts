@@ -274,6 +274,35 @@ export const paginatedPlayerDescriptions = query({
       .order('asc')
       .paginate({ ...args.paginationOpts, numItems });
     
-    return paginationResult;
+    // Get world data containing player information (including positions)
+    const world = await ctx.db.get(args.worldId);
+    
+    if (!world) {
+      throw new Error(`World not found: ${args.worldId}`);
+    }
+    
+    // Add position information to each player description
+    const enhancedPage = paginationResult.page.map(playerDesc => {
+      // Find the corresponding player from world data
+      const player = world.players.find(p => p.id === playerDesc.playerId);
+      
+      // If player is found, add position information
+      if (player) {
+        return {
+          ...playerDesc,
+          position: player.position, // Add position
+          facing: player.facing     // Add facing direction
+        };
+      }
+      
+      // If player not found (possibly offline), return original data
+      return playerDesc;
+    });
+    
+    // Return paginated result with position information
+    return {
+      ...paginationResult,
+      page: enhancedPage
+    };
   },
 });
