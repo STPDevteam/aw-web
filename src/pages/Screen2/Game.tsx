@@ -27,13 +27,6 @@ export const Game = () => {
   }>();
 
 
-  //  const gameWrapperRef = useRef(null);
-  //  const { width, height } = useResizeObserver({
-  //    ref: gameWrapperRef,
-  //    box: 'content-box',
-  //  });
-
-
   const [gameWrapperRef, { width:mapWidth, height:mapHeight }] = useElementSize();
 
 
@@ -55,16 +48,9 @@ export const Game = () => {
     return null;
   } 
 
-  // console.log('mapWidth111111111111', width)
-  // console.log('mapHeight', mapHeight)
 
   const width = 1161
   const height = 661
-
-
-
-//   export const mapwidth = 169;
-// export const mapheight = 196;
 
 
   return (  

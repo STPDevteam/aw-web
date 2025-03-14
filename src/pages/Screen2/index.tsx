@@ -20,7 +20,9 @@ export const Screen2 = () => {
       py="40px"
     >
         <Nav/>
-        <Game/>        
+        <Box className='center'>
+          <Game/>        
+        </Box>
     </Box>
   )
 }
