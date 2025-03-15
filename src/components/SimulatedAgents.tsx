@@ -19,56 +19,20 @@ const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container,
     const isOutOfBounds = tileX < 0 || tileY < 0 || 
                            tileX >= objmap[0].length || 
                            tileY >= (objmap[0][0]?.length || 0);
-    
-    if (isOutOfBounds) return true; 
-    
-
-    const blockedInBg = false;
-    
+    if (isOutOfBounds) return true;  
+  
     const blockedInObj = objmap.some(layer => {
-      return layer[Math.floor(tileX)] && 
-             layer[Math.floor(tileX)][Math.floor(tileY)] !== -1;
+      return layer[tileX] && layer[tileX][tileY] !== -1;
     });
   
-    return blockedInBg || blockedInObj;
+    const blockedInBg = false;  
+  
+    return blockedInObj || blockedInBg;
   }
   
-  function willCollideWithObstacle(
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-    tileDim: number,
-    objmap: number[][][],
-    bgtiles: number[][][]
-  ): boolean {
-    const startTileX = Math.floor(startX / tileDim);
-    const startTileY = Math.floor(startY / tileDim);
-    const endTileX = Math.floor(endX / tileDim);
-    const endTileY = Math.floor(endY / tileDim);
-    
-    if (startTileX === endTileX && startTileY === endTileY) {
-      return isTileObstacle(endTileX, endTileY, objmap, bgtiles);
-    }
-
-    const checkPoints = 3; 
-    
-    for (let i = 1; i <= checkPoints; i++) {
-      const ratio = i / (checkPoints + 1);
-      const checkX = startX + (endX - startX) * ratio;
-      const checkY = startY + (endY - startY) * ratio;
-      
-      const checkTileX = Math.floor(checkX / tileDim);
-      const checkTileY = Math.floor(checkY / tileDim);
-      
-      if (isTileObstacle(checkTileX, checkTileY, objmap, bgtiles)) {
-        return true; 
-      }
-    }
-    
- 
-    return isTileObstacle(endTileX, endTileY, objmap, bgtiles);
-  }
+  
+  
+  
 
   function willAgentsCollide(
     sprite1: PIXI.Sprite | PIXI.AnimatedSprite,
@@ -103,221 +67,11 @@ const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container,
   }
   
   
-  function animateAgent(
-    sprite: PIXI.Sprite | PIXI.AnimatedSprite,
-    container: PIXI.Container,
-    speed: number,            
-    minDistanceTiles: number,   
-    maxDistanceTiles: number,   
-    agentFacing: { dx: number; dy: number },
-    allSprites: Array<PIXI.Sprite | PIXI.AnimatedSprite>, 
-    tileDim: number,
-    objmap: number[][][],
-    bgtiles: number[][][],
-    mapWidth: number
-  ) {
-    const startPos = { x: sprite.x, y: sprite.y };
+
   
-    if (!(sprite as any).stuckCount) {
-      (sprite as any).stuckCount = 0;
-      (sprite as any).lastPosition = { x: startPos.x, y: startPos.y };
-    }
+ 
   
-    const lastPos = (sprite as any).lastPosition;
-    const distanceMoved = Math.sqrt(Math.pow(startPos.x - lastPos.x, 2) + Math.pow(startPos.y - lastPos.y, 2));
-    if (distanceMoved < tileDim * 0.1) {
-      (sprite as any).stuckCount++;
-    } else {
-      (sprite as any).stuckCount = 0;
-    }
-    (sprite as any).lastPosition = { x: startPos.x, y: startPos.y };
-  
-    const stuckThreshold = 4;
-    let changeDirection = false;
-  
-    if ((sprite as any).stuckCount > stuckThreshold) {
-   
-      console.log("The agent is stuck and randomly chooses a new direction");    
-      const newFacing = { dx: -agentFacing.dy, dy: agentFacing.dx };
-      updateSpriteFacing(sprite as ExtendedAnimatedSprite, newFacing);    
     
-      agentFacing = newFacing;
-      (sprite as any).stuckCount = 0;
-      changeDirection = true; 
-    }
-  
-    let { dx, dy } = agentFacing;
-    
-    
-
-    if (changeDirection) {
-      const randomDir = Math.floor(Math.random() * 4);
-      const newFacing = [
-        { dx: 1, dy: 0 },
-        { dx: -1, dy: 0 },
-        { dx: 0, dy: 1 },
-        { dx: 0, dy: -1 }
-      ][randomDir];
-  
-      dx = newFacing.dx;
-      dy = newFacing.dy;
-      agentFacing.dx = dx;
-      agentFacing.dy = dy;
-  
-  
-      if (sprite instanceof PIXI.AnimatedSprite) {
-        updateSpriteFacing(sprite as ExtendedAnimatedSprite, agentFacing);
-      }
-  
-
-      sprite.x = startPos.x;
-      sprite.y = startPos.y;
-    } else {
-  
-      if (dx !== 0 && dy !== 0) {
-        if (Math.random() < 0.5) {
-          dy = 0;
-        } else {
-          dx = 0;
-        }
-        agentFacing.dx = dx;
-        agentFacing.dy = dy;
-      }
-    }
-  
-
-    let distanceTiles: number = 0;
-    let distance: number = 0;
-    let endPos: { x: number; y: number } = { x: startPos.x, y: startPos.y };
-    let valid = false;
-  
-    const maxAttempts = 8;
-    let attempts = 0;
-  
-    while (attempts < maxAttempts && !valid) {
-      distanceTiles = minDistanceTiles + (maxDistanceTiles - minDistanceTiles) * Math.random();
-      distance = distanceTiles * tileDim;
-  
-      endPos = {
-        x: startPos.x + (dx !== 0 ? Math.sign(dx) * distance : 0),
-        y: startPos.y + (dy !== 0 ? Math.sign(dy) * distance : 0),
-      };
-  
-      const withinBounds = endPos.x >= 0 && endPos.x <= container.width && endPos.y >= 0 && endPos.y <= container.height;
-      const noObstacles = !willCollideWithObstacle(
-        startPos.x,
-        startPos.y,
-        endPos.x,
-        endPos.y,
-        tileDim,
-        objmap,
-        bgtiles
-      );
-  
-      let noAgentCollisions = true;
-      if (withinBounds && noObstacles) {
-        for (const otherSprite of allSprites) {
-          if (otherSprite !== sprite && (otherSprite as any).isMoving) {
-            const otherStartPos = { x: otherSprite.x, y: otherSprite.y };
-            const otherEndPos = (otherSprite as any).targetPos || otherStartPos;
-  
-            if (willAgentsCollide(
-              sprite, startPos, endPos,
-              otherSprite, otherStartPos, otherEndPos,
-              tileDim 
-            )) {
-              noAgentCollisions = false;
-  
-            
-              const randomDir = Math.floor(Math.random() * 4);
-              const newFacing = [
-                { dx: 1, dy: 0 },
-                { dx: -1, dy: 0 },
-                { dx: 0, dy: 1 },
-                { dx: 0, dy: -1 }
-              ][randomDir];
-  
-              (otherSprite as any).dx = newFacing.dx;
-              (otherSprite as any).dy = newFacing.dy;
-              if (otherSprite instanceof PIXI.AnimatedSprite) {
-                updateSpriteFacing(otherSprite as ExtendedAnimatedSprite, newFacing);
-              }
-  
-              break;
-            }
-          }
-        }
-      }
-  
-      valid = withinBounds && noObstacles && noAgentCollisions;
-      attempts++;
-    }
-  
-
-    if (!valid) {
-      console.log("Unable to find valid path, changing direction");
-  
-   
-      const randomDir = Math.floor(Math.random() * 4);
-      const newFacing = [
-        { dx: 1, dy: 0 },
-        { dx: -1, dy: 0 },
-        { dx: 0, dy: 1 },
-        { dx: 0, dy: -1 }
-      ][randomDir];
-  
-      agentFacing.dx = newFacing.dx;
-      agentFacing.dy = newFacing.dy;
-  
-      if (sprite instanceof PIXI.AnimatedSprite) {
-        updateSpriteFacing(sprite as ExtendedAnimatedSprite, newFacing);
-      }
-  
-      setTimeout(() => {
-        sprite.x = startPos.x;
-        sprite.y = startPos.y;
-  
-        animateAgent(
-          sprite,
-          container,
-          speed,
-          minDistanceTiles,
-          maxDistanceTiles,
-          agentFacing,
-          allSprites,
-          tileDim,
-          objmap,
-          bgtiles,
-          mapWidth
-        );
-      }, 500);
-      return;
-    }
-  
-
-    (sprite as any).targetPos = endPos;
-    (sprite as any).isMoving = true;
-  
-
-    const duration = (distance / speed) * 1000;
-    animateMovement(sprite, startPos, endPos, duration, () => {
-      (sprite as any).isMoving = false;
-      animateAgent(
-        sprite,
-        container,
-        speed,
-        minDistanceTiles,
-        maxDistanceTiles,
-        agentFacing,
-        allSprites,
-        tileDim,
-        objmap,
-        bgtiles,
-        mapWidth
-      );
-    });
-  }
-  
 
 function animateMovement(
   sprite: PIXI.Sprite | PIXI.AnimatedSprite,
@@ -361,6 +115,192 @@ function animateMovement(
     
 
 
+  function isPositionObstacle(x: number, y: number, tileDim: number): boolean {
+    const tileX = Math.floor(x / tileDim);
+    const tileY = Math.floor(y / tileDim);
+    const isOutOfBounds = tileX < 0 || tileY < 0 || 
+                          tileX >= map.objmap[0].length || 
+                          tileY >= (map.objmap[0][0]?.length || 0);
+    if (isOutOfBounds) return true;
+    const blockedInObj = map.objmap.some(layer => {
+      return layer[tileX] && layer[tileX][tileY] !== -1;
+    });
+    return blockedInObj;
+  }
+
+  function isPositionNearObstacle(x: number, y: number, tileDim: number): boolean {
+    const tileX = Math.floor(x / tileDim);
+    const tileY = Math.floor(y / tileDim);
+    
+    const isOutOfBounds = tileX < 0 || tileY < 0 || 
+                          tileX >= map.objmap[0].length || 
+                          tileY >= (map.objmap[0][0]?.length || 0);
+    if (isOutOfBounds) return true;
+  
+    const blockedInObj = map.objmap.some(layer => {
+      return layer[tileX] && layer[tileX][tileY] !== -1;
+    });
+  
+    return blockedInObj;
+  }
+  
+  function willCollideWithObstacle(
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    tileDim: number,
+    objmap: number[][][],
+    bgtiles: number[][][]
+  ): boolean {
+    const checkPoints = 3; 
+  
+    for (let i = 1; i <= checkPoints; i++) {
+      const ratio = i / (checkPoints + 1);
+      const checkX = startX + (endX - startX) * ratio;
+      const checkY = startY + (endY - startY) * ratio;
+  
+      if (isPositionNearObstacle(checkX, checkY, tileDim)) {
+        return true; 
+      }
+    }
+  
+    return false;
+  }
+  
+
+
+function animateAgent(
+  sprite: PIXI.Sprite | PIXI.AnimatedSprite,
+  container: PIXI.Container,
+  speed: number,            
+  minDistanceTiles: number,   
+  maxDistanceTiles: number,   
+  agentFacing: { dx: number; dy: number },
+  allSprites: Array<PIXI.Sprite | PIXI.AnimatedSprite>, 
+  tileDim: number,
+  objmap: number[][][],
+  bgtiles: number[][][],
+  mapWidth: number
+) {
+  const startPos = { x: sprite.x, y: sprite.y };
+  let { dx, dy } = agentFacing;  
+
+  let distanceTiles: number = 0;
+  let distance: number = 0;
+  let endPos: { x: number; y: number } = { x: startPos.x, y: startPos.y };
+  let valid = false;
+
+  const maxAttempts = 8;
+  let attempts = 0;
+
+  while (attempts < maxAttempts && !valid) {
+    distanceTiles = minDistanceTiles + (maxDistanceTiles - minDistanceTiles) * Math.random();
+    distance = distanceTiles * tileDim;
+
+    endPos = {
+      x: startPos.x + (dx !== 0 ? Math.sign(dx) * distance : 0),
+      y: startPos.y + (dy !== 0 ? Math.sign(dy) * distance : 0),
+    };
+
+    const withinBounds = endPos.x >= 0 && endPos.x <= container.width && endPos.y >= 0 && endPos.y <= container.height;
+    const noObstacles = !willCollideWithObstacle(
+      startPos.x,
+      startPos.y,
+      endPos.x,
+      endPos.y,
+      tileDim,
+      objmap,
+      bgtiles
+    );
+
+    let noAgentCollisions = true;
+    if (withinBounds && noObstacles) {
+      for (const otherSprite of allSprites) {
+        if (otherSprite !== sprite && (otherSprite as any).isMoving) {
+          const otherStartPos = { x: otherSprite.x, y: otherSprite.y };
+          const otherEndPos = (otherSprite as any).targetPos || otherStartPos;
+
+          if (willAgentsCollide(
+            sprite, startPos, endPos,
+            otherSprite, otherStartPos, otherEndPos,
+            tileDim 
+          )) {
+            noAgentCollisions = false;
+            break;
+          }
+        }
+      }
+    }
+
+    valid = withinBounds && noObstacles && noAgentCollisions;
+    attempts++;
+  }
+
+  if (!valid) {
+    console.log("Unable to find valid path or blocked by obstacle, changing direction");
+
+    const randomDir = Math.floor(Math.random() * 4);
+    const newFacing = [
+      { dx: 1, dy: 0 },
+      { dx: -1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: 0, dy: -1 }
+    ][randomDir];
+
+    agentFacing.dx = newFacing.dx;
+    agentFacing.dy = newFacing.dy;
+
+    if (sprite instanceof PIXI.AnimatedSprite) {
+      updateSpriteFacing(sprite as ExtendedAnimatedSprite, newFacing);
+    }
+
+    setTimeout(() => {
+      sprite.x = startPos.x;
+      sprite.y = startPos.y;
+
+      animateAgent(
+        sprite,
+        container,
+        speed,
+        minDistanceTiles,
+        maxDistanceTiles,
+        agentFacing,
+        allSprites,
+        tileDim,
+        objmap,
+        bgtiles,
+        mapWidth
+      );
+    }, 500);
+    return;
+  }
+
+  (sprite as any).targetPos = endPos;
+  (sprite as any).isMoving = true;
+
+  const duration = (distance / speed) * 1000;
+  animateMovement(sprite, startPos, endPos, duration, () => {
+    (sprite as any).isMoving = false;
+    animateAgent(
+      sprite,
+      container,
+      speed,
+      minDistanceTiles,
+      maxDistanceTiles,
+      agentFacing,
+      allSprites,
+      tileDim,
+      objmap,
+      bgtiles,
+      mapWidth
+    );
+  });
+}
+
+  
+
+
   function updateSpriteFacing(sprite: ExtendedAnimatedSprite, facing: { dx: number; dy: number }) {
     const orientation = orientationDegrees(facing); 
     const roundedOrientation = Math.floor(orientation / 90);
@@ -372,7 +312,6 @@ function animateMovement(
     }
   }
 
-
   useEffect(() => {
     if (!container) return;
     if (!simulatedContainerRef.current) {
@@ -380,7 +319,7 @@ function animateMovement(
       simulatedContainer.name = "simulatedAgentsContainer";
       simulatedContainerRef.current = simulatedContainer;
       const agentsData: SimulatedAgent[] = mockAgents();
-  
+
       Promise.all(agentsData.map((agent) => createSimulatedAgentSprite(agent, tileDim)))
         .then((sprites) => {
           const allSprites = sprites;
@@ -414,7 +353,6 @@ function animateMovement(
       }
     };
   }, [container, tileDim, mapWidth]);
-
 
 
   return null;
