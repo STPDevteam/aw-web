@@ -171,6 +171,7 @@ export const PixiGame:React.FC<{
          x: gameSpacePx.x / tileDim,
          y: gameSpacePx.y / tileDim,
        };
+       console.log('gameSpaceTiles11', gameSpaceTiles)
        return gameSpaceTiles
     }
   } 
@@ -194,7 +195,7 @@ export const PixiGame:React.FC<{
    
       {memoizedPositionIndicator}
       {viewportRef.current && (
-        <SimulatedAgents container={viewportRef.current} tileDim={tileDim}/>
+        <SimulatedAgents container={viewportRef.current} tileDim={tileDim} mapWidth={width}/>
       )}
       {memoizedPlayers}
       {lastDestination && <PositionIndicator destination={lastDestination} tileDim={tileDim} />}

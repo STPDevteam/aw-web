@@ -1,5 +1,6 @@
 import { data as f0SpritesheetData } from './spritesheets/f0';
 import {  SimulatedAgent } from '../src/components/createSimulatedAgentSprite';
+import * as map from './gentle';
 
 
 // Helper functions for randomly generating names, descriptions and plans
@@ -189,10 +190,6 @@ function getRandomNumber(min: number, max: number): number {
 }
 
 
-
-
-
-
 export function getRandomDirection(): { dx: number; dy: number } {
   const directions = [
     { dx: 1, dy: 0 },  // to right
@@ -203,12 +200,82 @@ export function getRandomDirection(): { dx: number; dy: number } {
   return directions[Math.floor(Math.random() * directions.length)];
 }
 
+// export const mockAgents = () => {
+
+//   return Array.from({ length: 400}, (_, i) => {
+//     const num = 500 - i;
+//     return {
+//       activity: { description: 'reading a book', emoji: '📖', until: 0 },
+//       facing: getRandomDirection(),
+//       human: undefined,
+//       id: `p:${num}`,
+//       lastInput: 0,
+//       pathfinding: undefined,
+ 
+//       position: { x: getRandomNumber(4, 205), y: getRandomNumber(4, 197) },
+//       speed: 0.1,
+//       textureUrl: `/ai-town/assets/avatar/${(i % 10) + 10}.png`,
+//       spritesheetData: f0SpritesheetData,
+//     };
+//   });
+// };
+function isPositionObstacle(x: number, y: number, tileDim: number): boolean {
+  // 将像素坐标转换为瓦片坐标
+  const tileX = x;
+  const tileY = y;
+  
+  // 检查坐标是否在地图范围内
+  const isOutOfBounds = tileX < 0 || tileY < 0 || 
+                         tileX >= map.objmap[0].length || 
+                         tileY >= (map.objmap[0][0]?.length || 0);
+  
+  if (isOutOfBounds) return true; // 将地图边界视为障碍物
+  
+  // 检查对象图层是否有障碍物
+  const blockedInObj = map.objmap.some(layer => {
+    return layer[tileX] && layer[tileX][tileY] !== -1;
+  });
+  
+  // 检查背景图层是否有障碍物（如果需要）
+  // 根据你的地图设置，可能需要调整背景图层的检查逻辑
+  const blockedInBg = false; // 暂时忽略背景图层
+
+  return blockedInBg || blockedInObj;
+}
 
 
-export const mockAgents = () => {
 
-  return Array.from({ length: 400 }, (_, i) => {
+function getRandomPassablePosition(minX: number, maxX: number, minY: number, maxY: number, tileDim: number): { x: number, y: number } {
+  // 最大尝试次数，避免无限循环
+  const maxAttempts = 3;
+  let attempts = 0;
+  
+  while (attempts < maxAttempts) {
+    // 生成随机位置
+    const x = getRandomNumber(minX, maxX);
+    const y = getRandomNumber(minY, maxY);
+    
+    // 检查位置是否可通行
+    if (!isPositionObstacle(x, y, tileDim)) {
+      return { x, y };
+    }
+    
+    attempts++;
+  }
+  
+  // 如果找不到可通行位置，返回默认安全位置
+  // 你可以指定一个你确定安全的位置作为后备
+  console.warn("无法找到可通行的随机位置，使用默认安全位置");
+  return { x: 10, y: 10 }; // 假设这是一个安全位置，需要根据你的地图调整
+}
+
+export const mockAgents = (tileDim: number = 32) => { 
+  return Array.from({ length: 400}, (_, i) => {
     const num = 500 - i;
+    
+    // 获取随机的可通行位置
+    const position = getRandomPassablePosition(5, 168, 5, 192, tileDim);
+    
     return {
       activity: { description: 'reading a book', emoji: '📖', until: 0 },
       facing: getRandomDirection(),
@@ -216,8 +283,7 @@ export const mockAgents = () => {
       id: `p:${num}`,
       lastInput: 0,
       pathfinding: undefined,
- 
-      position: { x: getRandomNumber(4, 205), y: getRandomNumber(4, 197) },
+      position: position, // 使用可通行的位置
       speed: 0.1,
       textureUrl: `/ai-town/assets/avatar/${(i % 10) + 10}.png`,
       spritesheetData: f0SpritesheetData,
