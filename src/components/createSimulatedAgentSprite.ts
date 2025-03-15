@@ -13,6 +13,7 @@ export type SimulatedAgent = {
     lastInput: number,
     pathfinding: string | undefined,
     speed: number
+    moveCounter: number
 }
 
 export interface ExtendedAnimatedSprite extends PIXI.AnimatedSprite {
@@ -36,7 +37,7 @@ export async function createSimulatedAgentSprite(
     const textures = sheet.animations[animationName];
     const animatedSprite = new PIXI.AnimatedSprite(textures) as ExtendedAnimatedSprite;
     animatedSprite.anchor.set(0.5);
-    animatedSprite.scale.set(1.5);
+    animatedSprite.scale.set(1);
     animatedSprite.x = agent.position.x * tileDim;
     animatedSprite.y = agent.position.y * tileDim;
     animatedSprite.animationSpeed = agent.speed;
