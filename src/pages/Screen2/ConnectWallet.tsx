@@ -157,18 +157,70 @@
 // };
 
 
-import React, { FC, useState } from 'react'
-import { useBreakpointValue } from '@chakra-ui/react'
+import React, { FC, useState, useEffect } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import {  ClickButtonWrapper, GeneralButton, BasePopup } from '@/components'
-import { Flex, Image, Text, Box } from "@chakra-ui/react"
+import { ClickButtonWrapper, GeneralButton, BasePopup, Notification } from '@/components'
+import { Image, Text, Box } from "@chakra-ui/react"
 import { useDisconnect } from 'wagmi'
 import { ArrowBottom } from '@/images'
+import { useMutation } from 'convex/react';
+import { api } from '../../../convex/_generated/api.js'
+import { useAccount, useSignMessage } from 'wagmi';
+
 
 export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
-    const [walletOpen, setWalletOpen] = useState(false)
-    const { disconnect } = useDisconnect();
+  const [walletOpen, setWalletOpen] = useState(false)
+  const [signInfo, setSignInfo] = useState<{open: boolean, msg: string, type: 'success' | 'error' | ''}>({
+    open: false,
+    msg: '',
+    type: ''
+  })
+  const { disconnect } = useDisconnect();
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+
+  const createChallenge = useMutation(api.wallet.createAuthChallenge);
+  const verifySignature = useMutation(api.wallet.verifySignature);
+
+
+
+  useEffect(() => {
+    const didSignIn = sessionStorage.getItem('didSignIn');
+    if (isConnected && address && !didSignIn) {
+        signInWithWallet().then(() => {
+          sessionStorage.setItem('didSignIn', 'true');
+        });
+    }
+  }, [isConnected, address]);
+
+  
+
+  async function signInWithWallet() {
+    try {
+      if (!isConnected || !address) {
+        return;
+      }
+      const { challenge } = await createChallenge({ walletAddress: address });
+      const signature = await signMessageAsync({ message: challenge });   
+      const result = await verifySignature({
+        walletAddress: address,
+        signature,
+      });
+      setSignInfo({
+        open: true,
+        msg: result.isNewUser ? 'New user signed successfully.' : 'signed successfully.',
+        type: 'success'
+      })
+      return result;
+    } catch (error:any) {
+      console.error(error);
+    }
+  }
+
+
+
     return (
+      <Box>
         <ConnectButton.Custom>
           {({
             account,
@@ -196,29 +248,26 @@ export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
                   if (!connected) {
                     return (
                         <GeneralButton size="sm" title="Login" onClick={() => openConnectModal()} />           
-                        
-                        
-
                     )
                   }
                   return (
                     <ClickButtonWrapper onClick={() => setWalletOpen(true)}>
-                        <Box 
-                            h="69px" 
-                            w="323px"
-                            bgColor='#E0E0E0' 
-                            className="fx-row ai-ct jc-ct click box_clip " 
-                            px="26px" 
-                        >
-                            <Text className="fz26 gray3 fw700">@{ account?.displayName }</Text>
-                            <Image 
-                                src={ArrowBottom} 
-                                w="19px"
-                                h="10px" 
-                                transform={ walletOpen ? 'rotate(0deg)' : 'rotate(-180deg)'} 
-                                transition="transform 0.3s"
-                            />                            
-                        </Box>
+                      <Box 
+                          h="69px" 
+                          w="323px"
+                          bgColor='#E0E0E0' 
+                          className="fx-row ai-ct jc-ct click box_clip " 
+                          px="26px" 
+                      >
+                          <Text className="fz26 gray3 fw700">@{ account?.displayName }</Text>
+                          <Image 
+                              src={ArrowBottom} 
+                              w="19px"
+                              h="10px" 
+                              transform={ walletOpen ? 'rotate(0deg)' : 'rotate(-180deg)'} 
+                              transition="transform 0.3s"
+                          />                            
+                      </Box>
                     </ClickButtonWrapper>
                   );
                 })()}
@@ -240,7 +289,10 @@ export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
                             </Box>
                         </Box>
                     }
-                    onOK={() => disconnect()}
+                    onOK={() => {
+                      sessionStorage.removeItem('didSignIn');
+                      disconnect()
+                    }}
                     okText="Disconnect"
                     >
                 </BasePopup>
@@ -249,5 +301,17 @@ export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
             );
           }}
         </ConnectButton.Custom>
+        <Notification
+          visible={signInfo.open}
+          onClose={() => setSignInfo({
+            open: false,
+            msg: '',
+            type: ''
+          })}
+          title="Sign info"
+          content={signInfo.msg}
+          closeOnOverlay
+        />
+      </Box>
     );
 };
