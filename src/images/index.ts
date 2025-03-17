@@ -1,10 +1,13 @@
 export { default as Screen1Bg } from "./screen1Bg.png";
 export { default as Screen2Bg } from "./screen2Bg.png";
-export { default as Screen3Bg } from "./screen3Bg.png";
+
+export { default as Screen3Bg1 } from "./screen3Bg1.png";
+export { default as Screen3Bg2 } from "./screen3Bg2.png";
+export { default as Screen3Bg3 } from "./screen3Bg3.png";
+export { default as Screen3Bg4 } from "./screen3Bg4.png";
 export { default as Screen4Bg1 } from "./screen4Bg1.png";
 export { default as Screen4Bg2 } from "./screen4Bg2.png";
 export { default as Screen4Bg3 } from "./screen4Bg3.png";
-export { default as Screen4Bg4 } from "./screen4Bg4.png";
 export { default as Arrow } from "./arrow.png";
 export { default as Agent } from "./agent.png";
 export { default as Message } from "./message.png";
@@ -14,6 +17,7 @@ export { default as ButtonBgLg } from "./buttonBgLg.png";
 export { default as ButtonBgLgHover } from "./buttonBgLgHover.png";
 export { default as ButtonBgMd } from "./buttonBgMd.png";
 export { default as ButtonBgMdHover } from "./buttonBgMdHover.png";
+export { default as ButtonSsm } from "./buttonSsm.png";
 export { default as Close } from "./close.png";
 export { default as Popup } from "./popup.png";
 export { default as PopupLg } from "./popupLg.png";
@@ -24,4 +28,6 @@ export { default as XHover } from "./xHover.png";
 export { default as PopupDropdown } from "./popupDropdown.png";
 export { default as GameLeftBorder } from "./gameLeftBorder.png";
 export { default as GameRightBorder } from "./gameRightBorder.png";
+export { default as WorldFun } from "./worldFun.png";
+export { default as Screen1SubTitle } from "./screen1SubTitle.svg";
 

@@ -255,7 +255,7 @@ function animateAgent(
   (sprite as any).targetPos = endPos;
   (sprite as any).isMoving = true;
 
-  const duration = (distance / speed) * 2000;
+  const duration = (distance / speed) * 1000;
   animateMovement(sprite, startPos, endPos, duration, () => {
     (sprite as any).isMoving = false;
     animateAgent(

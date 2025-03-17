@@ -4,7 +4,7 @@
 import React from "react";
 import { Box, Spinner, Text } from "@chakra-ui/react";
 import { ClickButtonWrapper } from './ClickButtonWrapper'
-import { ButtonBg, ButtonBgHover, ButtonBgLg, ButtonBgLgHover, ButtonBgMd, ButtonBgMdHover} from '@/images'  
+import { ButtonBg, ButtonBgHover, ButtonSsm, ButtonBgLg, ButtonBgLgHover, ButtonBgMd, ButtonBgMdHover} from '@/images'  
 
 interface iGeneralButton {
   loading?: boolean;
@@ -14,13 +14,14 @@ interface iGeneralButton {
   title: string;
   style?: React.CSSProperties;
   fz?: string
-  size: 'sm' | 'md' | 'lg'
+  size: 'ssm' | 'sm' | 'md' | 'lg' 
 }
 
 const bgs = {
-  sm: { bg: ButtonBg, hover: ButtonBgHover, w: '225px', },
-  md: { bg: ButtonBgMd, hover: ButtonBgMdHover, w: '331px', },
-  lg: { bg: ButtonBgLg, hover: ButtonBgLgHover, w: '447px', },
+  ssm: { bg: ButtonBg, hover: ButtonBgHover, w: '127px', h: '39px', fz: '14px', },
+  sm: { bg: ButtonBg, hover: ButtonBgHover, w: '225px',h: '69px', fz: '24px', },
+  md: { bg: ButtonBgMd, hover: ButtonBgMdHover, w: '331px', h: '69px', fz: '24px',},
+  lg: { bg: ButtonBgLg, hover: ButtonBgLgHover, w: '447px', h: '69px', fz: '24px',},
 }
 export const GeneralButton: React.FC<iGeneralButton> = ({
 
@@ -31,7 +32,6 @@ export const GeneralButton: React.FC<iGeneralButton> = ({
   title,
   style,
   fz = '24px',
-
   size
 }) => {
   const handleClick = () => {
@@ -45,7 +45,7 @@ export const GeneralButton: React.FC<iGeneralButton> = ({
   return (
     <ClickButtonWrapper onClick={handleClick} disable={disable} clickableDisabled={true}> 
       <Box
-        bgImage={ bgs[size].bg}
+        bgImage={bgs[size].bg}
         bgSize="cover"
         bgPosition='center'
         bgRepeat="no-repeat"    
@@ -57,7 +57,7 @@ export const GeneralButton: React.FC<iGeneralButton> = ({
           color: '#293033'
         }}
         transition="background-image 0.5s ease, color 0.5s ease"
-        h='69px'
+        h={bgs[size].h}
         w={bgs[size].w}
         style={{
           ...style,
@@ -65,7 +65,7 @@ export const GeneralButton: React.FC<iGeneralButton> = ({
       >
         {loading ? 
           <Spinner size="md" color="white" h={ loadingSize } w={ loadingSize } /> : 
-          <Text className="fw700 " fontSize={fz}>{title}</Text>
+          <Text fontSize={bgs[size].fz}>{title}</Text>
         }
       </Box>
     </ClickButtonWrapper>

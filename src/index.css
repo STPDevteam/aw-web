@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Messina Sans';
+  src: url('./styles/MessinaSans-Book.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
 
 @font-face {
   font-family: 'Upheaval Pro';

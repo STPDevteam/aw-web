@@ -38,7 +38,7 @@ export const Pages = () => {
             return (
               <Box className='h100 '>
                 <Box className="section h100 ">
-                  <Screen1 />
+                  <Screen1 onMoveTo={id => fullpageApi.moveTo(id)}/>
                 </Box>
                 <div className="section h100" >     
                   <Screen2/>          
