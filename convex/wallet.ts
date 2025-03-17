@@ -302,3 +302,140 @@ export const cleanupExpiredChallenges = mutation({
     };
   },
 });
+
+/**
+ * Get the current check-in status for a user
+ */
+export const getCheckInStatus = query({
+  args: {
+    walletAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress } = args;
+    
+    // Get the current user
+    const user = await ctx.db
+      .query('walletUsers')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!user) {
+      throw new ConvexError('User not found');
+    }
+    
+    // Get current date in UTC
+    const now = new Date();
+    const today = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
+    ));
+    
+    // The next reset time (UTC midnight)
+    const nextResetTime = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1
+    ));
+    
+    // Check if user has already checked in today
+    const existingCheckIn = await ctx.db
+      .query('checkIns')
+      .withIndex('userDaily', (q) => 
+        q.eq('userId', user._id).gte('checkInDate', today.getTime())
+      )
+      .unique();
+    
+    return {
+      canCheckIn: !existingCheckIn,
+      nextResetTime: nextResetTime.getTime(),
+      currentPoints: user.points,
+      lastCheckIn: existingCheckIn ? existingCheckIn.checkInDate : null,
+    };
+  },
+});
+
+/**
+ * Daily check-in functionality
+ * 
+ * Allows users to check in once per day (based on UTC time) and earn 10 points.
+ * The check-in status resets at UTC 00:00.
+ */
+export const dailyCheckIn = mutation({
+  args: {
+    walletAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress } = args;
+    
+    // Get the current user
+    const user = await ctx.db
+      .query('walletUsers')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!user) {
+      throw new ConvexError('User not found');
+    }
+    
+    // Get current date in UTC
+    const now = new Date();
+    const today = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
+    ));
+    
+    // Check if user has already checked in today
+    const existingCheckIn = await ctx.db
+      .query('checkIns')
+      .withIndex('userDaily', (q) => 
+        q.eq('userId', user._id).gte('checkInDate', today.getTime())
+      )
+      .unique();
+    
+    if (existingCheckIn) {
+      return {
+        success: false,
+        message: 'You have already checked in today',
+        nextCheckIn: new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() + 1
+        )).getTime()
+      };
+    }
+    
+    // Award points
+    await ctx.db.patch(user._id, {
+      points: user.points + 10
+    });
+    
+    // Get the updated user after adding points
+    const updatedUser = await ctx.db.get(user._id);
+    
+    if (!updatedUser) {
+      throw new ConvexError('Failed to update user points');
+    }
+    
+    // Record check-in
+    await ctx.db.insert('checkIns', {
+      userId: user._id,
+      walletAddress,
+      checkInDate: today.getTime(),
+      pointsEarned: 10
+    });
+    
+    return {
+      success: true,
+      message: 'Successfully checked in and earned 10 points!',
+      currentPoints: updatedUser.points,
+      nextCheckIn: new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1
+      )).getTime()
+    };
+  },
+});
+

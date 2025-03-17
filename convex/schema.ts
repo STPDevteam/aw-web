@@ -51,6 +51,20 @@ export default defineSchema({
     .index('walletAddress', ['walletAddress'])
     .index('expiration', ['expiresAt']),
 
+  // Daily check-ins table - tracks user check-ins
+  checkIns: defineTable({
+    // Reference to the user who checked in
+    userId: v.id('walletUsers'),
+    // Wallet address for easier querying
+    walletAddress: v.string(),
+    // The date of check-in (as UTC timestamp)
+    checkInDate: v.number(),
+    // Points earned from this check-in
+    pointsEarned: v.number(),
+  })
+    .index('userDaily', ['userId', 'checkInDate'])
+    .index('walletAddress', ['walletAddress']),
+
   ...agentTables,
   ...aiTownTables,
   ...engineTables,
