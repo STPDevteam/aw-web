@@ -74,7 +74,7 @@ const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container,
     tileDim: number,
 
   ): boolean {
-    const checkPoints = 3; 
+    const checkPoints = 20; 
   
     for (let i = 1; i <= checkPoints; i++) {
       const ratio = i / (checkPoints + 1);
