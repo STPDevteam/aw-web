@@ -113,17 +113,17 @@ export const Nav = () => {
                     <GeneralButton 
                         disable={isConnected ? (!!!canCheckIn) : false}
                         onClick={onClaim}
-                        title={isConnected ? (checkStatus && canCheckIn) ? 'Claim' : 'Claimed' : 'Claim'}
+                        title={isConnected ? (checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed' : 'Daily Clock-in'}
                         size='sm'
                     />
                     <GeneralButton 
                         onClick={() => checkWalletConnected(() => setCreateAgentOpen(true))}
-                        title='Create agent'
+                        title='My Agent'
                         size='sm'
                     />
                     <GeneralButton 
                         onClick={() => checkWalletConnected(() => setRandomOpen(true))}
-                        title='Random encounter (1 $STPT)'
+                        title='Random Encounter'
                         size="lg"
                     />
                 </Box>               
