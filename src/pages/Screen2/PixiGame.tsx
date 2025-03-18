@@ -138,29 +138,7 @@ export const PixiGame:React.FC<{
   const memoizedPositionIndicator = useMemo(() => {
     return lastDestination ? <PositionIndicator destination={lastDestination} tileDim={tileDim} /> : null;
   }, [lastDestination, tileDim]);
-
-
-
-
-
-  const memoizedPlayers = useMemo(() => {
-    
-    
-    return players.map((p) => (
-      <Player
-        engineId={engineId}
-        key={`player-${p.id}`}
-        game={game}
-        player={p}
-        isViewer={p.id === humanPlayerId}
-        onClick={setSelectedElement}
-        historicalTime={historicalTime}
-      />
-    ));
-  }, [ humanPlayerId]);
-
-
-
+  
   const px2Positon = () => {
     const viewport = viewportRef.current;
     if(dragStart.current && viewport) {
@@ -197,7 +175,19 @@ export const PixiGame:React.FC<{
       {viewportRef.current && (
         <SimulatedAgents container={viewportRef.current} tileDim={tileDim} mapWidth={width}/>
       )}
-      {memoizedPlayers}
+      {
+        players.map((p) => (
+          <Player
+            engineId={engineId}
+            key={`player-${p.id}`}
+            game={game}
+            player={p}
+            isViewer={p.id === humanPlayerId}
+            onClick={setSelectedElement}
+            historicalTime={historicalTime}
+          />
+        ))
+      }
       {lastDestination && <PositionIndicator destination={lastDestination} tileDim={tileDim} />}
     </PixiViewport>
   );
