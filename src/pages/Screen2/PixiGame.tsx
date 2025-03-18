@@ -35,11 +35,6 @@ export const PixiGame:React.FC<{
   agentInfo,
 
 }) => {
-
-
-
-  
-
   // PIXI setup.
   const pixiApp = useApp();
   const viewportRef = useRef<Viewport | undefined>();
@@ -52,10 +47,6 @@ export const PixiGame:React.FC<{
 
 
   const moveTo = useSendInput(engineId, 'moveTo');
-
-
-  
-
 
   // Interaction for clicking on the world to navigate.
   const dragStart = useRef<{ screenX: number; screenY: number } | null>(null);
@@ -138,7 +129,7 @@ export const PixiGame:React.FC<{
   const memoizedPositionIndicator = useMemo(() => {
     return lastDestination ? <PositionIndicator destination={lastDestination} tileDim={tileDim} /> : null;
   }, [lastDestination, tileDim]);
-  
+
   const px2Positon = () => {
     const viewport = viewportRef.current;
     if(dragStart.current && viewport) {

@@ -1,6 +1,6 @@
 import { data as f0SpritesheetData } from './spritesheets/f0';
-import {  SimulatedAgent } from '../src/components/createSimulatedAgentSprite';
 import * as map from './gentle';
+import { agentNames } from './agentNames'
 
 
 // Helper functions for randomly generating names, descriptions and plans
@@ -155,11 +155,10 @@ export const fixedCharacters = [
 const randomCount = 42;
 const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
   const id = i + 9;
-  const randomName = getRandomName(id);
   return {
-    name: randomName,
+    name: agentNames[id],
     character: `f${id}`,
-    identity: randomIdentity(randomName),
+    identity: randomIdentity(agentNames[id]),
     plan: randomPlan(),
   };
 });
@@ -181,31 +180,6 @@ export const characters = fixedCharacters.concat(randomCharacters);
 
 // Characters move at 0.75 tiles per second.
 export const movementSpeed = 0.75;
-
-
-
-
-
-
-// export const mockAgents = () => {
-
-//   return Array.from({ length: 400}, (_, i) => {
-//     const num = 500 - i;
-//     return {
-//       activity: { description: 'reading a book', emoji: '📖', until: 0 },
-//       facing: getRandomDirection(),
-//       human: undefined,
-//       id: `p:${num}`,
-//       lastInput: 0,
-//       pathfinding: undefined,
- 
-//       position: { x: getRandomNumber(4, 205), y: getRandomNumber(4, 197) },
-//       speed: 0.1,
-//       textureUrl: `/ai-town/assets/avatar/${(i % 10) + 10}.png`,
-//       spritesheetData: f0SpritesheetData,
-//     };
-//   });
-// };
 
 
 function getRandomNumber(min: number, max: number): number {
@@ -237,45 +211,37 @@ function isPositionObstacle(x: number, y: number, tileDim: number): boolean {
   return blockedInBg || blockedInObj;
 }
 
-
-
 function getRandomPassablePosition(minX: number, maxX: number, minY: number, maxY: number, tileDim: number): { x: number, y: number } {
  
-  const maxAttempts = 3;
+  const maxAttempts = 5;
   let attempts = 0;
   
   while (attempts < maxAttempts) {
 
     const x = getRandomNumber(minX, maxX);
     const y = getRandomNumber(minY, maxY);
-    
 
     if (!isPositionObstacle(x, y, tileDim)) {
       return { x, y };
     }
-    
     attempts++;
   }
-  
-
   return { x: 150, y: 180 }; 
 }
 
 export const mockAgents = (tileDim: number = 32) => { 
-  return Array.from({ length: 400}, (_, i) => {
+  return Array.from({ length: 400 }, (_, i) => {
     const num = 500 - i;
-    
-
     const position = getRandomPassablePosition(6, map.mapwidth - 6, 6, map.mapheight - 6, tileDim);
     
     return {
+      name: agentNames[i - 1],
       activity: { description: 'reading a book', emoji: '📖', until: 0 },
       facing: getRandomDirection(),
       human: undefined,
       id: `p:${num}`,
       lastInput: 0,
       pathfinding: undefined,
-      // position: { x: 23, y: 26},
       position: position,
       speed: 0.1,
       textureUrl: `/ai-town/assets/avatar/${(i % 10) + 10}.png`,
