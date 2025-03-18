@@ -1,6 +1,6 @@
 
 import type { FC } from "react"
-import React from "react"
+import React, { useEffect } from "react"
 import { Box, Image, Text, Modal, ModalOverlay, ModalContent, ModalBody } from "@chakra-ui/react"
 import { GeneralButton }  from '@/components'
 import { Close, PopupLg } from '@/images'
@@ -25,6 +25,16 @@ export const BasePopup: FC<iBasePopup> = ({
     okText
 }) => {
 
+     useEffect(() => {
+        const fullpageInstance = (window as any).fullpage_api    
+        if (visible && fullpageInstance) {
+            fullpageInstance.setAllowScrolling(false)
+            fullpageInstance.setKeyboardScrolling(false)
+        } else if (fullpageInstance) {
+            fullpageInstance.setAllowScrolling(true)
+            fullpageInstance.setKeyboardScrolling(true)
+        }
+    }, [visible])
     
     const onHandle = () => {
         if(onOK) {

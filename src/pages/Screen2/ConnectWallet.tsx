@@ -157,15 +157,17 @@
 // };
 
 
-import React, { FC, useState, useEffect } from 'react'
+import React, { FC, useState, useEffect, useRef } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ClickButtonWrapper, GeneralButton, BasePopup, Notification } from '@/components'
-import { Image, Text, Box } from "@chakra-ui/react"
-import { useDisconnect } from 'wagmi'
+import { Image, Text, Box, useAlertStyles } from "@chakra-ui/react"
+import { useDisconnect, useConnect } from 'wagmi'
 import { ArrowBottom } from '@/images'
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAccount, useSignMessage } from 'wagmi';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
+import { openConnectWalletAction, selectOpenConnectWallet } from '@/redux/reducer/agentReducer.js';
 
 
 export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
@@ -176,24 +178,33 @@ export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
     type: ''
   })
   const { disconnect } = useDisconnect();
+  
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
-
   const createChallenge = useMutation(api.wallet.createAuthChallenge);
   const verifySignature = useMutation(api.wallet.verifySignature);
-
-
+  const openConnectWallet = useAppSelector(selectOpenConnectWallet)
+  const dispatch = useAppDispatch()
+  const openConnectModalRef = useRef<() => void>(() => {})
+  useEffect(() => {
+    const didSignIn = localStorage.getItem('didSignIn')
+    if (isConnected && address && !didSignIn) {
+      signInWithWallet().then(() => {
+        localStorage.setItem('didSignIn', 'true')
+      })
+    }
+    if(!isConnected) {
+      localStorage.removeItem('didSignIn')
+    }
+  }, [isConnected, address])
 
   useEffect(() => {
-    const didSignIn = sessionStorage.getItem('didSignIn');
-    if (isConnected && address && !didSignIn) {
-        signInWithWallet().then(() => {
-          sessionStorage.setItem('didSignIn', 'true');
-        });
-    }
-  }, [isConnected, address]);
-
+    if(openConnectWallet) {
   
+      openConnectModalRef.current();
+      dispatch(openConnectWalletAction(false))
+    }
+  },[openConnectWallet])
 
   async function signInWithWallet() {
     try {
@@ -208,7 +219,7 @@ export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
       });
       setSignInfo({
         open: true,
-        msg: result.isNewUser ? 'New user signed successfully.' : 'signed successfully.',
+        msg: result.isNewUser ? 'New user signed successfully.' : 'Signed successfully.',
         type: 'success'
       })
       return result;
@@ -231,6 +242,7 @@ export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
             authenticationStatus,
             mounted,
           }) => {
+            openConnectModalRef.current = openConnectModal
             const ready = mounted 
             const connected = ready && account && chain
             return (
@@ -290,7 +302,7 @@ export const ConnectWallet:FC<{ disable?: boolean }> = ({ disable }) => {
                         </Box>
                     }
                     onOK={() => {
-                      sessionStorage.removeItem('didSignIn');
+                      localStorage.removeItem('didSignIn')
                       disconnect()
                     }}
                     okText="Disconnect"

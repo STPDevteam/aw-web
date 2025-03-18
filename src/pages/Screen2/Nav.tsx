@@ -1,14 +1,16 @@
 
 
 
-import React, { FC, useState, useEffect } from 'react'
-import { Text, Link, Box, Image } from '@chakra-ui/react'
-import { Screen2Bg } from '@/images'
+import React, {  useState, useEffect } from 'react'
+import { Text, Box,  } from '@chakra-ui/react'
 import { GeneralButton, Notification, BasePopup, CreateInput } from '@/components'
 import { ConnectWallet } from './ConnectWallet'
-import { useAppSelector } from '@/redux/hooks'
-import { selectedAgentInfo } from '@/redux/reducer'
 
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api.js'
+import { useAccount } from 'wagmi';
+import { useAppDispatch } from '@/redux/hooks.js';
+import { openConnectWalletAction } from '@/redux/reducer/agentReducer.js';
 
 interface iInput {
     value: string
@@ -38,13 +40,40 @@ export const Nav = () => {
         disable: true
     })
 
+    
+    const { address, isConnected } = useAccount()
+    const dispatch = useAppDispatch()
 
-    // const agentInfo = useAppSelector(selectedAgentInfo)
-  
-    // console.log('222222222222222222222', agentInfo)
 
+    const queryArgs = address
+    ? { walletAddress: address as `0x${string}` }
+    : null
+
+    const checkStatus = useQuery(api.wallet.getCheckInStatus, queryArgs || 'skip')
+    const [canCheckIn, setCanCheckIn] = useState<boolean | undefined>(checkStatus?.canCheckIn);
+
+    const dailyCheckIn = useMutation(api.wallet.dailyCheckIn)
+
+
+    useEffect(() => {
+        setCanCheckIn(checkStatus?.canCheckIn);
+      }, [checkStatus]);
+
+    const checkWalletConnected = (cb:() => void) => {
+        if(isConnected && address) {
+            cb()
+        }else {
+            dispatch(openConnectWalletAction(true))
+        }
+    }
     const onClaim = () => {
-        setClaimOpen(true)
+        checkWalletConnected(async() => {
+            const a = await dailyCheckIn({ walletAddress: address as `0x${string}` })
+            if(a && a.success) {
+                setClaimOpen(true)
+                setCanCheckIn(false);
+            }
+        })
     }
   
     const onCreateAgent = () => {
@@ -77,25 +106,23 @@ export const Nav = () => {
         setMyAgentOpen(false)
     }
     
-    const onRandom = () => {
-        setRandomOpen(true)
-    }
     return(
         <Box>
             <Box className='fx-row ai-ct jc-sb w-100'>
                 <Box className='fx-row ai-ct jc-sb'>
                     <GeneralButton 
+                        disable={isConnected ? (!!!canCheckIn) : false}
                         onClick={onClaim}
-                        title='Claim'
+                        title={isConnected ? (checkStatus && canCheckIn) ? 'Claim' : 'Claimed' : 'Claim'}
                         size='sm'
                     />
                     <GeneralButton 
-                        onClick={() => setCreateAgentOpen(true)}
+                        onClick={() => checkWalletConnected(() => setCreateAgentOpen(true))}
                         title='Create agent'
                         size='sm'
                     />
                     <GeneralButton 
-                        onClick={onRandom}
+                        onClick={() => checkWalletConnected(() => setRandomOpen(true))}
                         title='Random encounter (1 $STPT)'
                         size="lg"
                     />

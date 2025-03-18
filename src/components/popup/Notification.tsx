@@ -1,9 +1,9 @@
 
 import type { FC } from "react"
-import React from "react"
+import React, { useEffect } from "react"
 import { Box, Image, Text, Modal, ModalOverlay, ModalContent, ModalBody } from "@chakra-ui/react"
-import { GeneralButton }  from '@/components'
 import { Close, Popup } from '@/images'
+import ReactFullpage from '@fullpage/react-fullpage';
 
 interface iNotification {
     visible: boolean
@@ -20,7 +20,20 @@ export const Notification: FC<iNotification> = ({
     content,
     closeOnOverlay = true
 }) => {
+
+    useEffect(() => {
+        const fullpageInstance = (window as any).fullpage_api;
     
+        if (visible && fullpageInstance) {
+          fullpageInstance.setAllowScrolling(false);
+          fullpageInstance.setKeyboardScrolling(false);
+        } else if (fullpageInstance) {
+          fullpageInstance.setAllowScrolling(true);
+          fullpageInstance.setKeyboardScrolling(true);
+        }
+      }, [visible]);
+
+
     return (
         <Modal isOpen={visible} onClose={onClose} isCentered closeOnOverlayClick={closeOnOverlay}>
             <ModalOverlay />
@@ -41,7 +54,6 @@ export const Notification: FC<iNotification> = ({
                     </Box>
                     <Text className="gray fz20 fw700" mt="94px">{content}</Text>             
                 </ModalBody>                
-               
             </ModalContent>
         </Modal>
     )

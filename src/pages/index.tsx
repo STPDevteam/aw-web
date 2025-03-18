@@ -25,7 +25,7 @@ export const Pages = () => {
           controlArrows={false}
           afterLoad={(origin, destination, direction) => setCurrentIndex(destination.index)}
           anchors={['landing-page', 'world-fun', 'platform-generated-worlds', 'emergent-gaming']}
-          normalScrollElements=".screen2-map-container"
+          normalScrollElements=".screen2-map-container "
           render={({ fullpageApi }) => {
             return (
               <Box className='h100 '>

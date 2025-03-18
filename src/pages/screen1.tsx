@@ -24,6 +24,7 @@ export const Screen1:FC<{ onMoveTo: (id: string) => void }> = ({ onMoveTo }) => 
               { name: 'AGENTS', id: 'emergent-gaming'},
             ].map(item => (
               <GeneralButton 
+                key={item.name}
                 onClick={() => onMoveTo(item.id)}
                 title={item.name}
                 size='ssm'
