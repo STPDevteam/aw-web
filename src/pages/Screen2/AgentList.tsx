@@ -20,7 +20,7 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
     const agents = useQuery(api.world.paginatedPlayerDescriptions, { 
             worldId,
             paginationOpts: {
-                numItems: 100,
+                numItems: 50,
                 cursor: null,
             }
     })
@@ -30,7 +30,10 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
           !!agents?.page &&
           agents.page.length > 0 &&
           agents.page.map((item, idx) => (
-            <ListItem item={item} key={item._id} idx={idx} focusAgent={() => dispatch(selectedAgentInfoAction(item))}/>
+            <ListItem item={item} key={item._id} idx={idx} focusAgent={() => {
+                // console.log('dddddddddd', item)
+                dispatch(selectedAgentInfoAction(item))
+            }}/>
           ))
         )
       }, [agents])
@@ -44,11 +47,6 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                     bgPosition='center'
                     bgRepeat="no-repeat"    
                     className="click fx-row ai-ct jc-sb"
-                    // _hover={{
-                    //     bgImage: ButtonBgMdHover,
-                    //     color: '#293033'
-                    // }}
-                    // transition="background-image 0.5s ease, color 0.5s ease"
                     h='65px'
                     w="331px"
                     px="36px"
@@ -59,7 +57,7 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
             </ClickButtonWrapper>
 
             {
-                visible && 
+                visible &&  
                 <Box 
                     bgImage={PopupDropdown}
                     bgSize="cover"
@@ -74,6 +72,7 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                         h="calc(100% - 22px)"
                         px="30px"
                         className='w100 '
+                        onWheel={(e) => e.stopPropagation()} 
                     >
                         { renderedAgents }
                     </Box>
@@ -89,7 +88,7 @@ const ListItem:FC<{ item:any, idx: number, focusAgent:() => void }>= ({ item,idx
     const isSpecialAgent = idx < 5 
     return (
       <Box 
-        className={`fx-row ai-ct jc-sb click  ${isHovered ? 'box_clip' : ''}`}
+        className='fx-row ai-ct jc-sb click box_clip'
         color="#E0E0E0"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}

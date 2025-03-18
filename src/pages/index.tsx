@@ -16,15 +16,6 @@ export const useScreenIndex = () => useContext(ScreenIndexContext);
 
 export const Pages = () => {  
   const [currentIndex, setCurrentIndex] = useState(0);
-  
-  // useEffect(() => {
-  //   console.log = () => {};
-  //   console.info = () => {};
-  //   console.warn = () => {};
-  //   console.error = () => {};
-  // },[])
-
-  // console.log('currentIndex', currentIndex)
   return (  
     <ScreenIndexContext.Provider value={currentIndex}>
       <div className='h100 '>
@@ -34,6 +25,7 @@ export const Pages = () => {
           controlArrows={false}
           afterLoad={(origin, destination, direction) => setCurrentIndex(destination.index)}
           anchors={['landing-page', 'world-fun', 'platform-generated-worlds', 'emergent-gaming']}
+          normalScrollElements=".screen2-map-container"
           render={({ fullpageApi }) => {
             return (
               <Box className='h100 '>

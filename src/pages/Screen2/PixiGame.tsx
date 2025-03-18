@@ -65,7 +65,7 @@ export const PixiGame:React.FC<{
   const onMapPointerDown = (e: any) => {
     // https://pixijs.download/dev/docs/PIXI.FederatedPointerEvent.html
     dragStart.current = { screenX: e.screenX, screenY: e.screenY };
-    // px2Positon()
+    px2Positon()
   };
 
   const [lastDestination, setLastDestination] = useState<{
@@ -110,18 +110,18 @@ export const PixiGame:React.FC<{
   };
  
 
-
-  // useEffect(() => {
-  //   if(agentInfo) {
-
-  //     console.log('agentInfo', agentInfo)
-  //     if(viewportRef.current) {
-  //       viewportRef.current.animate({
-  //         position: new PIXI.Point(22, 26),
-  //       });
-  //     }
-  //   }
-  // },[agentInfo])
+  useEffect(() => {
+    if(agentInfo && viewportRef.current) {      
+      const focusPlayer = players.filter(p => p.id === agentInfo.playerId)
+      if(focusPlayer) {
+        const { x, y } = focusPlayer[0].position
+        viewportRef.current.animate({
+          position: new PIXI.Point(x * tileDim,y * tileDim),
+          scale: 1,
+        })
+      }
+    }
+  },[agentInfo])
   
   // Zoom on the user's avatar when it is created
   useEffect(() => {

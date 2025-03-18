@@ -19,6 +19,7 @@ import { useAppSelector } from '@/redux/hooks.ts';
 
 export const Game = () => {
   const agentInfo = useAppSelector(selectedAgentInfo)
+
   
   const convex = useConvex();
   const [selectedElement, setSelectedElement] = useState<{
@@ -73,8 +74,8 @@ export const Game = () => {
         bgRepeat="no-repeat"  
         w="1161px"
         h="661px"
-        className='box_clip'
-        
+        className='box_clip screen2-map-container'  
+        cursor='all-scroll'
       > 
           <Stage width={width} height={height} options={{ backgroundColor: '#1F1F23' }}>
             <ConvexProvider client={convex}>
@@ -97,6 +98,8 @@ export const Game = () => {
         w="494px"
         h="661px"
         className='fx jc-ct'
+        overflowY="scroll"
+        onWheel={(e) => e.stopPropagation()} 
       >       
         <PlayerDetails
           worldId={worldId} 
