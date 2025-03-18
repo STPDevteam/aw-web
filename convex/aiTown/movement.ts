@@ -36,8 +36,22 @@ type PathCandidate = {
 };
 
 export function stopPlayer(player: Player) {
-  delete player.pathfinding;
-  player.speed = 0;
+  try {
+    if (!player) {
+      console.error("Tried to stop a non-existent player");
+      return;
+    }
+    
+    // Safely delete pathfinding
+    if (player.pathfinding) {
+      delete player.pathfinding;
+    }
+    
+    // Set speed to 0
+    player.speed = 0;
+  } catch (error) {
+    console.error("Error in stopPlayer function:", error);
+  }
 }
 
 export function movePlayer(
@@ -74,7 +88,7 @@ export function movePlayer(
 
 export function findRoute(game: Game, now: number, player: Player, destination: Point) {
   try {
-    // 首先检查目标点是否在地图边界内
+    // First check if the destination point is within the map boundaries
     if (destination.x < 0 || destination.y < 0 || 
         destination.x >= game.worldMap.width || 
         destination.y >= game.worldMap.height) {
@@ -82,60 +96,78 @@ export function findRoute(game: Game, now: number, player: Player, destination: 
       return null;
     }
     
-    // 简化寻路：只使用直线路径连接当前位置和目标位置
     const startTime = now;
-    const straightLineDistance = Math.sqrt(
-      Math.pow(player.position.x - destination.x, 2) + 
-      Math.pow(player.position.y - destination.y, 2)
-    );
+    const startPos = { ...player.position }; // Clone to avoid reference issues
     
-    // 计算到达时间 (时间 = 距离 / 速度)
-    const endTime = startTime + (straightLineDistance / movementSpeed) * 1000;
+    // Calculate distances and directions
+    const dx = destination.x - startPos.x;
+    const dy = destination.y - startPos.y;
+    const xDistance = Math.abs(dx);
+    const yDistance = Math.abs(dy);
     
-    // 计算朝向
-    const dx = destination.x - player.position.x;
-    const dy = destination.y - player.position.y;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const normalizedDx = length > 0 ? dx / length : 0;
-    const normalizedDy = length > 0 ? dy / length : 0;
-    
-    // 创建直线路径
-    const directPath: PathComponent[] = [
-      {
-        position: { x: player.position.x, y: player.position.y },
-        facing: { dx: normalizedDx, dy: normalizedDy },
-        t: startTime
-      },
-      {
-        position: { x: destination.x, y: destination.y },
-        facing: { dx: normalizedDx, dy: normalizedDy },
-        t: endTime
-      }
-    ];
-    
-    // 如果距离很远，添加一些中间点，使移动更加平滑
-    if (straightLineDistance > 4) {
-      const numIntermediatePoints = Math.min(Math.floor(straightLineDistance / 2), 5);
-      const updatedPath: PathComponent[] = [directPath[0]];
-      
-      for (let i = 1; i <= numIntermediatePoints; i++) {
-        const ratio = i / (numIntermediatePoints + 1);
-        const intermediateX = player.position.x + dx * ratio;
-        const intermediateY = player.position.y + dy * ratio;
-        const intermediateTime = startTime + (endTime - startTime) * ratio;
-        
-        updatedPath.push({
-          position: { x: intermediateX, y: intermediateY },
-          facing: { dx: normalizedDx, dy: normalizedDy },
-          t: intermediateTime
-        });
-      }
-      
-      updatedPath.push(directPath[1]);
-      return { path: compressPath(updatedPath), newDestination: null };
+    // No movement needed if already at destination
+    if (xDistance === 0 && yDistance === 0) {
+      return {
+        path: compressPath([{
+          position: { x: startPos.x, y: startPos.y },
+          facing: { dx: 0, dy: 0 },
+          t: startTime
+        }]),
+        newDestination: null
+      };
     }
     
-    return { path: compressPath(directPath), newDestination: null };
+    // Calculate movement times
+    // Use Manhattan distance (x+y) to match frontend behavior
+    const totalDistance = xDistance + yDistance;
+    
+    // Fixed speed of 0.75 tiles per second 
+    // 1000ms / 0.75 = 1333.33ms per tile
+    const msPerTile = 1000 / movementSpeed;
+    const totalMovementTime = totalDistance * msPerTile;
+    
+    const path: PathComponent[] = [];
+    
+    // Add starting point
+    path.push({
+      position: { x: startPos.x, y: startPos.y },
+      facing: { dx: xDistance > 0 ? 1 : (xDistance < 0 ? -1 : 0), dy: 0 },
+      t: startTime
+    });
+    
+    // For movement along a single axis, create a direct path
+    if (xDistance === 0 || yDistance === 0) {
+      path.push({
+        position: { x: destination.x, y: destination.y },
+        facing: { 
+          dx: xDistance > 0 ? 1 : (xDistance < 0 ? -1 : 0), 
+          dy: yDistance > 0 ? 1 : (yDistance < 0 ? -1 : 0)
+        },
+        t: startTime + totalMovementTime
+      });
+    } else {
+      // Calculate the time for X-axis movement portion
+      const xMovementTime = (xDistance / totalDistance) * totalMovementTime;
+      
+      // Add intermediate point after X movement is complete
+      path.push({
+        position: { x: destination.x, y: startPos.y },
+        facing: { dx: 0, dy: dy > 0 ? 1 : -1 },
+        t: startTime + xMovementTime
+      });
+      
+      // Add the final destination
+      path.push({
+        position: { x: destination.x, y: destination.y },
+        facing: { dx: 0, dy: 0 },
+        t: startTime + totalMovementTime
+      });
+    }
+    
+    return { 
+      path: compressPath(path),
+      newDestination: null
+    };
   } catch (e) {
     console.error(`Error in findRoute: ${e}`);
     return null;
@@ -143,19 +175,44 @@ export function findRoute(game: Game, now: number, player: Player, destination: 
 }
 
 export function blocked(game: Game, now: number, pos: Point, playerId?: GameId<'players'>) {
-  // 完全禁用碰撞检测，总是返回null（表示没有障碍）
-  // 只检查是否越界，其他都不检查
-  if (pos.x < 0 || pos.y < 0 || pos.x >= game.worldMap.width || pos.y >= game.worldMap.height) {
-    return 'out of bounds';
+  try {
+    // Only check for map boundaries
+    if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') {
+      return 'invalid position';
+    }
+    
+    if (pos.x < 0 || pos.y < 0 || 
+        pos.x >= game.worldMap.width || 
+        pos.y >= game.worldMap.height) {
+      return 'out of bounds';
+    }
+    
+    // No other collision checks
+    return null;
+  } catch (error) {
+    console.error("Error in blocked function:", error);
+    return 'error checking position';
   }
-  return null;
 }
 
 export function blockedWithPositions(position: Point, otherPositions: Point[], map: WorldMap) {
-  // 完全禁用碰撞检测，只保留地图边界检查
-  if (position.x < 0 || position.y < 0 || position.x >= map.width || position.y >= map.height) {
-    return 'out of bounds';
+  try {
+    // Validate input
+    if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+      return 'invalid position';
+    }
+    
+    // Only check for map boundaries
+    if (position.x < 0 || position.y < 0 || 
+        position.x >= map.width || 
+        position.y >= map.height) {
+      return 'out of bounds';
+    }
+    
+    // No other collision checks
+    return null;
+  } catch (error) {
+    console.error("Error in blockedWithPositions function:", error);
+    return 'error checking position';
   }
-  // 不再检查物体层和其他玩家的碰撞
-  return null;
 }
