@@ -86,6 +86,15 @@ export function movePlayer(
   return;
 }
 
+// Helper function to ensure we never have a zero vector for facing direction
+function ensureValidFacingVector(vector: Vector): Vector {
+  if (vector.dx === 0 && vector.dy === 0) {
+    // Default to facing right if vector is zero
+    return { dx: 1, dy: 0 };
+  }
+  return vector;
+}
+
 export function findRoute(game: Game, now: number, player: Player, destination: Point) {
   try {
     // First check if the destination point is within the map boundaries
@@ -107,10 +116,12 @@ export function findRoute(game: Game, now: number, player: Player, destination: 
     
     // No movement needed if already at destination
     if (xDistance === 0 && yDistance === 0) {
+      // Use the player's current facing direction if available, or default to facing right
+      const currentFacing = player.facing ? ensureValidFacingVector(player.facing) : { dx: 1, dy: 0 };
       return {
         path: compressPath([{
           position: { x: startPos.x, y: startPos.y },
-          facing: { dx: 0, dy: 0 },
+          facing: currentFacing,
           t: startTime
         }]),
         newDestination: null
@@ -128,38 +139,65 @@ export function findRoute(game: Game, now: number, player: Player, destination: 
     
     const path: PathComponent[] = [];
     
-    // Add starting point
-    path.push({
-      position: { x: startPos.x, y: startPos.y },
-      facing: { dx: xDistance > 0 ? 1 : (xDistance < 0 ? -1 : 0), dy: 0 },
-      t: startTime
-    });
-    
-    // For movement along a single axis, create a direct path
+    // Handle single-axis movement (horizontal or vertical only)
     if (xDistance === 0 || yDistance === 0) {
+      // Direction vector that points in the movement direction
+      const directionVector = {
+        dx: xDistance > 0 ? 1 : (xDistance < 0 ? -1 : 0),
+        dy: yDistance > 0 ? 1 : (yDistance < 0 ? -1 : 0)
+      };
+      
+      // Start facing the direction of movement
+      path.push({
+        position: { x: startPos.x, y: startPos.y },
+        facing: directionVector, // Already valid (either dx or dy is non-zero)
+        t: startTime
+      });
+      
+      // End facing the same direction (still facing forward)
       path.push({
         position: { x: destination.x, y: destination.y },
-        facing: { 
-          dx: xDistance > 0 ? 1 : (xDistance < 0 ? -1 : 0), 
-          dy: yDistance > 0 ? 1 : (yDistance < 0 ? -1 : 0)
-        },
+        facing: directionVector, // Same facing direction at destination
         t: startTime + totalMovementTime
       });
     } else {
-      // Calculate the time for X-axis movement portion
+      // For two-segment movement (X then Y)
       const xMovementTime = (xDistance / totalDistance) * totalMovementTime;
       
-      // Add intermediate point after X movement is complete
+      // Initial segment: move along X-axis first
+      const xDirectionVector = { dx: Math.sign(dx), dy: 0 };
+      path.push({
+        position: { x: startPos.x, y: startPos.y },
+        facing: xDirectionVector, // Face along X-axis direction
+        t: startTime
+      });
+      
+      // Add a point right before the turn to ensure consistency
+      // This helps prevent interpolation issues at the corner
+      const cornerTime = startTime + xMovementTime - 50; // 50ms before the turn
+      if (cornerTime > startTime) { // Only add if there's enough time
+        path.push({
+          position: {
+            x: destination.x - 0.01 * Math.sign(dx), // Slightly before corner
+            y: startPos.y
+          },
+          facing: xDirectionVector, // Still facing X direction
+          t: cornerTime
+        });
+      }
+      
+      // Intermediate point (corner) - now switch to facing Y direction
+      const yDirectionVector = { dx: 0, dy: Math.sign(dy) };
       path.push({
         position: { x: destination.x, y: startPos.y },
-        facing: { dx: 0, dy: dy > 0 ? 1 : -1 },
+        facing: yDirectionVector, // Face along Y-axis direction
         t: startTime + xMovementTime
       });
       
-      // Add the final destination
+      // Final destination - still facing Y direction
       path.push({
         position: { x: destination.x, y: destination.y },
-        facing: { dx: 0, dy: 0 },
+        facing: yDirectionVector, // Keep facing the Y direction
         t: startTime + totalMovementTime
       });
     }
