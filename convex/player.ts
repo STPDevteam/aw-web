@@ -6,6 +6,13 @@ import { Id } from './_generated/dataModel';
 import { insertInput } from './aiTown/insertInput';
 import { DEFAULT_NAME } from './constants';
 
+// Generate a simple UUID
+function generateId(): string {
+  return 'xxxx-xxxx-xxxx-xxxx'.replace(/[x]/g, () => {
+    return Math.floor(Math.random() * 16).toString(16);
+  });
+}
+
 /**
  * Get current player information by wallet address
  */
@@ -289,5 +296,227 @@ export const getPlayersByWallet = query({
       .collect();
     
     return players;
+  },
+});
+
+/**
+ * Start a conversation between user's player and a random agent
+ * Returns conversation ID, which can be used by the frontend to send messages
+ */
+export const startConversationWithAgent = mutation({
+  args: {
+    walletAddress: v.string(),
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress, worldId } = args;
+    
+    // Validate wallet address format
+    if (!walletAddress.startsWith('0x') || 
+        walletAddress.length !== 42 || 
+        !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      throw new ConvexError('Invalid wallet address format');
+    }
+    
+    // Find user's player
+    const player = await ctx.db
+      .query('players')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!player) {
+      throw new ConvexError('Player not found, please create a player first');
+    }
+    
+    if (!player.gamePlayerId) {
+      throw new ConvexError('Your player does not have an associated game ID, please recreate your player');
+    }
+    
+    // Get world data
+    const worldData = await ctx.db.get(worldId);
+    if (!worldData) {
+      throw new ConvexError(`Invalid world ID: ${worldId}`);
+    }
+    
+    // Get world status
+    const worldStatus = await ctx.db
+      .query('worldStatus')
+      .withIndex('worldId', (q) => q.eq('worldId', worldId))
+      .unique();
+    
+    if (!worldStatus) {
+      throw new ConvexError('World status not found');
+    }
+    
+    // Get all agents (excluding those already in conversations)
+    const allAgents = worldData.agents || [];
+    
+    // Exclude agents already in conversations
+    const availableAgents = allAgents.filter(agent => {
+      // Check if agent is already in a conversation
+      const inConversation = worldData.conversations?.some(
+        conv => conv.participants.some(p => p.playerId === agent.id)
+      );
+      
+      return !inConversation;
+    });
+    
+    if (availableAgents.length === 0) {
+      throw new ConvexError('No agents available for conversation, please try again later');
+    }
+    
+    // Randomly select an agent
+    const randomAgent = availableAgents[Math.floor(Math.random() * availableAgents.length)];
+    
+    try {
+      // Use agent's playerId instead of agentId
+      const agentPlayer = randomAgent.playerId;
+      
+      if (!agentPlayer) {
+        throw new ConvexError('Agent does not have an associated player ID');
+      }
+      
+      // Create conversation between player and agent
+      const inputId = await insertInput(ctx, worldId, 'startConversation', {
+        playerId: player.gamePlayerId,
+        invitee: agentPlayer,
+      });
+      
+      // Need to wait for conversation to be created
+      // Return conversation and agent info for frontend use
+      return {
+        success: true,
+        inputId,
+        message: 'Conversation created successfully',
+        agentPlayerId: agentPlayer
+      };
+    } catch (error: any) {
+      console.error('Failed to create conversation:', error);
+      throw new ConvexError(`Failed to create conversation: ${error.message || 'Unknown error'}`);
+    }
+  },
+});
+
+/**
+ * Send a message to a conversation
+ */
+export const sendMessageToConversation = mutation({
+  args: {
+    walletAddress: v.string(),
+    worldId: v.id('worlds'),
+    conversationId: v.string(),
+    text: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress, worldId, conversationId, text } = args;
+    
+    // Validate wallet address format
+    if (!walletAddress.startsWith('0x') || 
+        walletAddress.length !== 42 || 
+        !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      throw new ConvexError('Invalid wallet address format');
+    }
+    
+    // Find user's player
+    const player = await ctx.db
+      .query('players')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!player) {
+      throw new ConvexError('Player not found, please create a player first');
+    }
+    
+    if (!player.gamePlayerId) {
+      throw new ConvexError('Your player does not have an associated game ID');
+    }
+    
+    try {
+      // Generate message UUID
+      const messageUuid = generateId();
+      
+      // First mark as typing
+      await insertInput(ctx, worldId, 'startTyping', {
+        playerId: player.gamePlayerId,
+        conversationId,
+        messageUuid,
+      });
+      
+      // Write the message
+      await ctx.db.insert('messages', {
+        conversationId,
+        author: player.gamePlayerId,
+        messageUuid,
+        text,
+        worldId,
+      });
+      
+      // Mark message as sent
+      await insertInput(ctx, worldId, 'finishSendingMessage', {
+        playerId: player.gamePlayerId,
+        conversationId,
+        timestamp: Date.now(),
+      });
+      
+      return {
+        success: true,
+        message: 'Message sent',
+        messageUuid,
+      };
+    } catch (error: any) {
+      console.error('Failed to send message:', error);
+      throw new ConvexError(`Failed to send message: ${error.message || 'Unknown error'}`);
+    }
+  },
+});
+
+/**
+ * Leave a conversation
+ */
+export const leaveConversation = mutation({
+  args: {
+    walletAddress: v.string(),
+    worldId: v.id('worlds'),
+    conversationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress, worldId, conversationId } = args;
+    
+    // Validate wallet address format
+    if (!walletAddress.startsWith('0x') || 
+        walletAddress.length !== 42 || 
+        !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      throw new ConvexError('Invalid wallet address format');
+    }
+    
+    // Find user's player
+    const player = await ctx.db
+      .query('players')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!player) {
+      throw new ConvexError('Player not found, please create a player first');
+    }
+    
+    if (!player.gamePlayerId) {
+      throw new ConvexError('Your player does not have an associated game ID');
+    }
+    
+    try {
+      // Leave conversation
+      const inputId = await insertInput(ctx, worldId, 'leaveConversation', {
+        playerId: player.gamePlayerId,
+        conversationId,
+      });
+      
+      return {
+        success: true,
+        message: 'Left conversation',
+      };
+    } catch (error: any) {
+      console.error('Failed to leave conversation:', error);
+      throw new ConvexError(`Failed to leave conversation: ${error.message || 'Unknown error'}`);
+    }
   },
 }); 
