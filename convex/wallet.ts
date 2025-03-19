@@ -375,7 +375,12 @@ export const dailyCheckIn = mutation({
       .unique();
     
     if (!user) {
-      throw new ConvexError('User not found');
+      return {
+        success: false,
+        message: 'Please connect your wallet first',
+        currentPoints: null,
+        nextCheckIn: null
+      };
     }
     
     // Get current date in UTC
