@@ -4,8 +4,9 @@ import React, { FC } from 'react'
 import { Text, Box, Image } from '@chakra-ui/react'
 import { Screen1Bg, WorldFun, Screen1SubTitle} from '@/images'
 import { GeneralButton, Notification, BasePopup, CreateInput } from '@/components'
+import { isMobile } from '@/utils/tool'
 
-export const Screen1:FC<{ onMoveTo: (id: string) => void }> = ({ onMoveTo }) => {
+export const Screen1:FC<{ onMoveTo: (id: number) => void }> = ({ onMoveTo }) => {
   return(
     <Box 
       className=' h-screen' 
@@ -14,40 +15,32 @@ export const Screen1:FC<{ onMoveTo: (id: string) => void }> = ({ onMoveTo }) => 
       bgPosition='center'
       bgRepeat="no-repeat"     
     >
-      <Box className='center w100' pt="28px">
-        <Box className='fx-row ai-ct jc-sb' w="554px">
-          {
-            [
-              { name: 'HOME', id: 'landing-page'},
-              { name: 'AI TOWN', id: 'world-fun'},
-              { name: 'WORLDS', id: 'platform-generated-worlds'},
-              { name: 'AGENTS', id: 'emergent-gaming'},
-            ].map(item => (
-              <GeneralButton 
-                key={item.name}
-                onClick={() => onMoveTo(item.id)}
-                title={item.name}
-                size='ssm'
-              />
-            ))
-          }
+    
+
+      <Box className='center w100' pt="150px">
+        <Box 
+          className='fx-col ai-ct' 
+          w={['314px','440px','502px','628px','628px']}
+          // borderWidth="2px"
+          // borderStyle='solid'
+          // borderColor={['red','green','yellow','blue','pink',]}
+        >
+          <Image src={WorldFun}  w={['314px','440px','502px','628px','628px']} h={['100.5px','140.7px','160.8px','201px','201px']}/>
+          <Image src={Screen1SubTitle} w={['250px','350px','400px','500px','500px']} h={['13px','18.2px','20.8px','26px','26px']} mt="26px"/>
         </Box>
       </Box>
 
-      <Box className='center w100' mt="82px">
-        <Box className='fx-col ai-ct'  w="628px">
-          <Image src={WorldFun} w="628px" h="201px"/>
-          <Image src={Screen1SubTitle} w="500px" h="26px" mt="26px"/>
+      {
+        !isMobile() && 
+        <Box pos='absolute' bottom="46px" left="50%" transform="translateX(-50%)">
+          <GeneralButton  
+            onClick={() => onMoveTo(1)}
+            title="Launch 1,000-Agent AI Town"
+            size='lg'
+          />
         </Box>
-      </Box>
+      }
 
-      <Box pos='absolute' bottom="46px" left="50%" transform="translateX(-50%)">
-        <GeneralButton  
-          onClick={() => onMoveTo('world-fun')}
-          title="Launch 1,000-Agent AI Town"
-          size='lg'
-        />
-      </Box>
     </Box>
   )
 }

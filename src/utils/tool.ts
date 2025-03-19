@@ -16,3 +16,13 @@ export const truncateAddress = (address: string) => {
 export const openLink = (url: string) => {
   window.open(url,'_blank')
 }
+
+export const isMobile = (): boolean => {
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i
+  return mobileRegex.test(userAgent)
+}
+
+export const isiOS = (): boolean => {
+return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}

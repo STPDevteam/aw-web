@@ -58,7 +58,7 @@ export const Game = () => {
     <Box 
       className='box_clip fx-row ai-ct jc-sb' 
       bgColor="#1F1F23" 
-      w="1720px" 
+      maxW="1720px" 
       h="706px"
       py="30px"
       px="24px"        

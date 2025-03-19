@@ -3,6 +3,7 @@ import { Spritesheet, BaseTexture } from 'pixi.js';
 import { orientationDegrees } from '../../convex/util/geometry';
 
 export type SimulatedAgent = {
+    name: string;
     id: string;
     position: { x: number; y: number };
     textureUrl: string;
@@ -13,7 +14,6 @@ export type SimulatedAgent = {
     lastInput: number,
     pathfinding: string | undefined,
     speed: number
-    moveCounter: number
 }
 
 export interface ExtendedAnimatedSprite extends PIXI.AnimatedSprite {

@@ -7,36 +7,45 @@ import { Transform, X, XHover, PopupDropdown, ButtonBgMd, ButtonBgMdHover } from
 import { GeneralButton, ClickButtonWrapper } from '@/components'
 import { api } from '../../../convex/_generated/api.js'
 import {  Id } from '../../../convex/_generated/dataModel'
-import { useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { selectedAgentInfo, selectedAgentInfoAction } from '@/redux/reducer/agentReducer'
+import { mockAgents } from '../../../data/characters.js'
+import { SimulatedAgent} from '@/components/createSimulatedAgentSprite'
+
 
 export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
     const [visible, setVisible] = useState<boolean>(false)
 
     const dispatch = useAppDispatch()
-  
 
-    const agents = useQuery(api.world.paginatedPlayerDescriptions, { 
-            worldId,
-            paginationOpts: {
-                numItems: 50,
-                cursor: null,
-            }
+    const agentsWeb: SimulatedAgent[] = mockAgents();
+
+    const agentsServer = useQuery(api.world.paginatedPlayerDescriptions, { 
+        worldId,
+        paginationOpts: {
+            numItems: 50,
+            cursor: null,
+        }
     })
     
     const renderedAgents = useMemo(() => {
-        return (
-          !!agents?.page &&
-          agents.page.length > 0 &&
-          agents.page.map((item, idx) => (
-            <ListItem item={item} key={item._id} idx={idx} focusAgent={() => {
-                // console.log('dddddddddd', item)
-                dispatch(selectedAgentInfoAction(item))
-            }}/>
-          ))
-        )
-      }, [agents])
+        if(!!agentsServer?.page && agentsServer.page.length > 0) {
+            const list = [...agentsServer.page, ...agentsWeb]
+            // console.log('agentsServer.page', agentsServer.page)
+            // console.log('agentsWeb', agentsWeb)
+            // console.log('list', list)
+
+            return (
+                agentsServer.page.map((item, idx) => (
+                <ListItem item={item} key={item.name} idx={idx} focusAgent={() => {
+                    // console.log('dddddddddd', item)
+                    dispatch(selectedAgentInfoAction(item))
+                }}/>
+              ))
+            )
+        }
+      }, [agentsServer])
 
     return(
         <Box>

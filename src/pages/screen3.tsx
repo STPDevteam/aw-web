@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Flex, Text } from '@chakra-ui/react'
+import { Box, Flex, Text, useBreakpointValue, Grid, Image } from '@chakra-ui/react'
 import { 
   Screen3Bg1, 
   Screen3Bg2, 
   Screen3Bg3, 
   Screen3Bg4, 
 } from '@/images'
+import { isMobile } from '@/utils/tool'
+
 
 export const Screen3 = () => {
   const [activeIdx, setActiveIdx] = useState<number>(-1)
@@ -17,68 +19,122 @@ export const Screen3 = () => {
     { t1: 'On-chain Economies', t2: 'Massive agent-based economies (traders, DAOs, AMMs)' },
   ]
 
+  const debounceTime = 1000
+
+  const columns = useBreakpointValue({ base: 2, sm: 2, md: 2, lg: 4, xl: 4 });
+
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [maxWidth, setMaxWidth] = useState<string>('430px');
+
+  
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setWidth(window.innerWidth);
+      }, debounceTime);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [debounceTime]);
+
+
+  useEffect(() => {
+    if(columns as number> 2) {
+      setMaxWidth(`calc(${width} / ${columns})px`)
+    }else {
+      setMaxWidth(`calc(${width - 48} / ${columns})px`)
+    }
+  },[columns, width])
+
   return (
-    <Box className="h-screen fx-col ai-ct">
-      <Flex
-        width="100%"
-        height="215px"
-        bg="#101010"
-        align="center"
-        justify="center"
-      >
-        <Text className='fz48 gray'>
-          Platform-Generated Autonomous Worlds
-        </Text>
-      </Flex>
-      <Box
-        height="calc(100vh - 215px)"
-        bg="linear-gradient(180deg, #101010 0%, #293033 100%)"
-        className='w100 center'
-      >
-        {slides.map((bg, idx) => {
-        
-          const widthValue = activeIdx === -1 ? "430px" : activeIdx === idx ? `${430 * slides.length}px` : "0px";
-          return (
-            <Box
-              key={bg}
-              className="click"
-              onMouseOver={() => setActiveIdx(idx)}
-              onMouseLeave={() => setActiveIdx(-1)}
-              w={widthValue}
-              h="600px" 
-              pos='relative'
-              borderRadius='0 0 16px 16px'
-              overflow="hidden"
-              transition="width 0.5s ease"
-              style={{
-                backgroundImage: `url(${bg})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-              }}
-            >
-              <Box 
-                pos='absolute'
-                bottom={0}
-                left={0}
-                className='w100 fx-col jc-ct'          
-                pl="26px" 
-                borderRadius='0 0 16px 16px'
-                bgColor='rgba(34, 52, 74, 0.40)'
-                backdropFilter='blur(25px)'
+    <Box 
+      className="h-screen fx-row w100" 
+      bg="linear-gradient(180deg, #101010 0%, #293033 100%)"
+    >
+      { columns as number > 2 && <Box w="160px" className=''/>}
+      <Box className='fx-col ai-ct w100 h100 '>
+        <Flex
+          height={['105px','142px','172px','215px','215px']}
+          bg="#101010"
+          className='w100 center '
+        >
+          <Text className='gray' fontSize={['24px','32px','36px','48px','48px']}>More Worlds</Text>
+        </Flex>
+        <Grid
+          bg="linear-gradient(180deg, #101010 0%, #293033 100%)"
+          className=''
+          templateColumns={["repeat(2, 1fr)", "repeat(2, 1fr)", "repeat(4, 1fr)", "repeat(4, 1fr)", "repeat(4, 1fr)"]}
+          w={columns as number > 2  ? 'calc(100% - 160px)' : '100%'}
+          gap={['10px','10px','10px','10px','0px']}
+          // borderWidth="2px"
+          // borderStyle='solid'
+          // borderColor={['red','green','yellow','blue','pink',]}
+          px={['10px','10px','10px','0px','0px',]}
+          overflowX="hidden"
+        >
+          {slides.map((bg, idx) => {
+            const widthValue =
+            activeIdx === -1
+              ? maxWidth
+              : activeIdx === idx
+              ? `${width - 160}px`
+              : "0px"
+
+            return (
+              <Box
+                key={bg}
+                className="click"
+                onMouseOver={() => isMobile() ? null : setActiveIdx(idx)}
+                onMouseLeave={() => isMobile() ? null : setActiveIdx(-1)}
                 w={widthValue}
-                h="206px"
-                transition="width 0.5s ease"
+                h={['225px','420px','480px','600px','600px']}
+                pos='relative'
+                borderRadius='0 0 16px 16px'
+                overflow="hidden"
+                transition="width 0.5s ease, transform 0.5s ease" 
+                transform={activeIdx === idx ? "scale(1.1)" : "scale(1)"}
+
+                style={{
+                  backgroundImage: `url(${bg})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                }}
               >
-                <Text className='fz26 gray'>{titles[idx].t1}</Text>
-                <Text className='fz16 gray'>{titles[idx].t2}</Text>
+                <Box 
+                  pos='absolute'
+                  bottom={0}
+                  left={0}
+                  className='w100 fx-col jc-ct'          
+                  pl={activeIdx === idx ? '102px' : '26px'} 
+                  borderRadius='0 0 16px 16px'
+                  bgColor='rgba(34, 52, 74, 0.40)'
+                  backdropFilter='blur(25px)'
+                  w={widthValue}
+                  h={['115px','114px','164px','206px','206px']}
+                  transition="width 0.5s ease"
+                  
+                >
+                  <Text className=' gray' fontSize={['14px','18px','22px','26px','26px']}>{titles[idx].t1}</Text>
+                  <Text className='gray' fontSize={['12px','14px','14px','16px','16px']}>{titles[idx].t2}</Text>
+                </Box>
               </Box>
-            </Box>
-          );
-        })}      
-      </Box>     
+            );
+          })}      
+        </Grid>     
+      </Box>
     </Box>
   )
 }
+
+
+
 
 

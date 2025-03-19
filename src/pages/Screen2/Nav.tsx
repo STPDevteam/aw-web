@@ -107,8 +107,8 @@ export const Nav = () => {
     }
     
     return(
-        <Box>
-            <Box className='fx-row ai-ct jc-sb w-100'>
+        <Box className='w100' maxW="1720px">
+            <Box className='fx-row ai-ct jc-sb w100'>
                 <Box className='fx-row ai-ct jc-sb'>
                     <GeneralButton 
                         disable={isConnected ? (!!!canCheckIn) : false}
@@ -129,7 +129,6 @@ export const Nav = () => {
                 </Box>               
                 <ConnectWallet/>    
             </Box>      
-
             
             <Notification
                 visible={claimOpen}

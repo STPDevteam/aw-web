@@ -1,6 +1,7 @@
 import { data as f0SpritesheetData } from './spritesheets/f0';
 import * as map from './gentle';
 import { agentNames } from './agentNames'
+import { SimulatedAgent } from '../src/components/createSimulatedAgentSprite'
 
 
 // Helper functions for randomly generating names, descriptions and plans
@@ -229,11 +230,18 @@ function getRandomPassablePosition(minX: number, maxX: number, minY: number, max
   return { x: 150, y: 180 }; 
 }
 
-export const mockAgents = (tileDim: number = 32) => { 
-  return Array.from({ length: 400 }, (_, i) => {
-    const num = 500 - i;
+
+
+
+let cachedMockAgents: SimulatedAgent[] | null = null;
+
+export const mockAgents = (tileDim: number = 32): SimulatedAgent[] => {
+  if (cachedMockAgents !== null) {
+    return cachedMockAgents;
+  }
+  cachedMockAgents = Array.from({ length: 400 }, (_, i) => {
+    const num = i + 51;
     const position = getRandomPassablePosition(6, map.mapwidth - 6, 6, map.mapheight - 6, tileDim);
-    
     return {
       name: agentNames[i - 1],
       activity: { description: 'reading a book', emoji: '📖', until: 0 },
@@ -244,9 +252,9 @@ export const mockAgents = (tileDim: number = 32) => {
       pathfinding: undefined,
       position: position,
       speed: 0.1,
-      textureUrl: `/ai-town/assets/avatar/${(i % 10) + 10}.png`,
+      textureUrl: `/ai-town/assets/avatar/${((i + 50) % 400) + 1}.png`,
       spritesheetData: f0SpritesheetData,
-    };
+    } as SimulatedAgent;
   });
+  return cachedMockAgents;
 };
-

@@ -10,13 +10,11 @@ import { useQuery, useMutation} from 'convex/react';
 import { api } from '../../../convex/_generated/api.js';
 import { useSendInput } from '../../hooks/sendInput.ts';
 import { toastOnError } from '../../toasts.ts';
-
 import { PositionIndicator } from '../../components/PositionIndicator.tsx';
 import { ServerGame } from '../../hooks/serverGame.ts';
-import { useDebounceValue } from '../../hooks/useDebounceValue.ts'
-
 import SimulatedAgents from '../../components/SimulatedAgents.tsx'; 
-
+import { mockAgents } from '../../../data/characters.js'
+import { SimulatedAgent} from '@/components/createSimulatedAgentSprite'
 
 export const PixiGame:React.FC<{
   worldId: Id<'worlds'>;
@@ -64,6 +62,9 @@ export const PixiGame:React.FC<{
     y: number;
     t: number;
   } | null>(null);
+
+  const agentsWeb: SimulatedAgent[] = mockAgents();
+
   const onMapPointerUp = async (e: any) => {
     
     if (dragStart.current) {
@@ -103,6 +104,11 @@ export const PixiGame:React.FC<{
 
   useEffect(() => {
     if(agentInfo && viewportRef.current) {      
+
+      const list = [...players, ...agentsWeb]
+
+      console.log('dddddddddd list', list)
+
       const focusPlayer = players.filter(p => p.id === agentInfo.playerId)
       if(focusPlayer) {
         const { x, y } = focusPlayer[0].position

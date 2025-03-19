@@ -30,4 +30,6 @@ export { default as GameLeftBorder } from "./gameLeftBorder.png";
 export { default as GameRightBorder } from "./gameRightBorder.png";
 export { default as WorldFun } from "./worldFun.png";
 export { default as Screen1SubTitle } from "./screen1SubTitle.svg";
+export { default as MapContainer } from "./mapContainer.png";
+export { default as MapMobile } from "./mapMobile.png";
 
