@@ -263,4 +263,31 @@ export const getAllPlayers = query({
   handler: async (ctx) => {
     return await ctx.db.query('players').collect();
   },
+});
+
+/**
+ * Get all players created by a specific user
+ */
+export const getPlayersByWallet = query({
+  args: {
+    walletAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress } = args;
+    
+    // Validate wallet address format
+    if (!walletAddress.startsWith('0x') || 
+        walletAddress.length !== 42 || 
+        !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      throw new ConvexError('Invalid wallet address format');
+    }
+    
+    // Find all players corresponding to this wallet address
+    const players = await ctx.db
+      .query('players')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .collect();
+    
+    return players;
+  },
 }); 
