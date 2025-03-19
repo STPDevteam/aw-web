@@ -145,9 +145,23 @@ export class Game extends AbstractGame {
   }
 
   allocId<T extends IdTypes>(idType: T): GameId<T> {
-    const id = allocGameId(idType, this.world.nextId);
-    this.world.nextId += 1;
-    return id;
+    if (idType === 'players') {
+      // For players, use a simple sequential ID pattern: p:1, p:2, p:3, etc.
+      // Find the highest existing player ID to ensure we use the next number
+      const playerIds = Array.from(this.world.players.keys()).map(id => {
+        const match = id.match(/^p:(\d+)$/);
+        return match ? parseInt(match[1], 10) : 0;
+      });
+      
+      // If no players exist yet, start from 1, otherwise use the next number
+      const nextNum = playerIds.length > 0 ? Math.max(...playerIds) + 1 : 1;
+      return allocGameId(idType, nextNum);
+    } else {
+      // For other ID types, use the existing approach
+      const id = allocGameId(idType, this.world.nextId);
+      this.world.nextId += 1;
+      return id;
+    }
   }
 
   scheduleOperation(name: string, args: unknown) {
