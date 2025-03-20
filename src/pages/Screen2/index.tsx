@@ -24,7 +24,7 @@ export const Screen2 = () => {
       bg={['linear-gradient(180deg, #4B494B 0%, #1E2227 100%)', 'linear-gradient(180deg, #4B494B 0%, #1E2227 100%)', null,null,null]}
 
     >
-      <Box className='w100 fx-row ai-ct jc-sb' display={['none','none','flex','flex','flex']}> 
+      <Box className='w100 fx-row ai-ct jc-sb' display={['none','none','none','flex','flex']}> 
         <Box w="160px" className=''/>
         <Box className='w100 fx-col ai-ct'>
           <Nav/>
@@ -35,7 +35,7 @@ export const Screen2 = () => {
       </Box>
       <Box 
         w="100%" 
-        display={['flex','flex','none','none','none']} 
+        display={['flex','flex','flex','none','none']} 
         className='fx-col ai-ct'
         
         >

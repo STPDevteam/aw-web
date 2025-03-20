@@ -62,7 +62,6 @@ export const Screen3 = () => {
       <Box className='fx-col ai-ct w100 h100 '>
         <Flex
           height={['105px','142px','172px','215px','215px']}
-          bg="#101010"
           className='w100 center '
         >
           <Text className='gray' fontSize={['24px','32px','36px','48px','48px']}>More Worlds</Text>
