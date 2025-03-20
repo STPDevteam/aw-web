@@ -444,3 +444,31 @@ export const dailyCheckIn = mutation({
   },
 });
 
+/**
+ * Update user points
+ */
+export const updateUserPoints = mutation({
+  args: {
+    walletAddress: v.string(),
+    points: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress, points } = args;
+    
+    const user = await ctx.db
+      .query('walletUsers')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!user) {
+      throw new ConvexError('User not found');
+    }
+    
+    await ctx.db.patch(user._id, {
+      points: points
+    });
+    
+    return { success: true };
+  },
+});
+

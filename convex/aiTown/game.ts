@@ -391,3 +391,39 @@ export const getFirstMap = internalQuery({
   },
 });
 
+// Query to get world data
+export const getWorld = internalQuery({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.worldId);
+  },
+});
+
+// Query to get player descriptions
+export const getPlayerDescriptions = internalQuery({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('playerDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+  },
+});
+
+// Query to get agent descriptions
+export const getAgentDescriptions = internalQuery({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+  },
+});
+

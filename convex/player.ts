@@ -1,10 +1,11 @@
 import { ConvexError, v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, action } from './_generated/server';
 import { characters } from '../data/characters';
 import { chatCompletion } from './util/llm';
 import { Id } from './_generated/dataModel';
 import { insertInput } from './aiTown/insertInput';
 import { DEFAULT_NAME } from './constants';
+import { api, internal } from './_generated/api';
 
 // Generate a simple UUID
 function generateId(): string {
@@ -303,12 +304,30 @@ export const getPlayersByWallet = query({
  * Simulate a conversation with a random agent
  * Generates 8 total messages (4 each) using the agent identity, plan, and player description
  */
-export const simulateConversationWithAgent = mutation({
+export const simulateConversationWithAgent = action({
   args: {
     walletAddress: v.string(),
     worldId: v.id('worlds'),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{
+    success: boolean;
+    agent: {
+      id: string;
+      identity: string;
+      plan: string;
+    };
+    player: {
+      id: string;
+      name: string;
+      description: string;
+    };
+    conversation: Array<{
+      speaker: string;
+      text: string;
+    }>;
+    pointsEarned: number;
+    totalPoints: number;
+  }> => {
     const { walletAddress, worldId } = args;
     
     // Validate wallet address format
@@ -319,28 +338,26 @@ export const simulateConversationWithAgent = mutation({
     }
     
     // Find user's player
-    const player = await ctx.db
-      .query('players')
-      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
-      .unique();
+    const player = await ctx.runQuery(api.player.getCurrentPlayerByWallet, { walletAddress });
     
     if (!player) {
       throw new ConvexError('Player not found, please create a player first');
     }
     
     // Get world data
-    const worldData = await ctx.db.get(worldId);
+    const worldData = await ctx.runQuery(internal.aiTown.game.getWorld, { worldId });
     if (!worldData) {
       throw new ConvexError(`Invalid world ID: ${worldId}`);
     }
     
     // Get all agent descriptions for this world
-    const agentDescriptions = await ctx.db
-      .query('agentDescriptions')
-      .withIndex('worldId', (q) => q.eq('worldId', worldId))
-      .collect();
+    const agentDescriptions: Array<{
+      agentId: string;
+      identity: string;
+      plan: string;
+    }> = await ctx.runQuery(internal.aiTown.game.getAgentDescriptions, { worldId });
     
-    if (agentDescriptions.length === 0) {
+    if (!agentDescriptions || agentDescriptions.length === 0) {
       throw new ConvexError('No agents available in this world');
     }
     
@@ -348,22 +365,21 @@ export const simulateConversationWithAgent = mutation({
     const randomAgentDescription = agentDescriptions[Math.floor(Math.random() * agentDescriptions.length)];
     
     // Get player description
-    const playerDescription = await ctx.db
-      .query('playerDescriptions')
-      .withIndex('worldId', (q) => 
-        q.eq('worldId', worldId).eq('playerId', player.gamePlayerId as string)
-      )
-      .unique();
+    const playerDescriptions: Array<{
+      playerId: string;
+      name: string;
+      description: string;
+    }> = await ctx.runQuery(internal.aiTown.game.getPlayerDescriptions, { worldId });
+    
+    // Find this player's description
+    const playerDescription = playerDescriptions.find((pd: { playerId: string }) => pd.playerId === player.gamePlayerId);
     
     if (!playerDescription) {
       throw new ConvexError('Player description not found');
     }
     
     // Get user information for points update
-    const user = await ctx.db
-      .query('walletUsers')
-      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
-      .unique();
+    const user = await ctx.runQuery(api.wallet.getUserByWalletAddress, { walletAddress });
     
     if (!user) {
       throw new ConvexError('User information not found. Please login first');
@@ -412,8 +428,9 @@ player: [player's second response]
       }
       
       // Award 40 points to the user
-      const newPoints = user.points + 40;
-      await ctx.db.patch(user._id, {
+      const newPoints: number = user.points + 40;
+      await ctx.runMutation(api.wallet.updateUserPoints, {
+        walletAddress,
         points: newPoints
       });
       
