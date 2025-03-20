@@ -448,10 +448,39 @@ player: [player's second response]
         const messageText = messageParts.join(':').trim();
         
         if (speaker && messageText) {
-          messages.push({
-            speaker: speaker.trim(),
-            text: messageText
-          });
+          // Only accept 'agent' or 'player' as valid speakers
+          const speakerTrimmed = speaker.trim().toLowerCase();
+          if (speakerTrimmed === 'agent' || speakerTrimmed === 'player') {
+            messages.push({
+              speaker: speakerTrimmed,
+              text: messageText
+            });
+          }
+        }
+      }
+      
+      // Ensure we have exactly 8 messages (4 from each)
+      if (messages.length > 8) {
+        // If we have more than 8, truncate to first 8
+        messages.splice(8);
+      }
+      
+      // Validate we have proper alternating pattern (agent-player-agent-player...)
+      let validMessageCount = 0;
+      const validMessages = [];
+      let expectedSpeaker = 'agent'; // Start with agent
+      
+      for (const message of messages) {
+        if (message.speaker === expectedSpeaker) {
+          validMessages.push(message);
+          validMessageCount++;
+          // Toggle expected speaker
+          expectedSpeaker = expectedSpeaker === 'agent' ? 'player' : 'agent';
+          
+          // Stop if we have 8 valid messages
+          if (validMessageCount === 8) {
+            break;
+          }
         }
       }
       
@@ -474,7 +503,7 @@ player: [player's second response]
           name: playerDescription.name,
           description: playerDescription.description
         },
-        conversation: messages,
+        conversation: validMessages.length === 8 ? validMessages : messages.slice(0, 8),
         pointsEarned: 40,
         totalPoints: newPoints
       };
