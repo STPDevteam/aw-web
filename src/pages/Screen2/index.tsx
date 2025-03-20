@@ -6,8 +6,13 @@ import {  Box, Text } from '@chakra-ui/react'
 import { Screen2Bg, MapContainer, MapMobile } from '@/images'
 import { Nav } from './Nav' 
 import { Game } from './Game'
+import { Notification } from '@/components'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
 export const Screen2 = () => {  
+  const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
+  const dispatch = useAppDispatch()
   return(
     <Box 
       className='h-screen w100' 
@@ -62,6 +67,22 @@ export const Screen2 = () => {
         </Box>
         </Box>
       </Box>
+
+
+
+      <Notification
+        visible={open}
+        onClose={() => {
+          dispatch(alertInfoAction({
+            open: false,
+            title: '',
+            content: ''
+          }))
+          closeModal && closeModal()
+        }}
+        title={title}
+        content={content}
+    />
     </Box>
   )
 }

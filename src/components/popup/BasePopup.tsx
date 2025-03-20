@@ -13,6 +13,7 @@ interface iBasePopup {
     closeOnOverlay?: boolean
     onOK?: () => void
     okText?: string
+    okLoading?: boolean
 }
 
 export const BasePopup: FC<iBasePopup> = ({ 
@@ -22,7 +23,8 @@ export const BasePopup: FC<iBasePopup> = ({
     content,
     closeOnOverlay = true,
     onOK,
-    okText
+    okText,
+    okLoading = false
 }) => {
 
      useEffect(() => {
@@ -38,7 +40,7 @@ export const BasePopup: FC<iBasePopup> = ({
     
     const onHandle = () => {
         if(onOK) {
-            onClose()
+            // onClose()
             onOK()
         }else {
             onClose()
@@ -64,7 +66,7 @@ export const BasePopup: FC<iBasePopup> = ({
                         <Image src={Close} w="42px" h="42px" className="click" onClick={onClose}/>          
                     </Box>
                     { content }      
-                    {okText && <GeneralButton size="lg" title={okText} onClick={onHandle} style={{ marginTop:'58px' }}/>}
+                    {okText && <GeneralButton size="lg" loading={okLoading} title={okText} onClick={onHandle} style={{ marginTop:'58px' }}/>}
                 </ModalBody>                
             </ModalContent>            
         </Modal>

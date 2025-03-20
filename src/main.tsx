@@ -28,7 +28,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ReduxProvider>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider>
+          <RainbowKitProvider >
             <ChakraProvider>
               <ConvexClientProvider>      
                   <Pages />
