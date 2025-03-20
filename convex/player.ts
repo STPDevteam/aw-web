@@ -299,3 +299,121 @@ export const getPlayersByWallet = query({
   },
 });
 
+/**
+ * Simulate a conversation with a random agent
+ * Generates 8 total messages (4 each) using the agent identity, plan, and player description
+ */
+export const simulateConversationWithAgent = mutation({
+  args: {
+    walletAddress: v.string(),
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    // ... existing code ...
+  },
+});
+
+/**
+ * Automatically generate a conversation between a random agent and player
+ * No user input required - system selects random characters and generates dialog
+ */
+export const autoGenerateAgentConversation = mutation({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    const { worldId } = args;
+    
+    // Get world data
+    const worldData = await ctx.db.get(worldId);
+    if (!worldData) {
+      throw new ConvexError(`Invalid world ID: ${worldId}`);
+    }
+    
+    // Get all agent descriptions for this world
+    const agentDescriptions = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', worldId))
+      .collect();
+    
+    if (agentDescriptions.length === 0) {
+      throw new ConvexError('No agents available in this world');
+    }
+    
+    // Get all player descriptions for this world
+    const playerDescriptions = await ctx.db
+      .query('playerDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', worldId))
+      .collect();
+    
+    if (playerDescriptions.length === 0) {
+      throw new ConvexError('No players available in this world');
+    }
+    
+    // Randomly select an agent and player
+    const randomAgentDescription = agentDescriptions[Math.floor(Math.random() * agentDescriptions.length)];
+    const randomPlayerDescription = playerDescriptions[Math.floor(Math.random() * playerDescriptions.length)];
+    
+    // Generate conversation using OpenAI
+    const systemPrompt = `You are simulating a conversation between two characters in a virtual world:
+1. ${randomPlayerDescription.name}: ${randomPlayerDescription.description}
+2. An AI agent with the following identity: ${randomAgentDescription.identity}
+And the following plan: ${randomAgentDescription.plan}
+
+Generate a realistic back-and-forth conversation between these two characters. The conversation should be natural,
+interesting, and reflect the personalities and goals of both characters. Create exactly 8 messages total (4 from each character).
+Start with the AI agent speaking first.
+
+Format the conversation as follows:
+agent: [agent's first message]
+player: [player's first response]
+agent: [agent's second message]
+player: [player's second response]
+...and so on for exactly 8 messages total (4 from each character)`;
+
+    try {
+      const { content } = await chatCompletion({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: 'Generate the conversation now.' }
+        ],
+        temperature: 0.7,
+      });
+      
+      // Parse the conversation into an array of messages
+      const conversationLines = content.split('\n').filter(line => line.trim() !== '');
+      const messages = [];
+      
+      for (const line of conversationLines) {
+        const [speaker, ...messageParts] = line.split(':');
+        const messageText = messageParts.join(':').trim();
+        
+        if (speaker && messageText) {
+          messages.push({
+            speaker: speaker.trim(),
+            text: messageText
+          });
+        }
+      }
+      
+      return {
+        success: true,
+        agent: {
+          id: randomAgentDescription.agentId,
+          identity: randomAgentDescription.identity,
+          plan: randomAgentDescription.plan
+        },
+        player: {
+          id: randomPlayerDescription.playerId,
+          name: randomPlayerDescription.name,
+          description: randomPlayerDescription.description
+        },
+        conversation: messages
+      };
+    } catch (error: any) {
+      console.error('Error generating conversation:', error);
+      throw new ConvexError(`Failed to generate conversation: ${error.message || 'Unknown error'}`);
+    }
+  },
+});
+
