@@ -99,8 +99,7 @@ export class Player {
       stopPlayer(this);
     }
 
-    // 增加寻路超时时间，减少因超时而停止的机会
-    // Stop pathfinding if we've timed out.
+    // Increase pathfinding timeout to reduce the chance of stopping due to timeout
     if (pathfinding.started + PATHFINDING_TIMEOUT * 2 < now) {
       console.warn(`Timing out pathfinding for ${this.id}`);
       stopPlayer(this);
@@ -118,14 +117,14 @@ export class Player {
         console.warn(`Reached max pathfinds for this step`);
       }
       
-      // 尝试寻路
+      // Attempt pathfinding
       const route = findRoute(game, now, this, pathfinding.destination);
       
       if (route === null) {
-        // 如果寻路失败，不要立即放弃，而是使用直线路径
+        // If pathfinding fails, don't give up immediately, use a direct path instead
         console.log(`Failed to route to ${JSON.stringify(pathfinding.destination)}, using direct path`);
         
-        // 创建一个简单的直线路径
+        // Create a simple direct path
         const startTime = now;
         const distance = Math.sqrt(
           Math.pow(this.position.x - pathfinding.destination.x, 2) + 
@@ -133,7 +132,7 @@ export class Player {
         );
         const endTime = startTime + (distance / movementSpeed) * 1000;
         
-        // 计算朝向
+        // Calculate facing direction
         const dx = pathfinding.destination.x - this.position.x;
         const dy = pathfinding.destination.y - this.position.y;
         const length = Math.sqrt(dx * dx + dy * dy);
@@ -147,7 +146,7 @@ export class Player {
         
         pathfinding.state = { kind: 'moving', path: directPath };
       } else {
-        // 寻路成功
+        // Pathfinding successful
         if (route.newDestination) {
           console.warn(
             `Updating destination from ${JSON.stringify(
@@ -168,7 +167,7 @@ export class Player {
       return;
     }
 
-    // 增加对路径的有效性检查
+    // Add validity check for the path
     if (!this.pathfinding.state.path || !Array.isArray(this.pathfinding.state.path) || this.pathfinding.state.path.length < 2) {
       console.warn(`Invalid path for player ${this.id}, stopping pathfinding`);
       stopPlayer(this);
@@ -180,7 +179,7 @@ export class Player {
       // with anything.
       const candidate = pathPosition(this.pathfinding.state.path as Path, now);
       
-      // 检查candidate是否有效
+      // Check if candidate is valid
       if (!candidate || 
           typeof candidate.position?.x !== 'number' || 
           typeof candidate.position?.y !== 'number' ||
@@ -193,7 +192,7 @@ export class Player {
 
       const { position, facing, velocity } = candidate;
       
-      // 检查位置是否在地图范围内
+      // Check if position is within map boundaries
       if (position.x < 0 || position.y < 0 || 
           position.x >= game.worldMap.width || 
           position.y >= game.worldMap.height) {
@@ -202,30 +201,30 @@ export class Player {
         return;
       }
       
-      // 不再考虑碰撞，直接更新位置
-      // const collisionReason = blocked(game, now, position, this.id);
-      // if (collisionReason !== null) {
-      //   const backoff = Math.random() * PATHFINDING_BACKOFF;
-      //   console.warn(`Stopping path for ${this.id}, waiting for ${backoff}ms: ${collisionReason}`);
-      //   this.pathfinding.state = {
-      //     kind: 'waiting',
-      //     until: now + backoff,
-      //   };
-      //   this.speed = 0;
-      //   return;
-      // }
+      // Enable collision detection, don't allow passing through obstacles
+      const collisionReason = blocked(game, now, position, this.id);
+      if (collisionReason !== null) {
+        const backoff = Math.random() * PATHFINDING_BACKOFF;
+        console.warn(`Stopping path for ${this.id}, waiting for ${backoff}ms: ${collisionReason}`);
+        this.pathfinding.state = {
+          kind: 'waiting',
+          until: now + backoff,
+        };
+        this.speed = 0;
+        return;
+      }
       
-      // 更新位置
+      // Update position
       this.position = position;
       this.facing = facing;
       this.speed = velocity;
 
-      // 检查是否到达目的地
+      // Check if reached destination
       if (pointsEqual(this.position, this.pathfinding.destination)) {
         stopPlayer(this);
       }
     } catch (e) {
-      // 捕获任何可能发生的错误，确保不会导致游戏崩溃
+      // Catch any possible errors to ensure the game doesn't crash
       console.error(`Error in tickPosition for player ${this.id}: ${e}`);
       stopPlayer(this);
     }

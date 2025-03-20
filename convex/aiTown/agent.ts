@@ -20,7 +20,7 @@ import { FunctionArgs } from 'convex/server';
 import { MutationCtx, internalMutation, internalQuery } from '../_generated/server';
 import { distance } from '../util/geometry';
 import { internal } from '../_generated/api';
-import { movePlayer } from './movement';
+import { movePlayer, blocked } from './movement';
 import { insertInput } from './insertInput';
 
 export class Agent {
@@ -69,8 +69,8 @@ export class Agent {
       this.lastInviteAttempt && now < this.lastInviteAttempt + CONVERSATION_COOLDOWN;
     let doingActivity = player.activity && player.activity.until > now;
     
-    // 降低中断活动的概率
-    // 当有对话或移动机会时，有10%的几率中断当前活动（从40%降低到10%）
+    // Reduce the probability of interrupting activities
+    // When there's a conversation or movement opportunity, there's a 10% chance to interrupt the current activity (reduced from 40% to 10%)
     if (doingActivity && (conversation || player.pathfinding)) {
       if (Math.random() < 0.1) {
         player.activity!.until = now;
@@ -78,8 +78,8 @@ export class Agent {
       }
     }
     
-    // 降低主动寻找对话的概率
-    // 降低到5%几率中断活动去找其他事情做（从25%降低到5%）
+    // Reduce the probability of actively seeking conversations
+    // Reduce to a 5% chance of interrupting activities to find something else to do (reduced from 25% to 5%)
     if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.05) {
       player.activity!.until = now;
       doingActivity = false;
@@ -168,6 +168,35 @@ export class Agent {
             };
           }
           console.log(`Agent ${player.id} walking towards ${otherPlayer.id}...`, destination);
+          const destinationBlocked = blocked(game, now, destination, player.id);
+          if (destinationBlocked) {
+            console.warn(`Agent ${player.id} destination is blocked: ${destinationBlocked}`, destination);
+            // Find available positions nearby
+            const alternatives = [];
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                if (dx === 0 && dy === 0) continue; // Skip the original position
+                
+                const alt = {
+                  x: Math.floor(destination.x) + dx,
+                  y: Math.floor(destination.y) + dy
+                };
+                
+                if (!blocked(game, now, alt, player.id)) {
+                  alternatives.push(alt);
+                }
+              }
+            }
+            
+            if (alternatives.length > 0) {
+              // Choose the closest available position to the target
+              alternatives.sort((a, b) => 
+                distance(a, otherPlayer.position) - distance(b, otherPlayer.position)
+              );
+              destination = alternatives[0];
+              console.log(`Agent ${player.id} using alternative destination`, destination);
+            }
+          }
           movePlayer(game, now, player, destination);
         }
         return;
@@ -368,7 +397,7 @@ export const findConversationCandidate = internalQuery({
         .order('desc')
         .first();
       if (lastMember) {
-        // 有2%的几率可以跳过冷却时间限制（从20%降低到2%）
+        // There's a 2% chance to skip the cooldown time limit (reduced from 20% to 2%)
         if (now < lastMember.ended + PLAYER_CONVERSATION_COOLDOWN && Math.random() > 0.02) {
           continue;
         }
@@ -376,7 +405,7 @@ export const findConversationCandidate = internalQuery({
       candidates.push({ 
         id: otherPlayer.id, 
         position: otherPlayer.position,
-        // 减少随机因子，使选择更基于距离（从30%降低到5%）
+        // Reduce the random factor to make the selection more distance-based (reduced from 30% to 5%)
         randomFactor: Math.random() * 0.05
       });
     }
@@ -385,14 +414,14 @@ export const findConversationCandidate = internalQuery({
       return undefined;
     }
 
-    // 根据距离和随机因子排序
+    // Sort by distance and random factor
     candidates.sort((a, b) => {
       const distanceA = distance(a.position, position);
       const distanceB = distance(b.position, position);
       return (distanceA - a.randomFactor) - (distanceB - b.randomFactor);
     });
     
-    // 降低随机选择的概率（从30%降低到5%）
+    // Reduce the probability of random selection (reduced from 30% to 5%)
     if (candidates.length > 1) {
       const selectFromTop = Math.min(3, candidates.length);
       if (Math.random() < 0.05) {

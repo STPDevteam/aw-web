@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 import { agentId, conversationId, parseGameId } from './ids';
 import { Player, activity } from './player';
 import { Conversation, conversationInputs } from './conversation';
-import { movePlayer } from './movement';
+import { movePlayer, blocked } from './movement';
 import { inputHandler } from './inputHandler';
 import { point } from '../util/types';
 import { Descriptions } from '../../data/characters';
@@ -66,7 +66,37 @@ export const agentInputs = {
         agent.lastInviteAttempt = now;
       }
       if (args.destination) {
-        movePlayer(game, now, player, args.destination);
+        const destinationBlocked = blocked(game, now, args.destination, player.id);
+        if (destinationBlocked) {
+          console.warn(`Agent ${agentId} destination is blocked: ${destinationBlocked}`, args.destination);
+          
+          const alternatives = [];
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              if (dx === 0 && dy === 0) continue;
+              
+              const alt = {
+                x: Math.floor(args.destination.x) + dx,
+                y: Math.floor(args.destination.y) + dy
+              };
+              
+              if (!blocked(game, now, alt, player.id)) {
+                alternatives.push(alt);
+              }
+            }
+          }
+          
+          if (alternatives.length > 0) {
+            const randomIndex = Math.floor(Math.random() * alternatives.length);
+            const safeDestination = alternatives[randomIndex];
+            console.log(`Agent ${agentId} using alternative destination`, safeDestination);
+            movePlayer(game, now, player, safeDestination);
+          } else {
+            console.log(`Agent ${agentId} cannot find a valid destination nearby`);
+          }
+        } else {
+          movePlayer(game, now, player, args.destination);
+        }
       }
       if (args.activity) {
         player.activity = args.activity;

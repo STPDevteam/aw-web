@@ -226,34 +226,47 @@ export const agentDoSomething = internalAction({
 });
 
 function wanderDestination(worldMap: WorldMap) {
-  // 更智能地选择目标位置
+  // More intelligently select target positions, ensuring there are no obstacles
   
-  // 选择的位置需要离地图边缘更远
-  const margin = Math.floor(worldMap.width / 5);  // 增加边距
+  // The selected position needs to be farther from the map edges
+  const margin = Math.floor(worldMap.width / 10);  // Margin to prevent selecting positions too close to the edge
   
-  // 尝试多次选择可能的位置，避免选择到障碍物
-  for (let attempts = 0; attempts < 10; attempts++) {
+  // Try selecting possible positions multiple times, avoid selecting obstacles
+  for (let attempts = 0; attempts < 20; attempts++) {  // Increase the number of attempts to improve the probability of finding a suitable position
     const x = margin + Math.floor(Math.random() * (worldMap.width - 2 * margin));
     const y = margin + Math.floor(Math.random() * (worldMap.height - 2 * margin));
     
-    // 检查选择的位置是否有障碍物
+    // Check if the selected position has obstacles
     let hasObstacle = false;
-    for (const layer of worldMap.objectTiles) {
-      if (layer[x][y] !== -1) {
+    
+    // Check all object layers
+    for (let layerIndex = 0; layerIndex < worldMap.objectTiles.length; layerIndex++) {
+      const layer = worldMap.objectTiles[layerIndex];
+      // Check if there is a tile at this position, tile index >= 0 indicates an obstacle
+      if (layer[x] && layer[x][y] >= 0) {
         hasObstacle = true;
         break;
       }
     }
     
-    // 如果没有障碍物，返回这个位置
+    // If there are no obstacles, return this position
     if (!hasObstacle) {
       return { x, y };
     }
   }
   
-  // 如果多次尝试后仍找不到合适位置，返回地图中心区域的一个位置
-  return {
-    x: Math.floor(worldMap.width / 2) + Math.floor(Math.random() * 3) - 1,
-    y: Math.floor(worldMap.height / 2) + Math.floor(Math.random() * 3) - 1,
-  };
+  // If a suitable position can't be found after multiple attempts, use a simpler strategy:
+  // Return a random point near the center of the map
+  const centerX = Math.floor(worldMap.width / 2);
+  const centerY = Math.floor(worldMap.height / 2);
+  
+  // Choose a point in a 5x5 area around the center
+  const offsetX = Math.floor(Math.random() * 5) - 2;
+  const offsetY = Math.floor(Math.random() * 5) - 2;
+  
+  // Ensure the point is within the map range
+  const finalX = Math.max(0, Math.min(worldMap.width - 1, centerX + offsetX));
+  const finalY = Math.max(0, Math.min(worldMap.height - 1, centerY + offsetY));
+  
+  return { x: finalX, y: finalY };
 }
