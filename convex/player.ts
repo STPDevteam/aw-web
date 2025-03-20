@@ -156,6 +156,19 @@ export const createPlayer = mutation({
       const newPlayer = updatedWorld.players.find(p => p.human === walletAddress);
       if (newPlayer) {
         gamePlayerId = newPlayer.id;
+      } else {
+        // Fallback: If for some reason the player wasn't found in the world data
+        const randomIdNumber = Math.floor(Math.random() * 1000000);
+        gamePlayerId = `p:${randomIdNumber}`;
+        
+        // Add player description to playerDescriptions table as fallback
+        await ctx.db.insert('playerDescriptions', {
+          worldId,
+          playerId: gamePlayerId,
+          name,
+          description,
+          character,
+        });
       }
     } else {
       // Not displayed in game, but still add player description to playerDescriptions table
@@ -173,6 +186,21 @@ export const createPlayer = mutation({
       });
       
       gamePlayerId = internalPlayerId;
+    }
+    
+    // Final check to ensure gamePlayerId is never empty
+    if (!gamePlayerId) {
+      const randomIdNumber = Math.floor(Math.random() * 1000000);
+      gamePlayerId = `p:${randomIdNumber}`;
+      
+      // Add player description to playerDescriptions table as fallback
+      await ctx.db.insert('playerDescriptions', {
+        worldId,
+        playerId: gamePlayerId,
+        name,
+        description,
+        character,
+      });
     }
     
     // Create player record, regardless of game display status
