@@ -315,7 +315,7 @@ export const getPlayersByWallet = query({
     if (!walletAddress.startsWith('0x') || 
         walletAddress.length !== 42 || 
         !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
-      throw new ConvexError('Invalid wallet address format');
+      return [];
     }
     
     // Find all players corresponding to this wallet address
