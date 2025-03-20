@@ -309,20 +309,24 @@ export const simulateConversationWithAgent = mutation({
     worldId: v.id('worlds'),
   },
   handler: async (ctx, args) => {
-    // ... existing code ...
-  },
-});
-
-/**
- * Automatically generate a conversation between a random agent and player
- * No user input required - system selects random characters and generates dialog
- */
-export const autoGenerateAgentConversation = mutation({
-  args: {
-    worldId: v.id('worlds'),
-  },
-  handler: async (ctx, args) => {
-    const { worldId } = args;
+    const { walletAddress, worldId } = args;
+    
+    // Validate wallet address format
+    if (!walletAddress.startsWith('0x') || 
+        walletAddress.length !== 42 || 
+        !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      throw new ConvexError('Invalid wallet address format');
+    }
+    
+    // Find user's player
+    const player = await ctx.db
+      .query('players')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!player) {
+      throw new ConvexError('Player not found, please create a player first');
+    }
     
     // Get world data
     const worldData = await ctx.db.get(worldId);
@@ -340,23 +344,34 @@ export const autoGenerateAgentConversation = mutation({
       throw new ConvexError('No agents available in this world');
     }
     
-    // Get all player descriptions for this world
-    const playerDescriptions = await ctx.db
-      .query('playerDescriptions')
-      .withIndex('worldId', (q) => q.eq('worldId', worldId))
-      .collect();
+    // Randomly select an agent
+    const randomAgentDescription = agentDescriptions[Math.floor(Math.random() * agentDescriptions.length)];
     
-    if (playerDescriptions.length === 0) {
-      throw new ConvexError('No players available in this world');
+    // Get player description
+    const playerDescription = await ctx.db
+      .query('playerDescriptions')
+      .withIndex('worldId', (q) => 
+        q.eq('worldId', worldId).eq('playerId', player.gamePlayerId as string)
+      )
+      .unique();
+    
+    if (!playerDescription) {
+      throw new ConvexError('Player description not found');
     }
     
-    // Randomly select an agent and player
-    const randomAgentDescription = agentDescriptions[Math.floor(Math.random() * agentDescriptions.length)];
-    const randomPlayerDescription = playerDescriptions[Math.floor(Math.random() * playerDescriptions.length)];
+    // Get user information for points update
+    const user = await ctx.db
+      .query('walletUsers')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!user) {
+      throw new ConvexError('User information not found. Please login first');
+    }
     
     // Generate conversation using OpenAI
     const systemPrompt = `You are simulating a conversation between two characters in a virtual world:
-1. ${randomPlayerDescription.name}: ${randomPlayerDescription.description}
+1. ${playerDescription.name}: ${playerDescription.description}
 2. An AI agent with the following identity: ${randomAgentDescription.identity}
 And the following plan: ${randomAgentDescription.plan}
 
@@ -396,6 +411,12 @@ player: [player's second response]
         }
       }
       
+      // Award 40 points to the user
+      const newPoints = user.points + 40;
+      await ctx.db.patch(user._id, {
+        points: newPoints
+      });
+      
       return {
         success: true,
         agent: {
@@ -404,16 +425,17 @@ player: [player's second response]
           plan: randomAgentDescription.plan
         },
         player: {
-          id: randomPlayerDescription.playerId,
-          name: randomPlayerDescription.name,
-          description: randomPlayerDescription.description
+          id: playerDescription.playerId,
+          name: playerDescription.name,
+          description: playerDescription.description
         },
-        conversation: messages
+        conversation: messages,
+        pointsEarned: 40,
+        totalPoints: newPoints
       };
     } catch (error: any) {
       console.error('Error generating conversation:', error);
       throw new ConvexError(`Failed to generate conversation: ${error.message || 'Unknown error'}`);
     }
   },
-});
-
+}); 
