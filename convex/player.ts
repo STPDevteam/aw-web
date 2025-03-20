@@ -491,6 +491,14 @@ player: [player's second response]
         points: newPoints
       });
       
+      // Ensure only 8 messages are returned
+      const finalMessages = validMessages.length === 8 ? validMessages : messages.slice(0, 8);
+      
+      // Force limit to 8 messages, regardless of previous logic
+      if (finalMessages.length > 8) {
+        finalMessages.length = 8;
+      }
+      
       return {
         success: true,
         agent: {
@@ -503,7 +511,7 @@ player: [player's second response]
           name: playerDescription.name,
           description: playerDescription.description
         },
-        conversation: validMessages.length === 8 ? validMessages : messages.slice(0, 8),
+        conversation: finalMessages,
         pointsEarned: 40,
         totalPoints: newPoints
       };
