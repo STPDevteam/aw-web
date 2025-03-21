@@ -25,6 +25,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
     const [myAgentOpen, setMyAgentOpen] = useState<boolean>(false)
     const [createOpen, setCreateOpen] = useState<boolean>(false)
     const [deleteLoading, setDeleteLoading] = useState<boolean>(false)
+    const [confirmOpen, setConfirmOpen] = useState<boolean>(false)
     const [name, setName] = useState<iInput>({
             value: '',
             maxLen: 15,
@@ -39,7 +40,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
         disable: true
     })
     const dispatch = useAppDispatch()
-
+    
 
     const createdPlayers = useQuery(api.player.getPlayersByWallet, { walletAddress: address as string ?? ''})
     const createPlayer = useMutation(api.player.createPlayer)
@@ -197,7 +198,6 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
     }   
 
     const closeCreateModal = () => {
-        
         setName({
             value: '',
             maxLen: 15,
@@ -218,7 +218,9 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
             const a = await deletePlayer({walletAddress: address})
             setDeleteLoading(false)
             if(a && a.success) {
+                setConfirmOpen(false)
                 setMyAgentOpen(false)
+
                 dispatch(alertInfoAction({
                     open: true,
                     title: 'Successful',
@@ -269,7 +271,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
             <BasePopup
                 visible={myAgentOpen}
                 onClose={() => setMyAgentOpen(false)}
-                title="My agent"
+                title="My Agent"
                 content={
                     <Box mt="30px">
                         <Box className='fx-row ai-ct'>
@@ -280,17 +282,50 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
                             </Box>
                         </Box>
 
-                        <Text className='fz24 gray fw700' mt="70px">Name</Text>
+                        <Text className='fz24 gray fw700' mt="70px">Description</Text>
                         <Box className='center box_clip' p="24px 28px" mt="10px" w="553px" h="116px" bgColor="#838B8D">                        
                             <Text className='gray2 fz400'>{myAgentInfo.description}</Text>
                         </Box>
                     </Box>
                 }
-                onOK={deleteAgent}
-                okLoading={deleteLoading}
+                onOK={() => {
+                    setMyAgentOpen(false)
+                    setConfirmOpen(true)
+                }}
                 okText="Delete agent"
             >
             </BasePopup>
+
+            <BasePopup
+                visible={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                title="Delete"
+                content={
+                    <Box className='h100 fx-col ai-ct'>
+                        <Text className='gray fz20' mt="200px" maxW="376px" textAlign="center">
+                            Are you sure you want to delete this agent? 
+                            <br/>
+                            This action cannot beundone.
+                        </Text>
+                        <Box className='fx-row ai-ct w100' mt="192px">
+                            <GeneralButton 
+                                size='sm' 
+                                loading={deleteLoading} 
+                                title="Ok" 
+                                onClick={deleteAgent} 
+                            />
+                            <GeneralButton 
+                                style={{ marginLeft: '40px' }}
+                                size='sm' 
+                                title="Cancel" 
+                                onClick={() => setConfirmOpen(false)} 
+                            />
+                        </Box>
+                    </Box>
+                }
+            >
+            </BasePopup>
+
 
         </Box>
     )
