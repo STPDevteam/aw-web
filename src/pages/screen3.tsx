@@ -93,7 +93,7 @@ export const Screen3 = () => {
                 onMouseOver={() => isMobile() ? null : setActiveIdx(idx)}
                 onMouseLeave={() => isMobile() ? null : setActiveIdx(-1)}
                 w={widthValue}
-                h={['225px','420px','480px','600px','600px']}
+                h={['300px','420px','480px','600px','600px']}
                 pos='relative'
                 borderRadius='0 0 16px 16px'
                 overflow="hidden"
