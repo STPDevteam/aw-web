@@ -19,23 +19,50 @@ function generateId(): string {
  */
 export const getCurrentPlayerByWallet = query({
   args: {
-    walletAddress: v.string(),
+    walletAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { walletAddress } = args;
+    
+    // Return message if no wallet address is provided
+    if (!walletAddress) {
+      return {
+        success: false,
+        message: 'Please provide a wallet address',
+        player: null
+      };
+    }
+    
     // Validate wallet address format
-    if (!args.walletAddress.startsWith('0x') || 
-        args.walletAddress.length !== 42 || 
-        !/^0x[0-9a-fA-F]{40}$/.test(args.walletAddress)) {
-      throw new ConvexError('Invalid wallet address format');
+    if (!walletAddress.startsWith('0x') || 
+        walletAddress.length !== 42 || 
+        !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      return {
+        success: false,
+        message: 'Invalid wallet address format',
+        player: null
+      };
     }
     
     // Find player corresponding to this wallet address
     const player = await ctx.db
       .query('players')
-      .withIndex('walletAddress', (q) => q.eq('walletAddress', args.walletAddress))
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
       .unique();
     
-    return player;
+    if (!player) {
+      return {
+        success: false,
+        message: 'No player found for this wallet address',
+        player: null
+      };
+    }
+    
+    return {
+      success: true,
+      message: 'Player found',
+      player
+    };
   },
 });
 
@@ -306,16 +333,29 @@ export const getAllPlayers = query({
  */
 export const getPlayersByWallet = query({
   args: {
-    walletAddress: v.string(),
+    walletAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { walletAddress } = args;
+    
+    // Return message if no wallet address is provided
+    if (!walletAddress) {
+      return {
+        success: false,
+        message: 'Please provide a wallet address',
+        players: []
+      };
+    }
     
     // Validate wallet address format
     if (!walletAddress.startsWith('0x') || 
         walletAddress.length !== 42 || 
         !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
-      return [];
+      return {
+        success: false,
+        message: 'Invalid wallet address format',
+        players: []
+      };
     }
     
     // Find all players corresponding to this wallet address
@@ -324,7 +364,11 @@ export const getPlayersByWallet = query({
       .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
       .collect();
     
-    return players;
+    return {
+      success: true,
+      message: players.length > 0 ? 'Players found' : 'No players found for this wallet address',
+      players
+    };
   },
 });
 
@@ -366,11 +410,13 @@ export const simulateConversationWithAgent = action({
     }
     
     // Find user's player
-    const player = await ctx.runQuery(api.player.getCurrentPlayerByWallet, { walletAddress });
+    const playerResult = await ctx.runQuery(api.player.getCurrentPlayerByWallet, { walletAddress });
     
-    if (!player) {
+    if (!playerResult.success || !playerResult.player) {
       throw new ConvexError('Player not found, please create a player first');
     }
+    
+    const player = playerResult.player;
     
     // Get world data
     const worldData = await ctx.runQuery(internal.aiTown.game.getWorld, { worldId });

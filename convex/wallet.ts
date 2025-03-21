@@ -308,10 +308,15 @@ export const cleanupExpiredChallenges = mutation({
  */
 export const getCheckInStatus = query({
   args: {
-    walletAddress: v.string(),
+    walletAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { walletAddress } = args;
+    
+    // Return null if no wallet address is provided
+    if (!walletAddress) {
+      return null;
+    }
     
     // Get the current user
     const user = await ctx.db
@@ -363,10 +368,20 @@ export const getCheckInStatus = query({
  */
 export const dailyCheckIn = mutation({
   args: {
-    walletAddress: v.string(),
+    walletAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { walletAddress } = args;
+    
+    // Return friendly message if no wallet address is provided
+    if (!walletAddress) {
+      return {
+        success: false,
+        message: 'Please provide a wallet address',
+        currentPoints: null,
+        nextCheckIn: null
+      };
+    }
     
     // Get the current user
     const user = await ctx.db
