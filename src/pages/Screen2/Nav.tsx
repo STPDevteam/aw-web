@@ -11,29 +11,21 @@ import { MyAgent } from './MyAgent'
 import { RandomEncounte } from './RandomEncounte'
 
 export const Nav = () => {
-    const canCheckIn = false
-    // const [canCheckIn, setCanCheckIn] = useState<any>(false)
+    const [canCheckIn, setCanCheckIn] = useState<any>(false)
     const { address, isConnected } = useAccount()
     const dispatch = useAppDispatch()
-    const dailyCheckIn = useMutation(api.wallet.dailyCheckIn)    
-
-    // console.log('address=======', address)
-   
-
-    const checkStatus = useQuery(api.wallet.getCheckInStatus,{ walletAddress: address ?? '' })
-
+    const dailyCheckIn = useMutation(api.wallet.dailyCheckIn)       
+    const checkStatus = useQuery(api.wallet.getCheckInStatus,{ walletAddress: address as string })
       
     // console.log('checkStatus', checkStatus)
-
-   
-
+    // console.log('canCheckIn', canCheckIn)
 
     const worldStatus = useQuery(api.world.defaultWorldStatus)
     const worldId = worldStatus?.worldId   
 
-    // useEffect(() => {   
-    //     setCanCheckIn(checkStatus?.canCheckIn || false)
-    // }, [checkStatus?.canCheckIn])
+    useEffect(() => {   
+        setCanCheckIn(checkStatus?.canCheckIn || false)
+    }, [checkStatus?.canCheckIn])
 
     const checkWalletConnected = (cb:() => void) => {
        
@@ -54,7 +46,7 @@ export const Nav = () => {
                     content: 'Claimed! World points +10'
                 }))
                
-                // setCanCheckIn(false)
+                setCanCheckIn(false)
             }
         })
     }    
@@ -67,7 +59,9 @@ export const Nav = () => {
                     <GeneralButton 
                         disable={isConnected ? (!!!canCheckIn) : false}
                         onClick={onClaim}
-                        title={isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in'}
+                        title={
+                            isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in'
+                        }
                         size='sm'
                     />
                     <MyAgent worldId={worldId}/>
