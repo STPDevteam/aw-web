@@ -6,7 +6,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch } from '@/redux/hooks.js'
 import { alertInfoAction, openConnectWalletAction } from '@/redux/reducer/agentReducer.js'
-import {  useAccount, } from 'wagmi'
+import {  useAccount, useSignMessage} from 'wagmi'
 import { MyAgent } from './MyAgent'
 import { RandomEncounte } from './RandomEncounte'
 
@@ -23,6 +23,38 @@ export const Nav = () => {
     const worldStatus = useQuery(api.world.defaultWorldStatus)
     const worldId = worldStatus?.worldId   
 
+    const { signMessageAsync } = useSignMessage();
+    const createChallenge = useMutation(api.wallet.createAuthChallenge);
+    const verifySignature = useMutation(api.wallet.verifySignature);
+
+    
+
+    async function signInWithWallet() {
+        try {
+            if (!isConnected || !address) {
+                return
+            }
+            const { challenge } = await createChallenge({ walletAddress: address })
+            const signature = await signMessageAsync({ message: challenge })
+            const result = await verifySignature({
+                walletAddress: address,
+                signature,
+            });
+            return result
+        } catch (error:any) {
+            // console.log('errorerror', error)
+            if ((error as any).code === 4001 || error?.message?.includes('User rejected')) {
+                dispatch(alertInfoAction({
+                    open: true,
+                    title: 'Warning',
+                    content: 'User rejected the request.',
+                }))
+            }            
+            return false
+            
+        }
+    }
+      
     useEffect(() => {   
         setCanCheckIn(checkStatus?.canCheckIn || false)
     }, [checkStatus?.canCheckIn])
@@ -37,16 +69,20 @@ export const Nav = () => {
 
     const onClaim = () => {
         checkWalletConnected(async() => {
-            const a = await dailyCheckIn({ walletAddress: address as `0x${string}` })
-            if(a && a.success) {
-                dispatch(alertInfoAction({
-                    open: true, 
-                    title: 'Claim',
-                    content: 'Claimed! World points +10'
-                }))
-               
-                setCanCheckIn(false)
-            }
+            signInWithWallet().then(async(res: any) => {
+                if(res) {
+                    const a = await dailyCheckIn({ walletAddress: address as `0x${string}` })
+                    if(a && a.success) {
+                        dispatch(alertInfoAction({
+                            open: true, 
+                            title: 'Claim',
+                            content: 'Claimed! World points +10'
+                        }))
+                        setCanCheckIn(false)
+                    }
+                }
+            })
+
         })
     }    
     
@@ -59,7 +95,8 @@ export const Nav = () => {
                         disable={isConnected ? (!!!canCheckIn) : false}
                         onClick={onClaim}
                         title={
-                            isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in'
+                            checkStatus === null ? 'Daily Check-in' :
+                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Check-in' : 'Claimed') : 'Daily Check-in')
                         }
                         size='sm'
                     />

@@ -70,6 +70,9 @@ export const Game = () => {
   const _w =  0.914893 * window.innerWidth 
 
   const ___rightWidth = _rightWidth > 494 ? 494 : _rightWidth
+
+
+  
   return (  
     <Box 
       className='box_clip fx-row ai-ct jc-sb ' 

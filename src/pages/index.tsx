@@ -145,8 +145,6 @@ export const Pages = () => {
           </Box>
         }
 
-        
-
         { currentIndex === 0 && <Screen1 onMoveTo={idx => setCurrentIndex(idx)}/>}
         { currentIndex === 1 &&  <Screen2/>  }
         { currentIndex === 2 && <Screen3/> }

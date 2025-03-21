@@ -5,7 +5,7 @@ import { Image, Text, Box } from "@chakra-ui/react"
 import { ArrowBottom } from '@/images'
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
-import { useAccount, useSignMessage, useDisconnect, useConnect } from 'wagmi';
+import { useAccount, useDisconnect, useConnect } from 'wagmi';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
 import { alertInfoAction, openConnectWalletAction, selectOpenConnectWallet } from '@/redux/reducer/agentReducer.js';
 import { Logo } from '@/images'
@@ -14,25 +14,14 @@ import { Logo } from '@/images'
 export const ConnectWallet:FC<{ disable?: boolean, points: undefined | number }> = ({ disable, points }) => {
   const [walletOpen, setWalletOpen] = useState(false)
   const { disconnect } = useDisconnect();  
-  const { address, isConnected } = useAccount();
-  const { signMessageAsync } = useSignMessage();
-  const createChallenge = useMutation(api.wallet.createAuthChallenge);
-  const verifySignature = useMutation(api.wallet.verifySignature);
+ 
   const openConnectWallet = useAppSelector(selectOpenConnectWallet)
   const dispatch = useAppDispatch()
   const openConnectModalRef = useRef<() => void>(() => {})
 
-  useEffect(() => {
-    const didSignIn = localStorage.getItem('didSignIn')
-    if (isConnected && address && !didSignIn) {
-      signInWithWallet().then(() => {
-        localStorage.setItem('didSignIn', 'true')
-      })
-    }
-    if(!isConnected) {
-      localStorage.removeItem('didSignIn')
-    }
-  }, [isConnected, address])
+ const { address, isConnected } = useAccount()
+
+
 
   useEffect(() => {
     if(openConnectWallet) {
@@ -42,28 +31,6 @@ export const ConnectWallet:FC<{ disable?: boolean, points: undefined | number }>
     }
   },[openConnectWallet])
 
-  async function signInWithWallet() {
-    try {
-      if (!isConnected || !address) {
-        return;
-      }
-      const { challenge } = await createChallenge({ walletAddress: address });
-      const signature = await signMessageAsync({ message: challenge });   
-      const result = await verifySignature({
-        walletAddress: address,
-        signature,
-      });
-      dispatch(alertInfoAction({
-        open: true,
-        title: 'Successful',
-        content: result.isNewUser ? 'New user signed successfully.' : 'Signed successfully.',
-      }))
-    
-      return result;
-    } catch (error:any) {
-      console.error(error);
-    }
-  }
 
 
 

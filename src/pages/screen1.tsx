@@ -3,7 +3,7 @@
 import React, { FC } from 'react'
 import { Text, Box, Image } from '@chakra-ui/react'
 import { Screen1Bg, WorldFun, Screen1SubTitle} from '@/images'
-import { GeneralButton, Notification, BasePopup, CreateInput } from '@/components'
+import { GeneralButton, PageLoading } from '@/components'
 import { isMobile } from '@/utils/tool'
 
 export const Screen1:FC<{ onMoveTo: (id: number) => void }> = ({ onMoveTo }) => {
@@ -41,6 +41,9 @@ export const Screen1:FC<{ onMoveTo: (id: number) => void }> = ({ onMoveTo }) => 
         </Box>
       }
 
+      {/* <Box w="100%" pos='absolute' bottom={isMobile() ? '80px' : '20px'} left="50%"  transform="translateX(-50%)">
+        <PageLoading/>
+      </Box> */}
     </Box>
   )
 }

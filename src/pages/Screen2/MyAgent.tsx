@@ -84,10 +84,10 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
             setBtnLoading(false)
             if ((error as any).code === 4001 || error?.message?.includes('User rejected')) {
                 dispatch(alertInfoAction({
-                open: true,
-                title: 'Warning',
-                content: 'User rejected the request.',
-            }))
+                    open: true,
+                    title: 'Warning',
+                    content: 'User rejected the request.',
+                }))
           }
         }
     }, [error])
