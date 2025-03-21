@@ -52,7 +52,7 @@ export const Nav = () => {
     
    
     return(
-        <Box className='w100' maxW="1720px">
+        <Box className='w100' maxW="1720px" >
             <Box className='fx-row ai-ct jc-sb w100'>
                 <Box className='fx-row ai-ct jc-sb'>
                     <GeneralButton 
@@ -65,7 +65,6 @@ export const Nav = () => {
                     />
                     <MyAgent worldId={worldId}/>
                     <RandomEncounte worldId={worldId}/>
-                    
                 </Box>               
                 <ConnectWallet points={checkStatus ? checkStatus?.currentPoints : 0}/>    
             </Box>      

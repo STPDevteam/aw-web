@@ -22,12 +22,11 @@ export const Screen2 = () => {
       bgRepeat="no-repeat"     
       py="40px"
       bg={['linear-gradient(180deg, #4B494B 0%, #1E2227 100%)', 'linear-gradient(180deg, #4B494B 0%, #1E2227 100%)', null,null,null]}
-    
     >
-      <Box className='w100 fx-row ai-ct '   display={['none','none','none','flex','flex']}
+      <Box className='w100 fx-row ai-ct '  display={['none','none','none','flex','flex']}
        
       > 
-        <Box w="160px" className='' h="100px"/>
+        <Box minW="115px" w="160px" className=''  h="100px"/>
         <Box className='w100 fx-col ai-ct ' >
           <Nav/>
           <Box className='w100 center' mt="5px">

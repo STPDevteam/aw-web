@@ -30,50 +30,6 @@ export const Game = () => {
     id: GameId<'players'>;
   }>();
 
-  const debounceTime = 1000
-  const responsiveOtherWidth = useBreakpointValue({
-    base: mapContainerWidth / 2, 
-    sm: mapContainerWidth / 2,
-    md: mapContainerWidth / 2,
-    lg: mapRightWidth + 64,
-    xl: mapRightWidth + 64,
-  });
-
-  const otherWidth = mapRightWidth + 64 + 160 // 160 left nav width
-
-  const [pixiWidth, setPixiWidth] = useState<number>(() => {
-  
-    const containerWidth = Math.min(window.innerWidth, mapContainerWidth);
-    return containerWidth - (responsiveOtherWidth || containerWidth / 2);
-  });
-    
- 
-
-  
- useEffect(() => {
-  const updatePixiWidth = () => {
-    const containerWidth = Math.min(window.innerWidth, mapContainerWidth);
-    setPixiWidth(containerWidth - (responsiveOtherWidth || containerWidth / 2));
-  };
-
-  updatePixiWidth();
-
-  let timeoutId: ReturnType<typeof setTimeout>;
-  const handleResize = () => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      updatePixiWidth();
-    }, debounceTime);
-  };
-
-  window.addEventListener('resize', handleResize);
-  return () => {
-    clearTimeout(timeoutId);
-    window.removeEventListener('resize', handleResize);
-  };
-}, [debounceTime, responsiveOtherWidth]);
-
-
 
   const [gameWrapperRef, { width:mapWidth, height:mapHeight }] = useElementSize();
 
@@ -116,7 +72,7 @@ export const Game = () => {
   const ___rightWidth = _rightWidth > 494 ? 494 : _rightWidth
   return (  
     <Box 
-      className='box_clip fx-row ai-ct jc-sb' 
+      className='box_clip fx-row ai-ct jc-sb ' 
       // w={_w > 1720 ? "1720px" : `${_w}px` }
       w='100%'
       bgColor="#1F1F23" 
@@ -134,7 +90,7 @@ export const Game = () => {
         // borderStyle='solid'
         // borderColor={['red','green','yellow','blue','pink',]}
         maxW={`${mapContainerWidth}px`}
-        className='w100 fx-row ai-ct jc-sb'
+        className='w100 fx-row ai-ct jc-sb '
         >
         <Box
           bgImage={GameLeftBorder}

@@ -103,12 +103,12 @@ export const ConnectWallet:FC<{ disable?: boolean, points: undefined | number }>
                     <ClickButtonWrapper onClick={() => setWalletOpen(true)}>
                       <Box 
                           h="69px" 
-                          w="323px"
+                          w={['150px','150px','150px','200px','323px']}
                           bgColor='#E0E0E0' 
                           className="fx-row ai-ct jc-sb click box_clip" 
-                          px="26px" 
+                          px={['12px','12px','12px','12px','26px']}
                       >
-                          <Text className="fz26 gray3 fw700">@{ account?.displayName }</Text>
+                          <Text className=" gray3 fw700" fontSize={['16px','16px','16px','20px','26px']}>@{ account?.displayName }</Text>
                           <Image 
                               src={ArrowBottom} 
                               w="19px"
