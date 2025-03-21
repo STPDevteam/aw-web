@@ -24,8 +24,6 @@ export const mapRightWidth = 494
 
 export const Game = () => {
   const agentInfo = useAppSelector(selectedAgentInfo)
-
-  
   const convex = useConvex();
   const [selectedElement, setSelectedElement] = useState<{
     kind: 'player';
@@ -42,7 +40,6 @@ export const Game = () => {
   });
 
   const otherWidth = mapRightWidth + 64 + 160 // 160 left nav width
-  // const [pixiWidth, setPixiWidth] = useState<number>(window.innerWidth - otherWidth)
 
   const [pixiWidth, setPixiWidth] = useState<number>(() => {
   
@@ -102,12 +99,27 @@ export const Game = () => {
   } 
 
 
+  
+  // 1880
+
+  const h = 0.351595 * window.innerWidth > 661 ? 661 : 0.351595 * window.innerWidth
+  const _h = 0.375531 * window.innerWidth 
+  
+
+  //  1145 / 1880 = 0.609
+  const _leftWidth = 0.609 * window.innerWidth 
+  // 494 / 1880 = 0.262765
+  const _rightWidth = 0.262765 * window.innerWidth 
+  // 1720 / 1880 = 0.914893
+  const _w =  0.914893 * window.innerWidth 
   return (  
     <Box 
-      className='box_clip fx-row ai-ct jc-sb w100' 
+      className='box_clip fx-row ai-ct jc-sb' 
+      // w={_w > 1720 ? "1720px" : `${_w}px` }
+      w='100%'
       bgColor="#1F1F23" 
       maxW={`${mapContainerWidth}px`} 
-      h="706px"
+      h={_h > 706 ? "706px" : `${_h}px`}
       py="30px"
       px={['4px','4px','12px','24px','24px']}
       pos='relative'
@@ -115,28 +127,28 @@ export const Game = () => {
       <Box pos='absolute' left="50px" top="44px" zIndex={99}> 
         <AgentList  worldId={worldId}/>
       </Box> 
-      <Grid 
+      <Box 
         // borderWidth="2px"
         // borderStyle='solid'
         // borderColor={['red','green','yellow','blue','pink',]}
         maxW={`${mapContainerWidth}px`}
-        className='w100'
-        templateColumns={['1fr 1fr','1fr 1fr','1fr 1fr','1fr 1fr','11.45fr 4.94fr']}>
+        className='w100 fx-row ai-ct jc-sb'
+        >
         <Box
           bgImage={GameLeftBorder}
           bgSize="cover"
           bgPosition='center'
           bgRepeat="no-repeat"  
-          // w={`${mapLeftWidth}px`}
-          w="100%"
-          h={`${mapContainerHeight}px`}
-          className='box_clip screen2-map-container'  
+          w={_leftWidth > 1145 ? 1145 : _leftWidth}
+        
+          h={`${h}px`}
+          className='box_clip'  
           cursor='all-scroll'
         > 
-            <Stage width={pixiWidth} height={mapContainerHeight} options={{ backgroundColor: '#1F1F23' }}>
+            <Stage width={_leftWidth > 1145 ? 1145 : _leftWidth} height={h} options={{ backgroundColor: '#1F1F23' }}>
               <ConvexProvider client={convex}>
                 <PixiGame
-                  pixiWidth={pixiWidth}
+                  pixiWidth={_leftWidth > 1145 ? 1145 : _leftWidth}
                   agentInfo={agentInfo}
                   game={game}
                   worldId={worldId}
@@ -154,8 +166,8 @@ export const Game = () => {
           bgSize="cover"
           bgPosition='center'
           bgRepeat="no-repeat"  
-          w="100%"
-          h={`${mapContainerHeight}px`}
+          w={_rightWidth > 494 ? 494 : _rightWidth}
+          h={`${h}px`}
           className='fx jc-ct'
           overflowY="scroll"
           onWheel={(e) => e.stopPropagation()} 
@@ -171,7 +183,7 @@ export const Game = () => {
         </Box>
 
 
-      </Grid>
+      </Box>
     </Box>
   );
 }

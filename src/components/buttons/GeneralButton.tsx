@@ -4,7 +4,7 @@
 import React from "react";
 import { Box, Spinner, Text } from "@chakra-ui/react";
 import { ClickButtonWrapper } from './ClickButtonWrapper'
-import { ButtonBg, ButtonBgHover, ButtonSsm, ButtonBgLg, ButtonBgLgHover, ButtonBgMd, ButtonBgMdHover} from '@/images'  
+import { ButtonBg, ButtonBgHover, ButtonSsm, ButtonBgLg, ButtonBgLgHover, ButtonBgMd, ButtonBgMdHover, ButtonBgMd2, ButtonBgMd2Hover} from '@/images'  
 
 interface iGeneralButton {
   loading?: boolean;
@@ -14,13 +14,14 @@ interface iGeneralButton {
   title: string;
   style?: React.CSSProperties;
   fz?: string
-  size: 'ssm' | 'sm' | 'md' | 'lg' 
+  size: 'ssm' | 'sm' | 'md' | 'lg' | 'md2'
 }
 
 const bgs = {
   ssm: { bg: ButtonBg, hover: ButtonBgHover, w: '127px', h: '39px', fz: '14px', },
   sm: { bg: ButtonBg, hover: ButtonBgHover, w: '225px',h: '69px', fz: '24px', },
   md: { bg: ButtonBgMd, hover: ButtonBgMdHover, w: '331px', h: '69px', fz: '24px',},
+  md2: { bg: ButtonBgMd2, hover: ButtonBgMd2Hover, w: '391px', h: '69px', fz: '24px',},
   lg: { bg: ButtonBgLg, hover: ButtonBgLgHover, w: '447px', h: '69px', fz: '24px',},
 }
 export const GeneralButton: React.FC<iGeneralButton> = ({

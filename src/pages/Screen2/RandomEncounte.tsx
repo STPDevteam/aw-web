@@ -17,7 +17,7 @@ export const RandomEncounte:React.FC<{ worldId: any }> = ({ worldId }) => {
     const [randomOpen, setRandomOpen] = useState<boolean>(false)
     const [btnLoading, setBtnLoading] = useState<boolean>(false)
     const [conversationList, setConversationList] = useState<{speaker: string, text: string}[]>([])
-
+    const [title, setTitle] = useState('')
 
     const { address, isConnected } = useAccount()
     const { data: hash, writeContract, isPending, error } = useWriteContract()
@@ -60,6 +60,7 @@ export const RandomEncounte:React.FC<{ worldId: any }> = ({ worldId }) => {
             setBtnLoading(false)
             if(a && a.success) {
                 setRandomOpen(true)
+                setTitle(a.agent.name)
                 setConversationList(a.conversation)
             }
         }
@@ -98,13 +99,14 @@ export const RandomEncounte:React.FC<{ worldId: any }> = ({ worldId }) => {
         }
 
     }
-    
+
+    console.log('conversationList', conversationList)
     return (
         <Box>
             <GeneralButton 
                 onClick={handleRandomEncounter}
-                title='Random Encounter'
-                size="lg"
+                title='Send to Chat with NPC'
+                size="md2"
                 loading={btnLoading}
             />
             <BasePopup
@@ -113,13 +115,21 @@ export const RandomEncounte:React.FC<{ worldId: any }> = ({ worldId }) => {
                     setRandomOpen(false)
                     setConversationList([])
                 }}
-                title="Conversation"
+                title={title}
                 content={
                     <Box mt="30px" overflowY="scroll" maxH="432px" onWheel={(e) => e.stopPropagation()} >
                         {
-                            conversationList.map(item => (
+                            conversationList.map((item:any) => (
                                 <Box key={item.text} mt="20px">
-                                    <Text className='fz24 gray fw700'>{item.speaker}</Text>
+                                    <Box className='fx-row ai-ct jc-sb'>
+                                        {
+                                            item.isAgent ? <Text className='fz24 gray fw700'>{item.speaker}</Text> : <div/>
+                                        }
+                                        {
+                                            item.isAgent ? <div/> : <Text className='fz24 gray fw700'>{item.speaker}</Text>
+                                        }
+                                    </Box>
+
                                     <Box  className='center box_clip' p="24px 28px" mt="10px" w="553px"  bgColor="#838B8D">                        
                                         <Text className='gray2 fz400'>{item.text}</Text>
                                     </Box>

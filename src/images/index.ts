@@ -33,4 +33,6 @@ export { default as Screen1SubTitle } from "./screen1SubTitle.svg";
 export { default as MapContainer } from "./mapContainer.png";
 export { default as MapMobile } from "./mapMobile.png";
 export { default as Logo } from "./logo.png";
+export { default as ButtonBgMd2 } from "./buttonBgMd2.png";
+export { default as ButtonBgMd2Hover } from "./buttonBgMd2Hover.png";
 

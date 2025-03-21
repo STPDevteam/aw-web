@@ -82,12 +82,12 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
     useEffect(() => {
         if (error) {
             setBtnLoading(false)
-          if ((error as any).code === 4001 || error?.message?.includes('User rejected')) {
-            dispatch(alertInfoAction({
-              open: true,
-              title: 'Warning',
-              content: 'User rejected the request.',
-            }));
+            if ((error as any).code === 4001 || error?.message?.includes('User rejected')) {
+                dispatch(alertInfoAction({
+                open: true,
+                title: 'Warning',
+                content: 'User rejected the request.',
+            }))
           }
         }
     }, [error])
@@ -243,7 +243,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
             <BasePopup
                 visible={createOpen}
                 onClose={handleCreateClose}
-                title="Create agent"
+                title="Create Agent"
                 content={
                     <Box mt="30px">
                         <CreateInput 
@@ -253,7 +253,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
                         >
                             <input value={name.value} placeholder={`your agent's name – can be anything`} className="agent_input" onChange={onChangeName}/>
                         </CreateInput>    
-                        <CreateInput title="prompt"  maxLen={prompt.maxLen} currentLen={prompt.value.length}>
+                        <CreateInput title="Prompt"  maxLen={prompt.maxLen} currentLen={prompt.value.length}>
                             <textarea 
                                 className="agent_textarea" 
                                 placeholder={`Describe your agent`} 
@@ -264,7 +264,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
                 }
                 onOK={onCreateAgent}
                
-                okText={`Create agent for ${CREATE_AGENT_FEE} $STPT`}
+                okText={`Create Agent For ${CREATE_AGENT_FEE} $STPT`}
             >
             </BasePopup>
 
@@ -292,7 +292,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
                     setMyAgentOpen(false)
                     setConfirmOpen(true)
                 }}
-                okText="Delete agent"
+                okText="Delete Agent"
             >
             </BasePopup>
 
@@ -305,7 +305,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
                         <Text className='gray fz20' mt="200px" maxW="376px" textAlign="center">
                             Are you sure you want to delete this agent? 
                             <br/>
-                            This action cannot beundone.
+                            This action cannot be undone.
                         </Text>
                         <Box className='fx-row ai-ct w100' mt="192px">
                             <GeneralButton 

@@ -158,12 +158,13 @@ export const PixiGame:React.FC<{
     }
   } 
 
+ const h = 0.351595 * window.innerWidth
 
   return (
       <PixiViewport
         app={pixiApp}
         screenWidth={ pixiWidth }
-        screenHeight={mapContainerHeight}
+        screenHeight={h}
         worldWidth={width * tileDim}
         worldHeight={height * tileDim}
         viewportRef={viewportRef}

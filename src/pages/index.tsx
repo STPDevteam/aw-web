@@ -101,7 +101,7 @@ export const Pages = () => {
                 }
             </Box>
           </Box>:
-          <Box pos='absolute' left="1px" top={0} className='h100 fx ai-ct ' w="125px" >
+          <Box pos='absolute' left="1px" top={0} className='h100 fx ai-ct' w="125px" >
             <Box className='fx-row ai-ct' h="240px">
               <Box h="240px" className=''>
                 {
@@ -148,7 +148,7 @@ export const Pages = () => {
         
 
         { currentIndex === 0 && <Screen1 onMoveTo={idx => setCurrentIndex(idx)}/>}
-        { currentIndex === 1 && <Screen2/> }
+        { currentIndex === 1 &&  <Screen2/>  }
         { currentIndex === 2 && <Screen3/> }
     </Box>
   )
