@@ -11,6 +11,7 @@ import { ServerGame } from '../hooks/serverGame';
 import { Box, Image, Text  } from '@chakra-ui/react'
 import { Title } from '@/components'
 import { Close } from '@/images'
+import { ButtonBg, ButtonBgHover} from '@/images'  
 
 export default function PlayerDetails({
   worldId,
@@ -19,6 +20,7 @@ export default function PlayerDetails({
   playerId,
   setSelectedElement,
   scrollViewRef,
+  width,
 }: {
   worldId: Id<'worlds'>;
   engineId: Id<'engines'>;
@@ -26,6 +28,7 @@ export default function PlayerDetails({
   playerId?: GameId<'players'>;
   setSelectedElement: SelectElement;
   scrollViewRef: React.RefObject<HTMLDivElement>;
+  width: number
 }) {
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId });
 
@@ -136,14 +139,27 @@ export default function PlayerDetails({
 
 
   const descriptionFun = (d: string) => (
-    <Box className='box_clip center ' w="420px" px="20px" py="25px" bgColor='#838B8D' mt="10px">
+    <Box className='box_clip center ' w={`${width}px`} px="20px" py="25px" bgColor='#838B8D' mt="10px">
       <Text className='gray4 fz16'>{d}</Text>
     </Box>
   )
+
   return (
-    <Box className='' w="420px">      
-      <Box className='fx-row ai-ct jc-sb' mt="24px">
-        <Title name={playerDescription?.name || ''} size='md'/>
+    <Box className='' w={`${width}px`}>      
+      <Box className='fx-row ai-ct jc-sb' mt="24px">     
+          <Box 
+              bgImage={ButtonBg}
+              bgSize="cover"
+              bgPosition='center'
+              bgRepeat="no-repeat"    
+              className="center "
+              h={`${width * 0.788 * 0.19637}px`}
+              w={`${width * 0.788}px`}
+          >
+              <Text className="fw700 fz24 gray">{playerDescription?.name || ''}</Text>
+          </Box>
+
+
         <Image src={Close} w="50px" h="50px" className='click' onClick={() => setSelectedElement(undefined)}/>
       </Box>
 

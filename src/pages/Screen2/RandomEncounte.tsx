@@ -100,7 +100,6 @@ export const RandomEncounte:React.FC<{ worldId: any }> = ({ worldId }) => {
 
     }
 
-    console.log('conversationList', conversationList)
     return (
         <Box>
             <GeneralButton 

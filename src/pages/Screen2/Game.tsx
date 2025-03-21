@@ -112,6 +112,8 @@ export const Game = () => {
   const _rightWidth = 0.262765 * window.innerWidth 
   // 1720 / 1880 = 0.914893
   const _w =  0.914893 * window.innerWidth 
+
+  const ___rightWidth = _rightWidth > 494 ? 494 : _rightWidth
   return (  
     <Box 
       className='box_clip fx-row ai-ct jc-sb' 
@@ -166,13 +168,14 @@ export const Game = () => {
           bgSize="cover"
           bgPosition='center'
           bgRepeat="no-repeat"  
-          w={_rightWidth > 494 ? 494 : _rightWidth}
+          w={___rightWidth}
           h={`${h}px`}
           className='fx jc-ct'
           overflowY="scroll"
           onWheel={(e) => e.stopPropagation()} 
         >       
           <PlayerDetails
+            width={___rightWidth * 0.85}
             worldId={worldId} 
             engineId={engineId}
             game={game}

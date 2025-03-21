@@ -11,6 +11,7 @@ import { ButtonBg, ButtonBgHover, ButtonBgLg, ButtonBgLgHover, ButtonBgMd, Butto
 interface iTitle {
   name: string;
   size: 'sm' | 'md' | 'lg'
+  w: number
 }
 
 const bgs = {
@@ -20,7 +21,8 @@ const bgs = {
 }
 export const Title: React.FC<iTitle> = ({
     name,
-    size
+    size,
+    w
 }) => {  
   return (
     <Box 
@@ -35,7 +37,7 @@ export const Title: React.FC<iTitle> = ({
         // }}
         // transition="background-image 0.5s ease, color 0.5s ease"
         h='65px'
-        w="331px"
+        w={`${w}px`}
     >
         <Text className="fw700 fz24 gray">{name}</Text>
     </Box>
