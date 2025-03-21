@@ -1,7 +1,7 @@
 
 
 
-import React, { FC } from 'react'
+import React, { FC, useEffect } from 'react'
 import {  Box, Text } from '@chakra-ui/react'
 import { Screen2Bg, MapContainer, MapMobile } from '@/images'
 import { Nav } from './Nav' 
@@ -10,9 +10,10 @@ import { Notification } from '@/components'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
-export const Screen2 = () => {  
+export const Screen2:FC<{ isActive: boolean }> = ({ isActive }) => {  
   const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
   const dispatch = useAppDispatch()
+  
   return(
     <Box 
       className='h-screen w100' 
@@ -21,6 +22,7 @@ export const Screen2 = () => {
       bgPosition='center'
       bgRepeat="no-repeat"     
       py="40px"
+      display={isActive ? 'block' : 'none'}
       bg={['linear-gradient(180deg, #4B494B 0%, #1E2227 100%)', 'linear-gradient(180deg, #4B494B 0%, #1E2227 100%)', null,null,null]}
     >
       <Box className='w100 fx-row ai-ct '  display={['none','none','none','flex','flex']}
@@ -90,5 +92,4 @@ export const Screen2 = () => {
     </Box>
   )
 }
-
 

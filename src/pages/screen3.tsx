@@ -9,7 +9,7 @@ import {
 import { isMobile } from '@/utils/tool'
 
 
-export const Screen3 = () => {
+export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
   const [activeIdx, setActiveIdx] = useState<number>(-1)
   const slides = [Screen3Bg1, Screen3Bg2, Screen3Bg3, Screen3Bg4];
   const titles = [
@@ -57,6 +57,7 @@ export const Screen3 = () => {
     <Box 
       className="h-screen fx-row w100" 
       bg="linear-gradient(180deg, #101010 0%, #293033 100%)"
+      display={isActive ? 'flex' : 'none'}
     >
       { columns as number > 2 && <Box w="160px" className=''/>}
       <Box className='fx-col ai-ct w100 h100 '>

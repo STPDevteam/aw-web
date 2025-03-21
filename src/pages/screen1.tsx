@@ -6,7 +6,7 @@ import { Screen1Bg, WorldFun, Screen1SubTitle} from '@/images'
 import { GeneralButton, PageLoading } from '@/components'
 import { isMobile } from '@/utils/tool'
 
-export const Screen1:FC<{ onMoveTo: (id: number) => void }> = ({ onMoveTo }) => {
+export const Screen1:FC<{ onMoveTo: (id: number) => void, isActive: boolean, onCompleted: (p: number) => void }> = ({ onMoveTo, isActive, onCompleted}) => {
   return(
     <Box 
       className=' h-screen' 
@@ -14,6 +14,7 @@ export const Screen1:FC<{ onMoveTo: (id: number) => void }> = ({ onMoveTo }) => 
       bgSize="cover"
       bgPosition='center'
       bgRepeat="no-repeat"     
+      display={isActive ? 'block' : 'none'}
     >
     
 
@@ -41,9 +42,9 @@ export const Screen1:FC<{ onMoveTo: (id: number) => void }> = ({ onMoveTo }) => 
         </Box>
       }
 
-      {/* <Box w="100%" pos='absolute' bottom={isMobile() ? '80px' : '20px'} left="50%"  transform="translateX(-50%)">
-        <PageLoading/>
-      </Box> */}
+      <Box w="100%" pos='absolute' bottom={isMobile() ? '80px' : '20px'} left="50%"  transform="translateX(-50%)">
+        <PageLoading onCompleted={onCompleted}/>
+      </Box>
     </Box>
   )
 }
