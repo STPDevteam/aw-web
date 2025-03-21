@@ -7,7 +7,7 @@ import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
 import { alertInfoAction, openConnectWalletAction, openCreateAction, selectOpenCreate } from '@/redux/reducer/agentReducer.js';
 import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, RECIPIENT_ADDRESS, STPT_ADDRESS } from '@/config'
-import {  useWaitForTransactionReceipt, useAccount, useWriteContract, type BaseError, } from 'wagmi'
+import {  useWaitForTransactionReceipt, useAccount, useWriteContract, type BaseError, useChainId } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
 import { Logo } from '@/images'
 import { parseUnits } from 'viem'
@@ -45,7 +45,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
     const createPlayer = useMutation(api.player.createPlayer)
     const deletePlayer = useMutation(api.player.deletePlayer)
 
-    const AGENT_CREATED = createdPlayers && !!createdPlayers.length
+    const AGENT_CREATED = createdPlayers && !!createdPlayers.players.length
 
     const { data: hash, writeContract, isPending, error } = useWriteContract()
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({hash})
@@ -65,7 +65,8 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
         _id: '',
     })
 
-    const openCreate = useAppSelector(selectOpenCreate)
+    const openCreate = useAppSelector(selectOpenCreate)    
+
 
     useEffect(() => {
         openCreate && setCreateOpen(true)
@@ -93,7 +94,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
         
     useEffect(() => {
         if(AGENT_CREATED) {
-            setMyAgentInfo(createdPlayers[0])
+            setMyAgentInfo(createdPlayers.players[0])
         }
     },[createdPlayers])
 
@@ -176,15 +177,21 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
       
         if(!!name.value.length && !!prompt.value.length && !name.disable && !prompt.disable) {
             setCreateOpen(false)
-            setBtnLoading(true)          
-            await writeContract({
-                address: STPT_ADDRESS,
-                abi:STPT_ABI,
-                functionName: 'transfer',
-                // args: [RECIPIENT_ADDRESS, parseUnits(`0.2`, 18)],
-                args: [RECIPIENT_ADDRESS, parseUnits(`${CREATE_AGENT_FEE}`, 18)],
+            setBtnLoading(true)      
+            
+            const a = await window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: '0x2105' }],
             })
-         
+            setTimeout(async() => {
+                await writeContract({
+                    address: STPT_ADDRESS,
+                    abi:STPT_ABI,
+                    functionName: 'transfer',
+                    // args: [RECIPIENT_ADDRESS, parseUnits(`0.2`, 18)],
+                    args: [RECIPIENT_ADDRESS, parseUnits(`${CREATE_AGENT_FEE}`, 18)],
+                })
+            },500)
            
         }
     }   

@@ -15,7 +15,7 @@ export const Nav = () => {
     const { address, isConnected } = useAccount()
     const dispatch = useAppDispatch()
     const dailyCheckIn = useMutation(api.wallet.dailyCheckIn)       
-    const checkStatus = useQuery(api.wallet.getCheckInStatus,{ walletAddress: address as string })
+    const checkStatus = useQuery(api.wallet.getCheckInStatus,{ walletAddress: address ?? '' })
       
     // console.log('checkStatus', checkStatus)
     // console.log('canCheckIn', canCheckIn)
@@ -28,7 +28,6 @@ export const Nav = () => {
     }, [checkStatus?.canCheckIn])
 
     const checkWalletConnected = (cb:() => void) => {
-       
         if(isConnected && address) {
             cb()
         }else {

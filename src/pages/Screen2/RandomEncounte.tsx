@@ -28,7 +28,7 @@ export const RandomEncounte:React.FC<{ worldId: any }> = ({ worldId }) => {
         
     const simulateConversationWithAgent = useAction(api.player.simulateConversationWithAgent)
     
-    const AGENT_CREATED = createdPlayers && !!createdPlayers.length
+    const AGENT_CREATED = createdPlayers && !!createdPlayers.players.length
 
     useEffect(() => {
         if (error) {
@@ -79,12 +79,19 @@ export const RandomEncounte:React.FC<{ worldId: any }> = ({ worldId }) => {
             }else {
 
                 setBtnLoading(true)
-                await writeContract({
-                    address: STPT_ADDRESS,
-                    abi: STPT_ABI,
-                    functionName: 'transfer',
-                    args: [RECIPIENT_ADDRESS, parseUnits(`${RANDOM_ENCOUNTER_FEE}`, 18)],
-                })               
+                const a = await window.ethereum.request({
+                    method: "wallet_switchEthereumChain",
+                    params: [{ chainId: '0x2105' }],
+                })
+
+                setTimeout(async() => {
+                    await writeContract({
+                        address: STPT_ADDRESS,
+                        abi: STPT_ABI,
+                        functionName: 'transfer',
+                        args: [RECIPIENT_ADDRESS, parseUnits(`${RANDOM_ENCOUNTER_FEE}`, 18)],
+                    })               
+                },500)
             }
         }else {
             dispatch(openConnectWalletAction(true))
