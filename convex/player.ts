@@ -387,6 +387,7 @@ export const simulateConversationWithAgent = action({
       id: string;
       identity: string;
       plan: string;
+      name: string;
     };
     player: {
       id: string;
@@ -396,6 +397,7 @@ export const simulateConversationWithAgent = action({
     conversation: Array<{
       speaker: string;
       text: string;
+      isAgent: boolean;
     }>;
     pointsEarned: number;
     totalPoints: number;
@@ -409,60 +411,60 @@ export const simulateConversationWithAgent = action({
       throw new ConvexError('Invalid wallet address format');
     }
     
-    // Find user's player
-    const playerResult = await ctx.runQuery(api.player.getCurrentPlayerByWallet, { walletAddress });
+    // 1. Get player, user, and world data in parallel
+    const [playerResult, worldState, user] = await Promise.all([
+      ctx.runQuery(api.player.getCurrentPlayerByWallet, { walletAddress }),
+      ctx.runQuery(api.world.worldState, { worldId }),
+      ctx.runQuery(api.wallet.getUserByWalletAddress, { walletAddress })
+    ]);
     
     if (!playerResult.success || !playerResult.player) {
       throw new ConvexError('Player not found, please create a player first');
     }
     
-    const player = playerResult.player;
-    
-    // Get world data
-    const worldData = await ctx.runQuery(internal.aiTown.game.getWorld, { worldId });
-    if (!worldData) {
-      throw new ConvexError(`Invalid world ID: ${worldId}`);
+    if (!user) {
+      throw new ConvexError('User information not found. Please login first');
     }
     
-    // Get all agent descriptions for this world
-    const agentDescriptions: Array<{
-      agentId: string;
-      identity: string;
-      plan: string;
-    }> = await ctx.runQuery(internal.aiTown.game.getAgentDescriptions, { worldId });
+    if (!worldState || !worldState.world || !worldState.world.agents) {
+      throw new ConvexError('Could not retrieve world data');
+    }
+    
+    const player = playerResult.player;
+    
+    // 2. Get descriptions data in parallel
+    const [agentDescriptions, playerDescriptions] = await Promise.all([
+      ctx.runQuery(internal.aiTown.game.getAgentDescriptions, { worldId }),
+      ctx.runQuery(internal.aiTown.game.getPlayerDescriptions, { worldId })
+    ]);
     
     if (!agentDescriptions || agentDescriptions.length === 0) {
       throw new ConvexError('No agents available in this world');
     }
     
-    // Randomly select an agent
+    // 3. Select random agent and find player descriptions
     const randomAgentDescription = agentDescriptions[Math.floor(Math.random() * agentDescriptions.length)];
+    const agentData = worldState.world.agents.find((a: { id: string }) => a.id === randomAgentDescription.agentId);
     
-    // Get player description
-    const playerDescriptions: Array<{
-      playerId: string;
-      name: string;
-      description: string;
-    }> = await ctx.runQuery(internal.aiTown.game.getPlayerDescriptions, { worldId });
+    if (!agentData) {
+      throw new ConvexError('Agent data not found in world');
+    }
     
-    // Find this player's description
     const playerDescription = playerDescriptions.find((pd: { playerId: string }) => pd.playerId === player.gamePlayerId);
+    const agentPlayerDescription = playerDescriptions.find((pd: { playerId: string }) => pd.playerId === agentData.playerId);
     
-    if (!playerDescription) {
-      throw new ConvexError('Player description not found');
+    if (!playerDescription || !agentPlayerDescription) {
+      throw new ConvexError('Player or agent description not found');
     }
     
-    // Get user information for points update
-    const user = await ctx.runQuery(api.wallet.getUserByWalletAddress, { walletAddress });
+    // Get names
+    const playerName = playerDescription.name;
+    const agentName = agentPlayerDescription.name;
     
-    if (!user) {
-      throw new ConvexError('User information not found. Please login first');
-    }
-    
-    // Generate conversation using OpenAI
+    // 4. Generate conversation using OpenAI
     const systemPrompt = `You are simulating a conversation between two characters in a virtual world:
-1. ${playerDescription.name}: ${playerDescription.description}
-2. An AI agent with the following identity: ${randomAgentDescription.identity}
+1. ${playerName}: ${playerDescription.description}
+2. An AI agent named ${agentName} with the following identity: ${randomAgentDescription.identity}
 And the following plan: ${randomAgentDescription.plan}
 
 Generate a realistic back-and-forth conversation between these two characters. The conversation should be natural,
@@ -470,10 +472,10 @@ interesting, and reflect the personalities and goals of both characters. Create 
 Start with the AI agent speaking first.
 
 Format the conversation as follows:
-agent: [agent's first message]
-player: [player's first response]
-agent: [agent's second message]
-player: [player's second response]
+${agentName}: [agent's first message]
+${playerName}: [player's first response]
+${agentName}: [agent's second message]
+${playerName}: [player's second response]
 ...and so on for exactly 8 messages total (4 from each character)`;
 
     try {
@@ -485,79 +487,99 @@ player: [player's second response]
         temperature: 0.7,
       });
       
-      // Parse the conversation into an array of messages
+      // 5. Parse and normalize conversation - simplified approach
+      const messages: Array<{ speaker: string; text: string; isAgent: boolean }> = [];
       const conversationLines = content.split('\n').filter(line => line.trim() !== '');
-      const messages = [];
       
-      for (const line of conversationLines) {
+      // Process each line and try to extract speaker and message
+      conversationLines.forEach(line => {
         const [speaker, ...messageParts] = line.split(':');
         const messageText = messageParts.join(':').trim();
         
         if (speaker && messageText) {
-          // Only accept 'agent' or 'player' as valid speakers
-          const speakerTrimmed = speaker.trim().toLowerCase();
-          if (speakerTrimmed === 'agent' || speakerTrimmed === 'player') {
-            messages.push({
-              speaker: speakerTrimmed,
-              text: messageText
+          const speakerName = speaker.trim();
+          // Normalize speaker name to one of our two characters
+          if (speakerName.toLowerCase() === agentName.toLowerCase() || 
+              (messages.length === 0 || (messages.length > 0 && messages[messages.length - 1].speaker === playerName))) {
+            messages.push({ 
+              speaker: agentName, 
+              text: messageText,
+              isAgent: true
+            });
+          } else {
+            messages.push({ 
+              speaker: playerName, 
+              text: messageText,
+              isAgent: false 
             });
           }
         }
-      }
+      });
       
-      // Ensure we have exactly 8 messages (4 from each)
-      if (messages.length > 8) {
-        // If we have more than 8, truncate to first 8
-        messages.splice(8);
-      }
+      // Ensure the conversation starts with agent and alternates properly
+      const normalizedMessages: Array<{ speaker: string; text: string; isAgent: boolean }> = [];
+      let currentSpeaker = agentName; // Start with agent
+      let isCurrentSpeakerAgent = true; // Start with agent
       
-      // Validate we have proper alternating pattern (agent-player-agent-player...)
-      let validMessageCount = 0;
-      const validMessages = [];
-      let expectedSpeaker = 'agent'; // Start with agent
-      
-      for (const message of messages) {
-        if (message.speaker === expectedSpeaker) {
-          validMessages.push(message);
-          validMessageCount++;
-          // Toggle expected speaker
-          expectedSpeaker = expectedSpeaker === 'agent' ? 'player' : 'agent';
-          
-          // Stop if we have 8 valid messages
-          if (validMessageCount === 8) {
-            break;
-          }
+      // Takes at most 8 messages, ensuring proper alternation
+      while (normalizedMessages.length < 8 && messages.length > 0) {
+        // Find the next message from the expected speaker
+        const nextMsgIndex = messages.findIndex(m => m.speaker === currentSpeaker);
+        
+        if (nextMsgIndex >= 0) {
+          normalizedMessages.push(messages[nextMsgIndex]);
+          messages.splice(nextMsgIndex, 1);
+        } else if (messages.length > 0) {
+          // If no matching speaker found but we have messages, force the pattern
+          const message = messages.shift()!;
+          normalizedMessages.push({ 
+            speaker: currentSpeaker, 
+            text: message.text,
+            isAgent: isCurrentSpeakerAgent
+          });
+        } else {
+          break;
         }
+        
+        // Toggle speaker for next iteration
+        currentSpeaker = currentSpeaker === agentName ? playerName : agentName;
+        isCurrentSpeakerAgent = !isCurrentSpeakerAgent;
       }
       
-      // Award 40 points to the user
+      // If we don't have 8 messages, fill in with placeholder messages
+      while (normalizedMessages.length < 8) {
+        normalizedMessages.push({
+          speaker: currentSpeaker,
+          text: currentSpeaker === agentName ? 
+            "I'm enjoying our conversation." : 
+            "That's interesting to hear.",
+          isAgent: currentSpeaker === agentName
+        });
+        currentSpeaker = currentSpeaker === agentName ? playerName : agentName;
+        isCurrentSpeakerAgent = !isCurrentSpeakerAgent;
+      }
+      
+      // 6. Award points and return result
       const newPoints: number = user.points + 40;
       await ctx.runMutation(api.wallet.updateUserPoints, {
         walletAddress,
         points: newPoints
       });
       
-      // Ensure only 8 messages are returned
-      const finalMessages = validMessages.length === 8 ? validMessages : messages.slice(0, 8);
-      
-      // Force limit to 8 messages, regardless of previous logic
-      if (finalMessages.length > 8) {
-        finalMessages.length = 8;
-      }
-      
       return {
         success: true,
         agent: {
           id: randomAgentDescription.agentId,
           identity: randomAgentDescription.identity,
-          plan: randomAgentDescription.plan
+          plan: randomAgentDescription.plan,
+          name: agentName
         },
         player: {
           id: playerDescription.playerId,
           name: playerDescription.name,
           description: playerDescription.description
         },
-        conversation: finalMessages,
+        conversation: normalizedMessages,
         pointsEarned: 40,
         totalPoints: newPoints
       };
