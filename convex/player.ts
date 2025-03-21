@@ -67,36 +67,65 @@ export const getCurrentPlayerByWallet = query({
 });
 
 /**
- * Generate player description using OpenAI
+ * Generate player description using AI
+ * This action only handles AI description generation
  */
-async function generatePlayerDescription(name: string, prompt: string): Promise<string> {
-  const systemPrompt = `Generate a detailed character description based on the given inputs: ${name} and ${prompt}.
-Output must be in the format: description:"[Generated character description]"
-The description should be rich, vivid, and engaging.
-If the prompt is brief, expand it into a well-rounded personality, including core traits, behavioral patterns, and background elements.`;
+export const generatePlayerDescription = action({
+  args: {
+    name: v.string(),
+    prompt: v.string(),
+  },
+  handler: async (ctx, args): Promise<string> => {
+    const { name, prompt } = args;
+    const systemPrompt = `Generate a concise character description based on the given inputs: ${name} and ${prompt}.
+Your description MUST be between 55-75 words total.
+The description should be vivid and engaging, focusing on the most important personality traits.
+If the prompt is brief, expand it into a well-rounded personality with core traits.
+IMPORTANT: Your description MUST be a complete passage with no unfinished sentences or trailing ellipses.
+DO NOT include "description:" at the beginning of your response.`;
 
-  try {
-    const { content } = await chatCompletion({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Name: ${name}, Prompt: ${prompt}` }
-      ],
-      temperature: 0.7,
-    });
+    try {
+      const { content } = await chatCompletion({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Name: ${name}, Prompt: ${prompt}` }
+        ],
+        temperature: 0.7,
+      });
 
-    // Extract description part from content
-    const match = content.match(/description:"(.*?)"/);
-    if (match && match[1]) {
-      return match[1];
+      // Remove "description:" prefix if present
+      let description = content.replace(/^description:/i, "").trim();
+      
+      // Remove any trailing ellipses if they exist
+      description = description.replace(/\.\.\.+$/, ".").trim();
+      
+      // Count words
+      const words = description.split(/\s+/);
+      
+      if (words.length < 55) {
+        // If too short, use the original prompt as fallback with name
+        description = `${name} is an intriguing character with ${prompt}. They have a captivating personality that draws others to them naturally. With a unique perspective on the world, ${name} brings depth and warmth to every interaction, making lasting impressions on everyone they meet.`;
+      } else if (words.length > 75) {
+        // If too long, truncate at the last sentence boundary before 75 words
+        // First join the first 75 words
+        const truncated = words.slice(0, 75).join(" ");
+        // Find the last sentence boundary
+        const lastSentence = truncated.match(/.*\./);
+        if (lastSentence) {
+          description = lastSentence[0];
+        } else {
+          // If no sentence boundary found, just add a period
+          description = truncated + ".";
+        }
+      }
+      
+      return description;
+    } catch (error) {
+      console.error('Error generating player description:', error);
+      return `${name} is a mysterious character with hidden depths. ${prompt}`;
     }
-    
-    // If format doesn't match, return the entire content
-    return content;
-  } catch (error) {
-    console.error('Error generating player description:', error);
-    return `${name} is a mysterious character with hidden depths. ${prompt}`;
   }
-}
+});
 
 /**
  * Create a player
@@ -155,8 +184,9 @@ export const createPlayer = mutation({
     // Randomly select a character
     const character = characters[Math.floor(Math.random() * characters.length)].name;
     
-    // Generate player description using AI
-    const description = await generatePlayerDescription(name, prompt);
+    // For description, use a fallback since we can't call action from mutation
+    // Will need to be generated/updated separately
+    let description = `${name} is a character in the world. ${prompt}`;
     
     // Create player record
     const now = Date.now();
@@ -245,6 +275,10 @@ export const createPlayer = mutation({
     await ctx.db.patch(user._id, {
       points: user.points + 500
     });
+    
+    // Schedule an AI description generation (asynchronously, will not block)
+    // This will be executed after the player is created
+    ctx.scheduler.runAfter(0, api.player.regeneratePlayerDescription, { playerId });
     
     return {
       success: true,
@@ -588,4 +622,98 @@ ${playerName}: [player's second response]
       throw new ConvexError(`Failed to generate conversation: ${error.message || 'Unknown error'}`);
     }
   },
+});
+
+/**
+ * Get player by ID
+ */
+export const getPlayerById = query({
+  args: {
+    playerId: v.id('players')
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.playerId);
+  }
+});
+
+/**
+ * Update the player description in the database
+ */
+export const updatePlayerDescriptionInDB = mutation({
+  args: {
+    playerId: v.id('players'),
+    description: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { playerId, description } = args;
+    
+    // Get the player to validate and get worldId and gamePlayerId
+    const player = await ctx.db.get(playerId);
+    if (!player) {
+      throw new ConvexError('Player not found');
+    }
+    
+    // Update player record
+    await ctx.db.patch(playerId, { description });
+    
+    // Also update description in playerDescriptions if it exists
+    if (player.gamePlayerId && player.worldId) {
+      const playerDescription = await ctx.db
+        .query('playerDescriptions')
+        .withIndex('worldId', (q) => 
+          q.eq('worldId', player.worldId).eq('playerId', player.gamePlayerId as string)
+        )
+        .unique();
+      
+      if (playerDescription) {
+        await ctx.db.patch(playerDescription._id, { description });
+      }
+    }
+    
+    return { success: true };
+  }
+});
+
+/**
+ * Action that orchestrates updating player description with AI
+ * Uses a two-step process to avoid context errors
+ */
+export const regeneratePlayerDescription = action({
+  args: {
+    playerId: v.id('players'),
+  },
+  handler: async (ctx, args): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    const { playerId } = args;
+    
+    try {
+      // Step 1: Get the player info from the database
+      const player = await ctx.runQuery(api.player.getPlayerById, { playerId });
+      if (!player) {
+        throw new ConvexError('Player not found');
+      }
+      
+      // Step 2: Generate description using our AI action
+      const description = await ctx.runAction(api.player.generatePlayerDescription, {
+        name: player.name,
+        prompt: player.description || ""
+      });
+      
+      // Step 3: Update the player in the database using our mutation
+      await ctx.runMutation(api.player.updatePlayerDescriptionInDB, {
+        playerId,
+        description
+      });
+      
+      return {
+        success: true,
+        message: "Player description updated successfully"
+      };
+    } catch (error: any) {
+      console.error('Error updating player description:', error);
+      throw new ConvexError(`Failed to update player description: ${error.message || 'Unknown error'}`);
+    }
+  }
 }); 
