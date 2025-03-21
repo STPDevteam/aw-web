@@ -282,7 +282,6 @@ export const createPlayer = mutation({
     
     return {
       success: true,
-      player: await ctx.db.get(playerId),
       points: user.points + 500
     };
   },
