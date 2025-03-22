@@ -231,7 +231,10 @@ function getRandomPassablePosition(minX: number, maxX: number, minY: number, max
 }
 
 
-
+const getRandomEmoji = () => {
+  const emojis = ['❓', '😀', '😉', '😎', '😐', '😑', '😪', '😫'];
+  return emojis[Math.floor(Math.random() * emojis.length)];
+}
 
 let cachedMockAgents: SimulatedAgent[] | null = null;
 
@@ -240,7 +243,7 @@ export const mockAgents = (tileDim: number = 32): SimulatedAgent[] => {
     return cachedMockAgents;
   }
   cachedMockAgents = Array.from({ length: 400 }, (_, i) => {
-    const num = i + 51;
+    const num = i + 1;
     const position = getRandomPassablePosition(6, map.mapwidth - 6, 6, map.mapheight - 6, tileDim);
     return {
       name: agentNames[i - 1],
@@ -254,6 +257,7 @@ export const mockAgents = (tileDim: number = 32): SimulatedAgent[] => {
       speed: 0.1,
       textureUrl: `/ai-town/assets/avatar/${((i + 50) % 400) + 1}.png`,
       spritesheetData: f0SpritesheetData,
+      emoji: getRandomEmoji()
     } as SimulatedAgent;
   });
   return cachedMockAgents;

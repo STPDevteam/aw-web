@@ -65,8 +65,7 @@ export const Game = () => {
   const _h = 0.375531 * window.innerWidth 
   
 
-  //  1145 / 1880 = 0.609
-  const _leftWidth = 0.609 * window.innerWidth 
+  const _leftWidth = h / 0.56933 
   // 494 / 1880 = 0.262765
   const _rightWidth = 0.262765 * window.innerWidth 
   // 1720 / 1880 = 0.914893
@@ -76,7 +75,9 @@ export const Game = () => {
 
 
  
-  
+  // display={isActive ? 'block' : 'none'}
+
+  // 1161 / 661  0.56933
   return (  
     <Box 
       className='box_clip fx-row ai-ct jc-sb ' 
@@ -91,34 +92,47 @@ export const Game = () => {
     >
       <Box pos='absolute' left="50px" top="44px" zIndex={99}> 
         <AgentList  worldId={worldId}/>
-      </Box> 
-      {
-        pageProgress < 1 ?  
-        <Box  className='w100 center '>
-          <PageLoading onCompleted={p => setPageProgress(p)}/>
-        </Box> :
-        <Box 
-          // borderWidth="2px"
-          // borderStyle='solid'
-          // borderColor={['red','green','yellow','blue','pink',]}
-          maxW={`${mapContainerWidth}px`}
-          className='w100 fx-row ai-ct jc-sb '
-          >
+      </Box>         
+        
+        <Box maxW={`${mapContainerWidth}px`} className='w100 fx-row ai-ct jc-sb'>
             <Box
               bgImage={GameLeftBorder}
               bgSize="cover"
               bgPosition='center'
               bgRepeat="no-repeat"  
-              w={_leftWidth > 1145 ? 1145 : _leftWidth}
-            
+              w={_leftWidth}
               h={`${h}px`}
-              className='box_clip'  
+              className='box_clip center'  
               cursor='all-scroll'
+              pos='relative'
             > 
-                <Stage width={_leftWidth > 1145 ? 1145 : _leftWidth} height={h} options={{ backgroundColor: '#1F1F23' }}>
+              <Box 
+                className='w100 '  
+                pos='absolute'
+                left="0"
+                top="50%"
+                transform='-50% -50%'
+                zIndex={9999}
+                pointerEvents="none" 
+                display={pageProgress < 1 ? 'block' : 'none'} 
+                style={{ willChange: "opacity, transform", transform: "translateZ(0)" }}
+              >
+                <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setPageProgress(p)}/>
+              </Box>  
+              <Box 
+                display={pageProgress === 1 ? 'flex' : 'none'} 
+                className=''
+                position="absolute"
+                top="0"
+                left="0"
+                width="100%"
+                height="100%"
+                zIndex={1}
+              >
+                <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
                   <ConvexProvider client={convex}>
                     <PixiGame
-                      pixiWidth={_leftWidth > 1145 ? 1145 : _leftWidth}
+                      pixiWidth={_leftWidth}
                       agentInfo={agentInfo}
                       game={game}
                       worldId={worldId}
@@ -128,6 +142,7 @@ export const Game = () => {
                     />
                   </ConvexProvider>
                 </Stage>  
+              </Box>
             </Box>
             <Box
               bgImage={GameRightBorder}
@@ -151,7 +166,6 @@ export const Game = () => {
               />
             </Box>
         </Box>
-      }
     </Box>
   );
 }

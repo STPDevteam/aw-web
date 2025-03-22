@@ -34,7 +34,7 @@ export const Screen2:FC<{ isActive: boolean }> = ({ isActive }) => {
         <Box minW="115px" w="160px" className=''  h="100px"/>
         <Box className='w100 fx-col ai-ct ' >
           <Nav/>
-          <Box className='w100 center' mt="5px">
+          <Box className='w100 center' mt="20px">
             <Game/>
           </Box>
         </Box>
@@ -76,10 +76,6 @@ export const Screen2:FC<{ isActive: boolean }> = ({ isActive }) => {
         </Box>
         </Box>
       </Box>
-
-
-
-      
 
       <Notification
         visible={open}

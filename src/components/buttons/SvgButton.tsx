@@ -36,7 +36,7 @@ export const SvgButton:React.FC<iSvgButton> = ({
           onClick()
         }
     }
-    // const _w = w.map(item => item / 0.822222)
+    const _w = w.map(item => item / 0.822222)
     // console.log(_w)
     return (
         // <Box
@@ -49,8 +49,8 @@ export const SvgButton:React.FC<iSvgButton> = ({
             position='relative'
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            // w={_w}
-            w={w}
+            w={_w}
+            // w={w}
             h={h}
             onClick={handleClick}
             bg="none"

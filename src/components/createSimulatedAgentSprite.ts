@@ -14,6 +14,7 @@ export type SimulatedAgent = {
     lastInput: number,
     pathfinding: string | undefined,
     speed: number
+    emoji: string
 }
 
 export interface ExtendedAnimatedSprite extends PIXI.AnimatedSprite {

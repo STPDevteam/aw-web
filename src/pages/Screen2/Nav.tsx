@@ -198,6 +198,7 @@ export const Nav = () => {
                         {visible && (
                             <MotionBox 
                                 ref={menuRef}
+                                zIndex={2}
                                 className="fx-col ai-ct "
                                 pos="absolute"
                                 top='50px'

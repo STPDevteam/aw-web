@@ -11,7 +11,9 @@ import { ServerGame } from '../hooks/serverGame';
 import { Box, Image, Text  } from '@chakra-ui/react'
 import { Title } from '@/components'
 import { Close } from '@/images'
-import { ButtonBg, ButtonBgHover} from '@/images'  
+import { ButtonBgMd, } from '@/images'  
+import { useAppSelector } from '@/redux/hooks';
+import { selectActiveFEAgentId } from '@/redux/reducer';
 
 export default function PlayerDetails({
   worldId,
@@ -30,6 +32,7 @@ export default function PlayerDetails({
   scrollViewRef: React.RefObject<HTMLDivElement>;
   width: number
 }) {
+  // const activeFEAgentId = useAppSelector(selectActiveFEAgentId)
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId });
 
   const players = [...game.world.players.values()];
@@ -57,14 +60,43 @@ export default function PlayerDetails({
   const acceptInvite = useSendInput(engineId, 'acceptInvite');
   const rejectInvite = useSendInput(engineId, 'rejectInvite');
   const leaveConversation = useSendInput(engineId, 'leaveConversation');
+  
+  // console.log('activeFEAgentId', activeFEAgentId)
+
+
+  const descriptionFun = (d: string) => (
+    <Box className='box_clip center ' w={`${width}px`} px="20px" py="25px" bgColor='#838B8D' mt="10px">
+      <Text className='gray4 fz16'>{d}</Text>
+    </Box>
+  )
 
   if (!playerId) {
     return (
-      <div className="h-full text-xl flex text-center items-center p-4" >
-        Click on an agent on the map to see chat history.
-      </div>
-    );
+      <Box mt="25px">
+        <Box 
+          bgImage={ButtonBgMd}
+          bgSize="cover"
+          bgPosition='center'
+          bgRepeat="no-repeat"    
+          className="center "
+          h={`${width * 0.788 * 0.19637}px`}
+          w={`${width * 0.788}px`}
+        >
+            <Text className="fw600 fz20 gray">Introduction</Text>
+        </Box>
+        { descriptionFun('Alice, it’s great to meet you! I’ve always been fascinated by the mysteries of the universe. What’s the most intriguing riddle you’re encountered in your research?')}
+      </Box>
+
+    )
   }
+  // if (!playerId) {
+  //   return (
+  //     <div className="h-full text-xl flex text-center items-center white" >
+  //       Click on an agent on the map to see chat history.
+  //     </div>
+  //   );
+  // }
+
   if (!player) {
     return null;
   }
@@ -138,17 +170,14 @@ export default function PlayerDetails({
   const pendingSuffix = (s: string) => '';
 
 
-  const descriptionFun = (d: string) => (
-    <Box className='box_clip center ' w={`${width}px`} px="20px" py="25px" bgColor='#838B8D' mt="10px">
-      <Text className='gray4 fz16'>{d}</Text>
-    </Box>
-  )
+ 
 
   return (
     <Box className='' w={`${width}px`}>      
+   
       <Box className='fx-row ai-ct jc-sb' mt="24px">     
           <Box 
-              bgImage={ButtonBg}
+              bgImage={ButtonBgMd}
               bgSize="cover"
               bgPosition='center'
               bgRepeat="no-repeat"    

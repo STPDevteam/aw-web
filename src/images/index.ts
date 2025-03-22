@@ -34,4 +34,5 @@ export { default as ButtonBgMd2 } from "./buttonBgMd2.png";
 export { default as ButtonBgMd2Hover } from "./buttonBgMd2Hover.png";
 export { default as BtnSvg } from "./btn.svg";
 export { default as BtnHoverSvg } from "./btnHover.svg";
+export { default as MapLoading } from "./mapLoading.gif";
 

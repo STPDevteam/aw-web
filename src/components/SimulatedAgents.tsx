@@ -4,6 +4,8 @@ import { createSimulatedAgentSprite, SimulatedAgent, ExtendedAnimatedSprite} fro
 import { mockAgents } from '../../data/characters';
 import * as map from '../../data/gentle';
 import { orientationDegrees } from '../../convex/util/geometry';
+import { useAppDispatch } from '@/redux/hooks';
+import { activeFEAgentIdAction } from '@/redux/reducer';
 
 type SimulatedAgentsProps = {
   container: PIXI.Container; 
@@ -14,7 +16,7 @@ type SimulatedAgentsProps = {
 const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container, tileDim, mapWidth }) => {
   const simulatedContainerRef = useRef<PIXI.Container | null>(null);
 
-
+  // const dispatch = useAppDispatch()
 
   function animateMovement(
     sprite: PIXI.Sprite | PIXI.AnimatedSprite,
@@ -300,6 +302,29 @@ function animateAgent(
           const allSprites = sprites;
           sprites.forEach((sprite, idx) => {
             simulatedContainer.addChild(sprite);
+
+            // const emojiChar = '🚀'
+            const emojiChar = agentsData[idx].emoji
+            const emojiText = new PIXI.Text(emojiChar, {
+              fontSize: 24,
+              fill: "yellow",
+              align: "center",
+            });
+            emojiText.anchor.set(0.5, 0.5);
+            emojiText.scale.set(1.2, 1.2);
+            emojiText.x = 12;
+            emojiText.y = -42; 
+
+            sprite.addChild(emojiText);
+
+           
+            sprite.interactive = true;
+           
+            sprite.on('pointerdown', () => {              
+              // dispatch(activeFEAgentIdAction( agentsData[idx].id))
+            });
+
+
             animateAgent(
               sprite,
               simulatedContainer,

@@ -12,6 +12,7 @@ interface iAgentState {
     closeModal?:() => void
   }
   openCreate: boolean
+  activeFEAgentId: string
 }
 
 const initialState: iAgentState = {
@@ -23,7 +24,8 @@ const initialState: iAgentState = {
     content: '',
     closeModal: () => null
   },
-  openCreate: false
+  openCreate: false,
+  activeFEAgentId: -1
 }
 
 const marketSlice = createSlice({
@@ -42,6 +44,9 @@ const marketSlice = createSlice({
     openCreateAction: (state, action: PayloadAction<iAgentState['openCreate']>) => {
       state.openCreate = action.payload
     },
+    activeFEAgentIdAction: (state, action: PayloadAction<iAgentState['activeFEAgentId']>) => {
+      state.activeFEAgentId = action.payload
+    },
   }
 })
 
@@ -49,7 +54,8 @@ export const {
   selectedAgentInfoAction, 
   openConnectWalletAction,
   alertInfoAction,
-  openCreateAction
+  openCreateAction,
+  activeFEAgentIdAction
 } = marketSlice.actions
 
 
@@ -57,6 +63,7 @@ export const selectedAgentInfo = (state: RootState) => state.agentReducer.select
 export const selectOpenConnectWallet = (state: RootState) => state.agentReducer.openConnectWallet
 export const selectAlertInfo = (state: RootState) => state.agentReducer.alertInfo
 export const selectOpenCreate = (state: RootState) => state.agentReducer.openCreate
+export const selectActiveFEAgentId = (state: RootState) => state.agentReducer.activeFEAgentId
 
 export const agentReducer = marketSlice.reducer
 
