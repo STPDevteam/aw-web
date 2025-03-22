@@ -49,26 +49,12 @@ const btns = [
 ]
 
 
-const Container:React.FC<{
-  children: React.ReactNode,
-  title: React.ReactNode,
 
-}> = ({
-  title,
-  children
-}) => {
-  return(
-    <Box w="calc(100% - 125px)" className='h-screen'>
-      { children }
-    </Box>
-  )
-}
 
 export const Pages = () => {  
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isLoading, setLoading] = useState(true)
   return (    
-    <Box className='h100' pos='relative'>
+    <Box className='h100' pos='relative' bgColor="#1E1E1E">
       {
         isMobile() ? 
         <Box pos='absolute' bottom="20px" left={0} className='center w100'>
@@ -77,11 +63,10 @@ export const Pages = () => {
               btns.map((item, idx) => (
                 <Box 
                   key={item.name}
-                  onClick={() => !isLoading && setCurrentIndex(idx)}
+                  onClick={() => setCurrentIndex(idx)}
                   title={item.name}
                   style={item.mobileStyle}
-                  className='center'
-                  cursor={isLoading ? 'not-allowed' : 'pointer'}
+                  className='center click'
                   h="49px"
                   w="115px"
                   bgColor={idx === currentIndex ? '#293033' : "#838B8D"}
@@ -105,17 +90,16 @@ export const Pages = () => {
                   btns.map((item, idx) => (
                     <Box 
                       key={item.name}
-                      onClick={() => !isLoading && setCurrentIndex(idx)}
+                      onClick={() => setCurrentIndex(idx)}
                       title={item.name}
                       style={item.style}
-                      className='center'
-                      cursor={isLoading ? 'not-allowed' : 'pointer'}
+                      className='center click'
                       h="80px"
                       w="115px"
                       bgColor={idx === currentIndex ? '#293033' : "#838B8D"}
                       backdropFilter="blur(10px)"
                       color={idx === currentIndex ? '#E0E0E0' : '#293033'}
-                      
+                      mb="1px"
                       _hover={{
                         bgColor: '#1F1F23',
                         color: '#E0E0E0'
@@ -146,14 +130,9 @@ export const Pages = () => {
       <Screen1 
         isActive={currentIndex === 0} 
         onMoveTo={idx => setCurrentIndex(idx)}
-        onCompleted={p => setLoading(p < 1)}
       />
       <Screen2 isActive={currentIndex === 1} /> 
-
-     
-
       <Screen3 isActive={currentIndex === 2} /> 
-
     </Box>
   )
 }

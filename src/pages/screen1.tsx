@@ -3,10 +3,10 @@
 import React, { FC } from 'react'
 import { Text, Box, Image } from '@chakra-ui/react'
 import { Screen1Bg, WorldFun, Screen1SubTitle} from '@/images'
-import { GeneralButton, PageLoading } from '@/components'
+import { GeneralButton, PageLoading, SvgButton } from '@/components'
 import { isMobile } from '@/utils/tool'
 
-export const Screen1:FC<{ onMoveTo: (id: number) => void, isActive: boolean, onCompleted: (p: number) => void }> = ({ onMoveTo, isActive, onCompleted}) => {
+export const Screen1:FC<{ onMoveTo: (id: number) => void, isActive: boolean }> = ({ onMoveTo, isActive}) => {
   return(
     <Box 
       className=' h-screen' 
@@ -34,17 +34,18 @@ export const Screen1:FC<{ onMoveTo: (id: number) => void, isActive: boolean, onC
       {
         !isMobile() && 
         <Box pos='absolute' bottom="46px" left="50%" transform="translateX(-50%)">
-          <GeneralButton  
+
+          <GeneralButton
             onClick={() => onMoveTo(1)}
             title="Launch 1,000-Agent AI Town"
-            size='lg'
-          />
+            size='lg' />
+
+          
+          
         </Box>
       }
 
-      <Box w="100%" pos='absolute' bottom={isMobile() ? '80px' : '20px'} left="50%"  transform="translateX(-50%)">
-        <PageLoading onCompleted={onCompleted}/>
-      </Box>
+     
     </Box>
   )
 }

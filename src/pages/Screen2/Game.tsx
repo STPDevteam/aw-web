@@ -13,7 +13,8 @@ import { GameLeftBorder, GameRightBorder } from '@/images'
 import { AgentList } from '@/pages/Screen2/AgentList'
 import { PixiGame } from './PixiGame'
 import { selectedAgentInfo } from '@/redux/reducer'
-import { useAppSelector } from '@/redux/hooks.ts';
+import { useAppSelector } from '@/redux/hooks.ts'
+import { PageLoading } from '@/components'
 
 
 
@@ -23,6 +24,8 @@ export const mapLeftWidth = 1145
 export const mapRightWidth = 494
 
 export const Game = () => {
+  const [pageProgress, setPageProgress] = useState<number>(0)
+
   const agentInfo = useAppSelector(selectedAgentInfo)
   const convex = useConvex();
   const [selectedElement, setSelectedElement] = useState<{
@@ -72,6 +75,7 @@ export const Game = () => {
   const ___rightWidth = _rightWidth > 494 ? 494 : _rightWidth
 
 
+ 
   
   return (  
     <Box 
@@ -88,64 +92,66 @@ export const Game = () => {
       <Box pos='absolute' left="50px" top="44px" zIndex={99}> 
         <AgentList  worldId={worldId}/>
       </Box> 
-      <Box 
-        // borderWidth="2px"
-        // borderStyle='solid'
-        // borderColor={['red','green','yellow','blue','pink',]}
-        maxW={`${mapContainerWidth}px`}
-        className='w100 fx-row ai-ct jc-sb '
-        >
-        <Box
-          bgImage={GameLeftBorder}
-          bgSize="cover"
-          bgPosition='center'
-          bgRepeat="no-repeat"  
-          w={_leftWidth > 1145 ? 1145 : _leftWidth}
-        
-          h={`${h}px`}
-          className='box_clip'  
-          cursor='all-scroll'
-        > 
-            <Stage width={_leftWidth > 1145 ? 1145 : _leftWidth} height={h} options={{ backgroundColor: '#1F1F23' }}>
-              <ConvexProvider client={convex}>
-                <PixiGame
-                  pixiWidth={_leftWidth > 1145 ? 1145 : _leftWidth}
-                  agentInfo={agentInfo}
-                  game={game}
-                  worldId={worldId}
-                  engineId={engineId}
-                  historicalTime={historicalTime}
-                  setSelectedElement={setSelectedElement}
-                />
-              </ConvexProvider>
-            </Stage>  
+      {
+        pageProgress < 1 ?  
+        <Box  className='w100 center '>
+          <PageLoading onCompleted={p => setPageProgress(p)}/>
+        </Box> :
+        <Box 
+          // borderWidth="2px"
+          // borderStyle='solid'
+          // borderColor={['red','green','yellow','blue','pink',]}
+          maxW={`${mapContainerWidth}px`}
+          className='w100 fx-row ai-ct jc-sb '
+          >
+            <Box
+              bgImage={GameLeftBorder}
+              bgSize="cover"
+              bgPosition='center'
+              bgRepeat="no-repeat"  
+              w={_leftWidth > 1145 ? 1145 : _leftWidth}
+            
+              h={`${h}px`}
+              className='box_clip'  
+              cursor='all-scroll'
+            > 
+                <Stage width={_leftWidth > 1145 ? 1145 : _leftWidth} height={h} options={{ backgroundColor: '#1F1F23' }}>
+                  <ConvexProvider client={convex}>
+                    <PixiGame
+                      pixiWidth={_leftWidth > 1145 ? 1145 : _leftWidth}
+                      agentInfo={agentInfo}
+                      game={game}
+                      worldId={worldId}
+                      engineId={engineId}
+                      historicalTime={historicalTime}
+                      setSelectedElement={setSelectedElement}
+                    />
+                  </ConvexProvider>
+                </Stage>  
+            </Box>
+            <Box
+              bgImage={GameRightBorder}
+              bgSize="cover"
+              bgPosition='center'
+              bgRepeat="no-repeat"  
+              w={___rightWidth}
+              h={`${h}px`}
+              className='fx jc-ct'
+              overflowY="scroll"
+              onWheel={(e) => e.stopPropagation()} 
+            >       
+              <PlayerDetails
+                width={___rightWidth * 0.85}
+                worldId={worldId} 
+                engineId={engineId}
+                game={game}
+                playerId={selectedElement?.id}
+                setSelectedElement={setSelectedElement}
+                scrollViewRef={scrollViewRef}
+              />
+            </Box>
         </Box>
-
-
-        <Box
-          bgImage={GameRightBorder}
-          bgSize="cover"
-          bgPosition='center'
-          bgRepeat="no-repeat"  
-          w={___rightWidth}
-          h={`${h}px`}
-          className='fx jc-ct'
-          overflowY="scroll"
-          onWheel={(e) => e.stopPropagation()} 
-        >       
-          <PlayerDetails
-            width={___rightWidth * 0.85}
-            worldId={worldId} 
-            engineId={engineId}
-            game={game}
-            playerId={selectedElement?.id}
-            setSelectedElement={setSelectedElement}
-            scrollViewRef={scrollViewRef}
-          />
-        </Box>
-
-
-      </Box>
+      }
     </Box>
   );
 }

@@ -19,13 +19,34 @@ interface iInput {
     disable: boolean
 }
 
-export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
+interface iMyAgent {
+    worldId: any
+    createAgentOpen: boolean
+    closeCreate: () => void
+    myAgentOpen: boolean
+    closeMy: () => void
+    createdPlayers: any 
+    createAutoOpen:() => void
+    confirmDeleteOpen: boolean
+    closeConfirmDelete: (v: boolean) => void
+
+}
+export const MyAgent:React.FC<iMyAgent> = ({ 
+    worldId, 
+    createAgentOpen, 
+    closeCreate, 
+    myAgentOpen,
+    closeMy,
+    createAutoOpen,
+    createdPlayers,
+    confirmDeleteOpen,
+    closeConfirmDelete
+}) => {
 
     const { address, isConnected } = useAccount()
-    const [myAgentOpen, setMyAgentOpen] = useState<boolean>(false)
-    const [createOpen, setCreateOpen] = useState<boolean>(false)
+    
     const [deleteLoading, setDeleteLoading] = useState<boolean>(false)
-    const [confirmOpen, setConfirmOpen] = useState<boolean>(false)
+    // const [confirmOpen, setConfirmOpen] = useState<boolean>(false)
     const [name, setName] = useState<iInput>({
             value: '',
             maxLen: 15,
@@ -42,7 +63,6 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
     const dispatch = useAppDispatch()
     
 
-    const createdPlayers = useQuery(api.player.getPlayersByWallet, { walletAddress: address as string ?? ''})
     const createPlayer = useMutation(api.player.createPlayer)
     const deletePlayer = useMutation(api.player.deletePlayer)
 
@@ -70,7 +90,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
 
 
     useEffect(() => {
-        openCreate && setCreateOpen(true)
+        openCreate && createAutoOpen()
     },[openCreate])
 
     useEffect(() => {
@@ -111,7 +131,6 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
             })
             setBtnLoading(false)
             if(a && a.success) {
-               
                 closeCreateModal() 
                 dispatch(alertInfoAction({
                     open: true,
@@ -123,30 +142,27 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
         }
     }
 
-    const handleAgent = () => {
-        if(isConnected && address) {
-            if(AGENT_CREATED) {    
-                setMyAgentOpen(true)
-            }else {
-                setCreateOpen(true)
-            }
-        }else {
-            dispatch(openConnectWalletAction(true))
-        }
-    }
+    // const handleAgent = () => {
+    //     if(isConnected && address) {
+    //         if(AGENT_CREATED) {    
+    //             setMyAgentOpen(true)
+    //         }else {
+    //             setCreateOpen(true)
+    //         }
+    //     }else {
+    //         dispatch(openConnectWalletAction(true))
+    //     }
+    // }
 
 
      const handleCreateClose = () => {
-        if(!!name.value.length || !!prompt.value.length) {
-            setCreateOpen(false)
-            dispatch(alertInfoAction({
-                open: true,
-                title: 'Warning',
-                content: 'Cancelled'
-            }))
-        }else {
-            setCreateOpen(false)
-        }
+        closeCreateModal()
+        dispatch(alertInfoAction({
+            open: true,
+            title: 'Warning',
+            content: 'Cancelled'
+        }))
+       
         dispatch(openCreateAction(false))
     }
 
@@ -173,11 +189,9 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
         setPrompt({...prompt, value: val, msg: '', disable: false})
     } 
 
-    const onCreateAgent = async() => {
-
-      
+    const onCreateAgent = async() => {      
         if(!!name.value.length && !!prompt.value.length && !name.disable && !prompt.disable) {
-            setCreateOpen(false)
+            closeCreate()
             setBtnLoading(true)      
             
             const a = await window.ethereum.request({
@@ -210,6 +224,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
             msg: '',
             disable: true
         })
+        closeCreate()
     }
 
     const deleteAgent = async() => {
@@ -218,9 +233,8 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
             const a = await deletePlayer({walletAddress: address})
             setDeleteLoading(false)
             if(a && a.success) {
-                setConfirmOpen(false)
-                setMyAgentOpen(false)
-
+                closeConfirmDelete(false)
+                closeMy()
                 dispatch(alertInfoAction({
                     open: true,
                     title: 'Successful',
@@ -233,15 +247,15 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
 
     return (
         <Box>
-            <GeneralButton 
+            {/* <GeneralButton 
                 onClick={handleAgent}
                 title={AGENT_CREATED ? 'My Agent' : 'Create Agent'}
                 size='sm'
                 loading={btnLoading}
-            />
+            /> */}
 
             <BasePopup
-                visible={createOpen}
+                visible={createAgentOpen}
                 onClose={handleCreateClose}
                 title="Create Agent"
                 content={
@@ -270,7 +284,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
 
             <BasePopup
                 visible={myAgentOpen}
-                onClose={() => setMyAgentOpen(false)}
+                onClose={closeMy}
                 title="My Agent"
                 content={
                     <Box mt="30px">
@@ -289,16 +303,16 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
                     </Box>
                 }
                 onOK={() => {
-                    setMyAgentOpen(false)
-                    setConfirmOpen(true)
+                    closeMy()
+                    closeConfirmDelete(true)
                 }}
                 okText="Delete Agent"
             >
             </BasePopup>
 
             <BasePopup
-                visible={confirmOpen}
-                onClose={() => setConfirmOpen(false)}
+                visible={confirmDeleteOpen}
+                onClose={() => closeConfirmDelete(false)}
                 title="Delete"
                 content={
                     <Box className='h100 fx-col ai-ct'>
@@ -318,7 +332,7 @@ export const MyAgent:React.FC<{ worldId: any }> = ({ worldId }) => {
                                 style={{ marginLeft: '40px' }}
                                 size='sm' 
                                 title="Cancel" 
-                                onClick={() => setConfirmOpen(false)} 
+                                onClick={() => closeConfirmDelete(false)} 
                             />
                         </Box>
                     </Box>

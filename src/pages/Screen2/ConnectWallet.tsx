@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect, useRef } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { ClickButtonWrapper, GeneralButton, BasePopup, Notification } from '@/components'
+import { ClickButtonWrapper, SvgButton, BasePopup, Notification } from '@/components'
 import { Image, Text, Box } from "@chakra-ui/react"
 import { ArrowBottom } from '@/images'
 import { useMutation, useQuery } from 'convex/react';
@@ -11,17 +11,18 @@ import { alertInfoAction, openConnectWalletAction, selectOpenConnectWallet } fro
 import { Logo } from '@/images'
 
 
-export const ConnectWallet:FC<{ disable?: boolean, points: undefined | number }> = ({ disable, points }) => {
-  const [walletOpen, setWalletOpen] = useState(false)
-  const { disconnect } = useDisconnect();  
+interface iConnectWallet {
+  points: undefined | number 
+  menuOpen: (v: boolean) => void
+  closeWalletOpen: () => void
+  walletOpen: boolean
+}
+export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen, closeWalletOpen }) => {
+  const { disconnect } = useDisconnect()
  
   const openConnectWallet = useAppSelector(selectOpenConnectWallet)
   const dispatch = useAppDispatch()
   const openConnectModalRef = useRef<() => void>(() => {})
-
- const { address, isConnected } = useAccount()
-
-
 
   useEffect(() => {
     if(openConnectWallet) {
@@ -63,35 +64,40 @@ export const ConnectWallet:FC<{ disable?: boolean, points: undefined | number }>
                 {(() => {
                   if (!connected) {
                     return (
-                        <GeneralButton size="sm" title="Login" onClick={() => openConnectModal()} />           
+                        <SvgButton
+                          onClick={openConnectModal}
+                          name='Login'
+                          w={[180]}
+                          h={[46]}
+                      />  
                     )
                   }
-                  return (
-                    <ClickButtonWrapper onClick={() => setWalletOpen(true)}>
+                  return (                   
+                    <ClickButtonWrapper onClick={() => menuOpen(true)}>
                       <Box 
-                          h="69px" 
-                          w={['150px','150px','150px','200px','323px']}
-                          bgColor='#E0E0E0' 
-                          className="fx-row ai-ct jc-sb click box_clip" 
-                          px={['12px','12px','12px','12px','26px']}
+                        w={[180]}
+                        h={[46]}
+                        bgColor='#E0E0E0' 
+                        className="fx-row ai-ct jc-sb click box_clip15" 
+                        boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
+                        px={['12px','12px','12px','15px','15px']}
                       >
-                          <Text className=" gray3 fw700" fontSize={['16px','16px','16px','20px','26px']}>@{ account?.displayName }</Text>
+                          <Text className=" " fontWeight={350}  color="#1F1F23" fontSize={['14px','14px','14px','14px','16px']}>@{ account?.displayName }</Text>
                           <Image 
                               src={ArrowBottom} 
-                              w="19px"
-                              h="10px" 
+                              h="8px"
+                              w="15.2px" 
                               transform={ walletOpen ? 'rotate(0deg)' : 'rotate(-180deg)'} 
                               transition="transform 0.3s"
                           />                            
                       </Box>
                     </ClickButtonWrapper>
                   );
-                })()}
-
+                })()}                
 
                 <BasePopup
                     visible={walletOpen}
-                    onClose={() => setWalletOpen(false)}
+                    onClose={closeWalletOpen}
                     title="Wallet"
                     content={
                         <Box mt="30px" mb="150px">
@@ -108,7 +114,7 @@ export const ConnectWallet:FC<{ disable?: boolean, points: undefined | number }>
                     onOK={() => {
                       localStorage.removeItem('didSignIn')
                       disconnect()
-                      setWalletOpen(false)
+                      closeWalletOpen()
                     }}
                     okText="Disconnect"
                     >
@@ -118,7 +124,9 @@ export const ConnectWallet:FC<{ disable?: boolean, points: undefined | number }>
             );
           }}
         </ConnectButton.Custom>
+          
        
+
       </Box>
     );
 };

@@ -9,7 +9,7 @@ import { api } from '../../../convex/_generated/api.js'
 import {  Id } from '../../../convex/_generated/dataModel'
 import { useMutation, useQuery } from 'convex/react'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { selectedAgentInfo, selectedAgentInfoAction } from '@/redux/reducer/agentReducer'
+import { selectedAgentInfoAction } from '@/redux/reducer/agentReducer'
 import { mockAgents } from '../../../data/characters.js'
 import { SimulatedAgent} from '@/components/createSimulatedAgentSprite'
 
@@ -31,15 +31,12 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
     
     const renderedAgents = useMemo(() => {
         if(!!agentsServer?.page && agentsServer.page.length > 0) {
-            const list = [...agentsServer.page, ...agentsWeb]
-            // console.log('agentsServer.page', agentsServer.page)
-            // console.log('agentsWeb', agentsWeb)
-            // console.log('list', list)
+            const list = [...agentsServer.page, ...agentsWeb].filter(item => item.name !== undefined)
 
             return (
+                // list.map((item, idx) => (
                 agentsServer.page.map((item, idx) => (
                 <ListItem item={item} key={item.name} idx={idx} focusAgent={() => {
-                    // console.log('dddddddddd', item)
                     dispatch(selectedAgentInfoAction(item))
                 }}/>
               ))

@@ -6,13 +6,14 @@ import {  Box, Text } from '@chakra-ui/react'
 import { Screen2Bg, MapContainer, MapMobile } from '@/images'
 import { Nav } from './Nav' 
 import { Game } from './Game'
-import { Notification } from '@/components'
+import { Notification, PageLoading } from '@/components'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
 export const Screen2:FC<{ isActive: boolean }> = ({ isActive }) => {  
   const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
   const dispatch = useAppDispatch()
+
   
   return(
     <Box 
@@ -25,7 +26,9 @@ export const Screen2:FC<{ isActive: boolean }> = ({ isActive }) => {
       display={isActive ? 'block' : 'none'}
       bg={['linear-gradient(180deg, #4B494B 0%, #1E2227 100%)', 'linear-gradient(180deg, #4B494B 0%, #1E2227 100%)', null,null,null]}
     >
-      <Box className='w100 fx-row ai-ct '  display={['none','none','none','flex','flex']}
+      <Box 
+        className='w100 fx-row ai-ct '  
+        display={['none','none','none','flex','flex']}
        
       > 
         <Box minW="115px" w="160px" className=''  h="100px"/>
@@ -75,6 +78,8 @@ export const Screen2:FC<{ isActive: boolean }> = ({ isActive }) => {
       </Box>
 
 
+
+      
 
       <Notification
         visible={open}
