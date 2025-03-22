@@ -20,6 +20,14 @@ crons.daily('vacuum old entries', { hourUTC: 4, minuteUTC: 20 }, internal.crons.
 // Clean up expired authentication challenges every 10 minutes
 crons.interval('clean expired auth challenges', { minutes: 10 }, internal.crons.cleanExpiredAuthChallenges);
 
+// TODO: Uncomment this after the frontend agent API is properly set up
+// // Update frontend agent conversations daily at 01:00 UTC
+// crons.daily(
+//   'update frontend agents',
+//   { hourUTC: 1, minuteUTC: 0 },
+//   internal.frontendAgent.updateAllFrontendAgentConversations
+// );
+
 export default crons;
 
 const TablesToVacuum: TableNames[] = [
