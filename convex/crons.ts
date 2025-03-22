@@ -23,8 +23,8 @@ crons.interval('clean expired auth challenges', { minutes: 10 }, internal.crons.
 export default crons;
 
 const TablesToVacuum: TableNames[] = [
-  // Un-comment this to also clean out old conversations.
-  // 'conversationMembers', 'conversations', 'messages',
+  // Clean out old conversations.
+  'participatedTogether', 'archivedConversations', 'messages',
 
   // Inputs aren't useful unless you're trying to replay history.
   // If you want to support that, you should add a snapshot table, so you can

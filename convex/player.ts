@@ -314,6 +314,20 @@ export const deletePlayer = mutation({
       throw new ConvexError('Could not find your player');
     }
 
+    // First, find and delete playerDescriptions entry regardless of player state
+    if (player.gamePlayerId && player.worldId) {
+      const playerDescriptions = await ctx.db
+        .query('playerDescriptions')
+        .withIndex('worldId', (q) => 
+          q.eq('worldId', player.worldId).eq('playerId', player.gamePlayerId as string)
+        )
+        .unique();
+      
+      if (playerDescriptions) {
+        await ctx.db.delete(playerDescriptions._id);
+      }
+    }
+
     // Check if player is displayed in game
     const world = await ctx.db.get(player.worldId);
     if (world) {
@@ -325,20 +339,6 @@ export const deletePlayer = mutation({
         await insertInput(ctx, player.worldId, 'leave', {
           playerId: gamePlayer.id,
         });
-      } else {
-        // Player not in game, just delete data in playerDescriptions
-        if (player.gamePlayerId) {
-          const playerDescriptions = await ctx.db
-            .query('playerDescriptions')
-            .withIndex('worldId', (q) => 
-              q.eq('worldId', player.worldId).eq('playerId', player.gamePlayerId as string)
-            )
-            .unique();
-          
-          if (playerDescriptions) {
-            await ctx.db.delete(playerDescriptions._id);
-          }
-        }
       }
     }
     
