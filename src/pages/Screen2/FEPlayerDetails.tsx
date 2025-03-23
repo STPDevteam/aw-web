@@ -3,7 +3,7 @@ import { Box, Image, Text  } from '@chakra-ui/react'
 import { Close } from '@/images'
 import { useEffect, useMemo, useState} from 'react';
 import { formatYYYYMMDDHHMMSS } from '@/utils/tool';
-import { SwitchTab } from "@/components"
+import { SwitchTab} from "@/components"
 
 interface iFEPlayerDetails {
     currentFEAgent: any
@@ -23,7 +23,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
             py="25px" 
             bgColor='#838B8D' 
             mt="10px">
-          <Text className='gray4 gradient_content' fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
+          <Text className='gradient_content' fontWeight={400} color="#101010" fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
         </Box>
     ) 
       
@@ -37,7 +37,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
                     <Box className='  fx-row ai-ct jc-sb' mt="24px">     
                         
                         <Box className="center gradient_border " w="100%" h="46px">
-                            <Text className="fw700 fz24 gray gradient_content">{currentFEAgent.name}</Text>
+                            <Text className="gradient_content" color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{currentFEAgent.name}</Text>
                         </Box>
                         <Image 
                             ml={['24px','24px','24px','24px','36px','54px']} 

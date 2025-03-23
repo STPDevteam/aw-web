@@ -61,12 +61,13 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
     >
       { columns as number > 2 && <Box w="160px" className=''/>}
       <Box className='fx-col ai-ct w100 h100 '>
-        <Flex
+        <Box
           height={['105px','142px','172px','215px','215px']}
-          className='w100 center '
+          className='w100 fx-col ai-ct jc-ct'
         >
-          <Text className='gray' fontSize={['24px','32px','36px','48px','48px']}>More Worlds</Text>
-        </Flex>
+          <Text className='gray' fontSize={['24px','32px','36px','36px','40px', '48px']}>Launchpad</Text>
+          <Text className='gray' fontSize={['20px','20px','20px','20px','22px', '24px']}>World.Fun Beta Coming Soon</Text>
+        </Box>
         <Grid
           bg="linear-gradient(180deg, #101010 0%, #293033 100%)"
           className=''

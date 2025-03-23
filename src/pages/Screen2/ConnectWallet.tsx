@@ -1,10 +1,8 @@
 import React, { FC, useState, useEffect, useRef } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { ClickButtonWrapper, SvgButton, BasePopup, Notification } from '@/components'
-import { Image, Text, Box } from "@chakra-ui/react"
+import { ClickButtonWrapper, SvgButton, BasePopup,  } from '@/components'
+import { Image, Text, Box, Button } from "@chakra-ui/react"
 import { ArrowBottom, Logo } from '@/images'
-import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../convex/_generated/api.js'
 import { useAccount, useDisconnect, useConnect } from 'wagmi';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
 import { alertInfoAction, openConnectWalletAction, selectOpenConnectWallet } from '@/redux/reducer/agentReducer.js';
@@ -64,12 +62,22 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                 {(() => {
                   if (!connected) {
                     return (
-                        <SvgButton
-                          onClick={openConnectModal}
-                          name='Login'
+
+                      <Button 
                           w={[180]}
                           h={[46]}
-                      />  
+                          onClick={openConnectModal}
+                          bgColor='#293033' 
+                          className=" click box_clip" 
+                          boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
+                          _hover={{
+                              bgColor: '#838B8D'
+                          }}
+                      >
+                          <Text fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','16px']}>
+                          Login
+                          </Text>
+                      </Button>
                     )
                   }
                   return (                   
@@ -78,11 +86,11 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                         w={[180]}
                         h={[46]}
                         bgColor='#E0E0E0' 
-                        className="fx-row ai-ct jc-sb click box_clip15" 
+                        className="fx-row ai-ct jc-sb click box_clip" 
                         boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
                         px={['12px','12px','12px','15px','15px']}
                       >
-                          <Text className=" " fontWeight={350}  color="#1F1F23" fontSize={['14px','14px','14px','14px','16px']}>@{ account?.displayName }</Text>
+                          <Text color="#1F1F23" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{`@${account?.displayName}`}</Text>
                           <Image 
                               src={ArrowBottom} 
                               h="8px"

@@ -4,7 +4,7 @@
 import React, { FC, useState, useMemo } from 'react'
 import { Text, Link, Box, Image } from '@chakra-ui/react'
 import { Transform, X, XHover, PopupDropdown, ButtonBgMd, ButtonBgMdHover } from '@/images'
-import { GeneralButton, ClickButtonWrapper } from '@/components'
+import { BorderButton, ClickButtonWrapper, Font16 } from '@/components'
 import { api } from '../../../convex/_generated/api.js'
 import {  Id } from '../../../convex/_generated/dataModel'
 import { useMutation, useQuery } from 'convex/react'
@@ -46,7 +46,19 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
 
     return(
         <Box>
-            <ClickButtonWrapper onClick={() => setVisible(!visible)} disable={false} clickableDisabled={true}>
+
+            <BorderButton
+                w={256}
+                h={50}
+                onClick={() => setVisible(!visible)}
+                title={
+                    <Box className='fx-row ai-ct jc-sb w100 '>
+                        <Font16 t="AGENT LIST"/>
+                        <Image src={Transform} w="25px" h="18px"/>
+                    </Box>
+                }
+            />   
+            {/* <ClickButtonWrapper onClick={() => setVisible(!visible)} disable={false} clickableDisabled={true}>
                 <Box 
                     bgImage={ButtonBgMd}
                     bgSize="cover"
@@ -60,7 +72,7 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                     <Text className="fw700 fz24 gray">AGENT LIST</Text>
                     <Image src={Transform} w="37px" h="26px"/>
                 </Box>
-            </ClickButtonWrapper>
+            </ClickButtonWrapper> */}
 
             {
                 visible &&  

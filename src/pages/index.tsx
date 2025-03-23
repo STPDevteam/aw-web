@@ -16,6 +16,8 @@ const btns = [
   { 
     name: 'Home', 
     id: 'home', 
+    class1: 'nav_right_top',
+    class2: 'nav_right_top_content',
     style: {
       borderRadius: '24px 24px 0px 0px',
       border: '1px solid #838B8D',   
@@ -28,6 +30,8 @@ const btns = [
   { 
     name: 'AI Town', 
     id: 'ai-town',
+    class1: '',
+    class2: '',
     style: {
       border: '1px solid #E0E0E0',   
     },
@@ -37,8 +41,10 @@ const btns = [
     
   },
   { 
-    name: 'More Worlds', 
+    name: 'Launchpad', 
     id: 'more-worlds',
+    class1: 'nav_right_bottom',
+    class2: 'nav_right_bottom_content',
     style: {
       borderRadius: '0px 0px 24px 24px',
       border: '1px solid #E0E0E0',
@@ -115,7 +121,7 @@ export const Pages = () => {
                   ))
               }
             </Box>         
-            <Box className='fx-col jc-sb' h="40px" ml="10px">
+            {/* <Box className='fx-col jc-sb' h="40px" ml="10px">
               {
                 [1,2,3].map(dot => (
                   <Box key={dot}
@@ -127,7 +133,7 @@ export const Pages = () => {
                   />
                 ))
               }
-            </Box>
+            </Box> */}
           </Box>
         </Box>
       }

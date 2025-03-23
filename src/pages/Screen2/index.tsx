@@ -10,7 +10,7 @@ import { Notification, PageLoading } from '@/components'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
-export const Screen2:FC<{ isActive: boolean, currentIndex: number,feAgentsInfo:any[] }> = ({ isActive, currentIndex, feAgentsInfo }) => {  
+export const Screen2:FC<{ isActive: boolean, currentIndex: number,feAgentsInfo:any }> = ({ isActive, currentIndex, feAgentsInfo }) => {  
   
   const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
   const dispatch = useAppDispatch()

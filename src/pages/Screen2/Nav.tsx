@@ -9,7 +9,7 @@ import { alertInfoAction, openConnectWalletAction } from '@/redux/reducer/agentR
 import {  useAccount, useSignMessage} from 'wagmi'
 import { MyAgent } from './MyAgent'
 import { Chat } from './Chat'
-import { Logo } from '@/images'
+import { PointsImg } from '@/images'
 import { motion } from "framer-motion"
 
 const MotionBox = motion(Box)
@@ -136,17 +136,24 @@ export const Nav = () => {
         <Box className='w100' maxW="1720px" >
             <Box className='fx-row ai-ct jc-sb w100'>
                 <Box className='fx-row ai-ct jc-sb'>
-                    <SvgButton
-                        loading={false}
-                        disable={isConnected ? (!!!canCheckIn) : false}
+                    <Button 
                         onClick={onClaim}
-                        name={
-                            checkStatus === null ? 'Daily Check-in' :
-                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Check-in' : 'Claimed') : 'Daily Check-in')
-                        }
                         w={[180]}
                         h={[46]}
-                    />
+                        bgColor='#293033' 
+                        disabled={isConnected ? (!!!canCheckIn) : false}
+                        className=" click box_clip" 
+                        boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
+                        _hover={{
+                            bgColor: '#838B8D'
+                        }}
+                    >
+                        <Text fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','16px']}>
+                            {checkStatus === null ? 'Daily Clock-in' :
+                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}
+                        </Text>
+                    </Button>
+
 
                     <MyAgent 
                         worldId={worldId} 
@@ -173,14 +180,14 @@ export const Nav = () => {
                         w={[180]}
                         h={[46]}
                         bgColor='#838B8D' 
-                        className="fx-row ai-ct jc-sb click box_clip15" 
+                        className="fx-row ai-ct jc-sb click box_clip" 
                         boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
                         px={['12px','12px','12px','15px','15px']}
                         _hover={{
                             bgColor: '#838B8D'
                         }}
                     >
-                        <Image src={Logo} w="24px" h="25px"  />                            
+                        <Image src={PointsImg} w="24px" h="25px" mr="5px" />                            
                         <Text fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','16px']}>World Points: {checkStatus ? checkStatus?.currentPoints : 0}</Text>
                     </Button>
                    
@@ -199,7 +206,7 @@ export const Nav = () => {
                         {visible && (
                             <MotionBox 
                                 ref={menuRef}
-                                zIndex={2}
+                                zIndex={9}
                                 className="fx-col ai-ct "
                                 pos="absolute"
                                 top='50px'

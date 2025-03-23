@@ -3,7 +3,7 @@
 import React, { FC } from 'react'
 import { Text, Box, Image } from '@chakra-ui/react'
 import { Screen1Bg, WorldFun, Screen1SubTitle} from '@/images'
-import { GeneralButton, PageLoading, SvgButton } from '@/components'
+import { GeneralButton, PageLoading, BorderButton } from '@/components'
 import { isMobile } from '@/utils/tool'
 
 export const Screen1:FC<{ onMoveTo: (id: number) => void, isActive: boolean }> = ({ onMoveTo, isActive}) => {
@@ -36,13 +36,13 @@ export const Screen1:FC<{ onMoveTo: (id: number) => void, isActive: boolean }> =
       {
         !isMobile() && 
         <Box pos='absolute' bottom="46px" left="50%" transform="translateX(-50%)">
-
-          <GeneralButton
+          
+          <BorderButton
+            w={369}
+            h={58}
             onClick={() => onMoveTo(1)}
             title="Launch 1,000-Agent AI Town"
-            size='lg' />
-
-          
+          />          
           
         </Box>
       }

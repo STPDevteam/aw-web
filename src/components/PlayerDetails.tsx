@@ -69,7 +69,7 @@ export default function PlayerDetails({
 
   if (!playerId) {
     return (
-      <Box mt="25px" className='h100'>
+      <Box className='h100'>
         <Box 
           className='center gradient_border'
           w="100%"
