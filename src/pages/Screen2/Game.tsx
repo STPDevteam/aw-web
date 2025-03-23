@@ -50,6 +50,9 @@ export const Game:React.FC<{ feAgentId: number, currentIndex: number, feAgentsIn
 
   // Send a periodic heartbeat to our world to keep it alive.
   useWorldHeartbeat();
+  const memoizedFeDetail = useMemo(() => {
+    return currentFEAgent ? <FEPlayerDetails currentFEAgent={currentFEAgent}/>  : null;
+}, [currentFEAgent]);
 
   const worldState = useQuery(api.world.worldState, worldId ? { worldId } : 'skip');
   const { historicalTime, timeManager } = useHistoricalTime(worldState?.engine);
@@ -96,9 +99,7 @@ export const Game:React.FC<{ feAgentId: number, currentIndex: number, feAgentsIn
   }
 
 
-  const memoizedFeDetail = useMemo(() => {
-      return currentFEAgent ? <FEPlayerDetails currentFEAgent={currentFEAgent}/>  : null;
-  }, [currentFEAgent]);
+ 
 
   return (  
     <Box 

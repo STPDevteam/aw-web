@@ -300,8 +300,8 @@ function animateAgent(
           sprites.forEach((sprite, idx) => {
             simulatedContainer.addChild(sprite);
 
-            const emojiChar = '🚀'
-            // const emojiChar = agentsData[idx].emoji
+            // const emojiChar = '🚀'
+            const emojiChar = agentsData[idx].emoji
             const emojiText = new PIXI.Text(emojiChar, {
               fontSize: 24,
               fill: "yellow",
@@ -321,10 +321,6 @@ function animateAgent(
             sprite.on('pointerdown', () => {           
               const id = agentsData[idx].id   
               const newId = id ? Number(id.split(':')[1]) : -1;
-   
-              // localStorage.setItem('agentId', agentsData[idx].id)
-             
-
               selectedAgentId(newId)
             });
 
