@@ -37,3 +37,12 @@ export { default as BtnSvg } from "./btn.svg";
 export { default as BtnHoverSvg } from "./btnHover.svg";
 export { default as MapLoading } from "./mapLoading.gif";
 
+export { default as Nav11 } from "./nav1_1.png";
+export { default as Nav12 } from "./nav1_2.png";
+export { default as Nav13 } from "./nav1_3.png";
+export { default as Nav21 } from "./nav2_1.png";
+export { default as Nav22 } from "./nav2_2.png";
+export { default as Nav23 } from "./nav2_3.png";
+export { default as Nav31 } from "./nav3_1.png";
+export { default as Nav32 } from "./nav3_2.png";
+export { default as Nav33 } from "./nav3_3.png";

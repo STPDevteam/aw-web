@@ -6,7 +6,18 @@ import { Text, Box, Fade } from '@chakra-ui/react'
 import { isMobile } from '@/utils/tool'
 import { api } from '../../convex/_generated/api.js'
 import { useQuery } from 'convex/react'
+import {
+  Nav11,
+  Nav12,
+  Nav13,
+  Nav21,
+  Nav22,
+  Nav23,
+  Nav31,
+  Nav32,
+  Nav33
 
+} from '@/images'
 const ScreenIndexContext = createContext<number>(0);
 
 
@@ -18,6 +29,9 @@ const btns = [
     id: 'home', 
     class1: 'nav_right_top',
     class2: 'nav_right_top_content',
+    defaultBg: Nav11,
+    hoverBg: Nav12,
+    selectedBg: Nav13,
     style: {
       borderRadius: '24px 24px 0px 0px',
       border: '1px solid #838B8D',   
@@ -32,6 +46,9 @@ const btns = [
     id: 'ai-town',
     class1: '',
     class2: '',
+    defaultBg: Nav21,
+    hoverBg: Nav22,
+    selectedBg: Nav23,
     style: {
       border: '1px solid #E0E0E0',   
     },
@@ -45,6 +62,9 @@ const btns = [
     id: 'more-worlds',
     class1: 'nav_right_bottom',
     class2: 'nav_right_bottom_content',
+    defaultBg: Nav31,
+    hoverBg: Nav32,
+    selectedBg: Nav33,
     style: {
       borderRadius: '0px 0px 24px 24px',
       border: '1px solid #E0E0E0',
@@ -103,17 +123,19 @@ export const Pages = () => {
                       key={item.name}
                       onClick={() => setCurrentIndex(idx)}
                       title={item.name}
-                      style={item.style}
+                      bgImage={idx === currentIndex ? item.selectedBg : item.defaultBg}
+                      bgSize="cover"
+                      bgPosition='center'
+                      bgRepeat="no-repeat"  
+
                       className='center click'
                       h="80px"
-                      w="115px"
-                      bgColor={idx === currentIndex ? '#293033' : "#838B8D"}
-                      backdropFilter="blur(10px)"
+                      w="115px"                      
                       color={idx === currentIndex ? '#E0E0E0' : '#293033'}
                       mb="1px"
                       _hover={{
-                        bgColor: '#1F1F23',
-                        color: '#E0E0E0'
+                        color: '#E0E0E0',
+                        bgImage: item.hoverBg
                       }}
                     >
                       <Text className='fz16' fontWeight={350}>{item.name}</Text>

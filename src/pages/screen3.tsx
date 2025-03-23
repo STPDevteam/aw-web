@@ -66,7 +66,7 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
           className='w100 fx-col ai-ct jc-ct'
         >
           <Text className='gray' fontSize={['24px','32px','36px','36px','40px', '48px']}>Launchpad</Text>
-          <Text className='gray' fontSize={['20px','20px','20px','20px','22px', '24px']}>World.Fun Beta Coming Soon</Text>
+          <Text className='gray' fontSize={['14px','14px','14px','16px','22px', '24px']}>World.Fun Beta Coming Soon</Text>
         </Box>
         <Grid
           bg="linear-gradient(180deg, #101010 0%, #293033 100%)"
