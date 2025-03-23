@@ -126,33 +126,29 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
           cursor='all-scroll'
             pos='relative'
         > 
-ß         {pageProgress < 1 &&  currentIndex === 1 &&
-
-              <LoadingOverlay h={h} w={`${___rightWidth}px`} maxW={_leftWidth * 0.861326} onCompleted={p => setPageProgress(p)} />
-          }
-        
-            <BorderBox  >
-              <Box display={pageProgress === 1 ? 'flex' : 'none'} >
-              
-                <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
-                  <ConvexProvider client={convex}>
-                    <PixiGame
-                      selectedAgentId={selectedFEAgentId}
-                      pixiWidth={_leftWidth}
-                      agentInfo={agentInfo}
-                      game={game}
-                      worldId={worldId}
-                      engineId={engineId}
-                      historicalTime={historicalTime}
-                      setSelectedElement={setSelectedElement}
-                      onClearFEAgent={() => setCurrentFEAgent(null)}
-                    />
-                  </ConvexProvider>
-                </Stage>  
-              </Box>         
-            </BorderBox>
-
-          
+         {pageProgress < 1 &&  currentIndex === 1 && <LoadingOverlay h={h} w={`${___rightWidth}px`} maxW={_leftWidth * 0.861326} onCompleted={p => setPageProgress(p)} /> }
+          <BorderBox  >
+            <Box 
+              display={pageProgress === 1 ? 'flex' : 'none'} 
+            >
+            
+              <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
+                <ConvexProvider client={convex}>
+                  <PixiGame
+                    selectedAgentId={selectedFEAgentId}
+                    pixiWidth={_leftWidth}
+                    agentInfo={agentInfo}
+                    game={game}
+                    worldId={worldId}
+                    engineId={engineId}
+                    historicalTime={historicalTime}
+                    setSelectedElement={setSelectedElement}
+                    onClearFEAgent={() => setCurrentFEAgent(null)}
+                  />
+                </ConvexProvider>
+              </Stage>  
+            </Box>         
+          </BorderBox>
         </Box>
         
         <Box
@@ -186,7 +182,7 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
 }
 
 
-const BorderBox:React.FC<{ children:React.ReactNode }> = ({ children }) => {
+export const BorderBox:React.FC<{ children:React.ReactNode }> = ({ children }) => {
   return (
     <Box className='map2_border w100 h100'>
       <Box  className='map2_border_content w100 h100' p="10px">

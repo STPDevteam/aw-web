@@ -174,7 +174,7 @@ export default function PlayerDetails({
   return (
     <Box className='w100' >      
    
-      <Box className='fx-row ai-ct jc-sb' mt="24px">     
+      <Box className='fx-row ai-ct jc-sb'>     
           
           <Box 
             className='center gradient_border'

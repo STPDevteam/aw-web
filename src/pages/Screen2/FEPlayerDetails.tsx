@@ -18,7 +18,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
     const [selectedIdx, setSelectedIdx] = useState(0)
     const descriptionFun = (d: string | React.ReactNode) => (
         <Box 
-            className='box_clip center  ' 
+            className='box_clip ' 
             px="20px" 
             py="25px" 
             bgColor='#838B8D' 
@@ -34,7 +34,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
             {
                 currentFEAgent &&
                 <Box className=''>
-                    <Box className='  fx-row ai-ct jc-sb' mt="24px">     
+                    <Box className='  fx-row ai-ct jc-sb' >     
                         
                         <Box className="center gradient_border " w="100%" h="46px">
                             <Text className="gradient_content" color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{currentFEAgent.name}</Text>
