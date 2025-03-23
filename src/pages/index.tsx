@@ -18,6 +18,8 @@ import {
   Nav33
 
 } from '@/images'
+import { Font16 } from '@/components'
+
 const ScreenIndexContext = createContext<number>(0);
 
 
@@ -138,7 +140,7 @@ export const Pages = () => {
                         bgImage: item.hoverBg
                       }}
                     >
-                      <Text className='fz16' fontWeight={350}>{item.name}</Text>
+                      <Font16 t={item.name}/>
                     </Box>
                   ))
               }

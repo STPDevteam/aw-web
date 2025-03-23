@@ -69,7 +69,7 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                     w="256px"
                     px="24px"
                 >
-                    <Text color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>Agent List</Text>
+                    <Font16 t="Agent List"/>
                     <Image src={Transform} w="25px" h="18px"/>
                 </Box>
             </ClickButtonWrapper>

@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect, useRef } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { ClickButtonWrapper, SvgButton, BasePopup,  } from '@/components'
+import { ClickButtonWrapper, SvgButton, BasePopup, Font16,  } from '@/components'
 import { Image, Text, Box, Button } from "@chakra-ui/react"
 import { ArrowBottom, Logo } from '@/images'
 import { useAccount, useDisconnect, useConnect } from 'wagmi';
@@ -74,7 +74,7 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                               bgColor: '#838B8D'
                           }}
                       >
-                          <Text fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','16px']}>
+                          <Text fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','14px','16px']}>
                           Login
                           </Text>
                       </Button>
@@ -90,7 +90,7 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                         boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
                         px={['12px','12px','12px','15px','15px']}
                       >
-                          <Text color="#1F1F23" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{`@${account?.displayName}`}</Text>
+                          <Font16 t={`@${account?.displayName}`} c="#1F1F23"/>
                           <Image 
                               src={ArrowBottom} 
                               h="8px"

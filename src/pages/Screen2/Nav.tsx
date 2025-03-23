@@ -1,6 +1,6 @@
 import React, {  useState, useEffect, useRef } from 'react'
 import { Box, Text,Button, Image, Tooltip} from '@chakra-ui/react'
-import { GeneralButton, SvgButton } from '@/components'
+import { Font16, SvgButton } from '@/components'
 import { ConnectWallet } from './ConnectWallet'
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
@@ -148,10 +148,8 @@ export const Nav = () => {
                             bgColor: '#838B8D'
                         }}
                     >
-                        <Text fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','16px']}>
-                            {checkStatus === null ? 'Daily Clock-in' :
-                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}
-                        </Text>
+                        <Font16 t={checkStatus === null ? 'Daily Clock-in' :
+                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}/>
                     </Button>
 
 
@@ -187,8 +185,8 @@ export const Nav = () => {
                             bgColor: '#838B8D'
                         }}
                     >
-                        <Image src={PointsImg} w="24px" h="25px" mr="5px" />                            
-                        <Text fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','16px']}>World Points: {checkStatus ? checkStatus?.currentPoints : 0}</Text>
+                        <Image src={PointsImg} w="24px" h="25px" mr="5px" />     
+                        <Font16 t={`World Points: ${checkStatus ? checkStatus?.currentPoints : 0}`}/>                       
                     </Button>
                    
                   
