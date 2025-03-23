@@ -19,7 +19,6 @@ export default function PlayerDetails({
   playerId,
   setSelectedElement,
   scrollViewRef,
-  width,
 
 }: {
   worldId: Id<'worlds'>;
@@ -28,7 +27,7 @@ export default function PlayerDetails({
   playerId?: GameId<'players'>;
   setSelectedElement: SelectElement;
   scrollViewRef: React.RefObject<HTMLDivElement>;
-  width: number,
+
 }) {
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId });
 
@@ -61,7 +60,7 @@ export default function PlayerDetails({
   
 
   const descriptionFun = (d: string | React.ReactNode) => (
-    <Box className='box_clip center ' w={`${width}px`} px="20px" py="25px" bgColor='#838B8D' mt="10px">
+    <Box className='box_clip center w100' px="20px" py="25px" bgColor='#838B8D' mt="10px">
       <Text className='gray4' fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
     </Box>
   ) 
@@ -69,8 +68,7 @@ export default function PlayerDetails({
 
   if (!playerId) {
     return (
-      <Box mt="25px">
-        
+      <Box mt="25px" className='h100'>
         <Box 
           className='center gradient_border'
           w="100%"
@@ -173,20 +171,18 @@ export default function PlayerDetails({
   const pendingSuffix = (s: string) => ''; 
 
   return (
-    <Box className='' w={`${width}px`}>      
+    <Box className='w100' >      
    
       <Box className='fx-row ai-ct jc-sb' mt="24px">     
+          
           <Box 
-              bgImage={ButtonBgMd}
-              bgSize="cover"
-              bgPosition='center'
-              bgRepeat="no-repeat"    
-              className="center "
-              h={`${width * 0.788 * 0.19637}px`}
-              w={`${width * 0.788}px`}
+            className='center gradient_border'
+            w="100%"
+            h="46px"
           >
-              <Text className="fw700 fz24 gray">{playerDescription?.name || ''}</Text>
+            <Text className="fw600 gray gradient_content" fontSize={['16px','16px','16px','16px','20px','24px']}>{playerDescription?.name || ''}</Text>         
           </Box>
+
         <Image src={Close} w="34px" h="34px" className='click' onClick={() => {
           setSelectedElement(undefined)
           localStorage.removeItem('agentId')

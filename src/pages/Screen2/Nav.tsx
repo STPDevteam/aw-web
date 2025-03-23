@@ -189,6 +189,7 @@ export const Nav = () => {
 
                     <Box pos='relative' className='' >
                         <ConnectWallet 
+                            menuIsOpen={visible}
                             points={checkStatus ? checkStatus?.currentPoints : 0}
                             menuOpen={() => setVisible(true)}
                             walletOpen={walletOpen}

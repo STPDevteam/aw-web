@@ -2,13 +2,12 @@ import React, { FC, useState, useEffect, useRef } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ClickButtonWrapper, SvgButton, BasePopup, Notification } from '@/components'
 import { Image, Text, Box } from "@chakra-ui/react"
-import { ArrowBottom } from '@/images'
+import { ArrowBottom, Logo } from '@/images'
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAccount, useDisconnect, useConnect } from 'wagmi';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
 import { alertInfoAction, openConnectWalletAction, selectOpenConnectWallet } from '@/redux/reducer/agentReducer.js';
-import { Logo } from '@/images'
 
 
 interface iConnectWallet {
@@ -16,8 +15,9 @@ interface iConnectWallet {
   menuOpen: (v: boolean) => void
   closeWalletOpen: () => void
   walletOpen: boolean
+  menuIsOpen: boolean
 }
-export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen, closeWalletOpen }) => {
+export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen, closeWalletOpen, menuIsOpen }) => {
   const { disconnect } = useDisconnect()
  
   const openConnectWallet = useAppSelector(selectOpenConnectWallet)
@@ -87,7 +87,7 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                               src={ArrowBottom} 
                               h="8px"
                               w="15.2px" 
-                              transform={ walletOpen ? 'rotate(0deg)' : 'rotate(-180deg)'} 
+                              transform={ menuIsOpen ? 'rotate(-180deg)' : 'rotate(0deg)'} 
                               transition="transform 0.3s"
                           />                            
                       </Box>

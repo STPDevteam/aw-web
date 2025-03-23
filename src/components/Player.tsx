@@ -23,6 +23,7 @@ export const Player = ({
   onClick,
   historicalTime,
   engineId,
+  onClearFEAgent
 }: {
   engineId: Id<'engines'>,
   game: ServerGame;
@@ -31,6 +32,7 @@ export const Player = ({
 
   onClick: SelectElement;
   historicalTime?: number;
+  onClearFEAgent:() => void
 }) => {
   const playerCharacter = game.playerDescriptions.get(player.id)?.character;
   if (!playerCharacter) {
@@ -94,7 +96,8 @@ export const Player = ({
           // moveTo({ playerId: player.id, destination: { x: 51, y: 52} })
 
           onClick({ kind: 'player', id: player.id });
-          localStorage.removeItem('agentId')     
+          // localStorage.removeItem('agentId')     
+          onClearFEAgent()
         }}
       />
     </>

@@ -9,9 +9,10 @@ type SimulatedAgentsProps = {
   container: PIXI.Container; 
   tileDim: number;
   mapWidth: number
+  selectedAgentId: (id: number) => void
 };
 
-const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container, tileDim, mapWidth }) => {
+const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container, tileDim, mapWidth, selectedAgentId }) => {
   const simulatedContainerRef = useRef<PIXI.Container | null>(null);
 
   function animateMovement(
@@ -299,8 +300,8 @@ function animateAgent(
           sprites.forEach((sprite, idx) => {
             simulatedContainer.addChild(sprite);
 
-            // const emojiChar = '🚀'
-            const emojiChar = agentsData[idx].emoji
+            const emojiChar = '🚀'
+            // const emojiChar = agentsData[idx].emoji
             const emojiText = new PIXI.Text(emojiChar, {
               fontSize: 24,
               fill: "yellow",
@@ -317,8 +318,14 @@ function animateAgent(
             sprite.interactive = true;
             sprite.cursor = "pointer";
            
-            sprite.on('pointerdown', () => {              
-              localStorage.setItem('agentId', agentsData[idx].id)
+            sprite.on('pointerdown', () => {           
+              const id = agentsData[idx].id   
+              const newId = id ? Number(id.split(':')[1]) : -1;
+   
+              // localStorage.setItem('agentId', agentsData[idx].id)
+             
+
+              selectedAgentId(newId)
             });
 
 

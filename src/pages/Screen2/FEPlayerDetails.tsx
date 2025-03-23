@@ -1,5 +1,4 @@
-import { useQuery } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
+
 import { Box, Image, Text  } from '@chakra-ui/react'
 import { Close } from '@/images'
 import { useEffect, useMemo, useState} from 'react';
@@ -7,15 +6,13 @@ import { formatYYYYMMDDHHMMSS } from '@/utils/tool';
 import { SwitchTab } from "@/components"
 
 interface iFEPlayerDetails {
-    feAgendId: number
-    width: number
+    currentFEAgent: any
 }
 export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
-    feAgendId,
-    width
+    currentFEAgent,
+   
 }) => {
     const [selectedIdx, setSelectedIdx] = useState(0)
-    const feChatList = useQuery(api.frontendAgent.getFrontendAgentById,{ id: feAgendId })
     const descriptionFun = (d: string | React.ReactNode) => (
         <Box 
             className='box_clip center  ' 
@@ -29,23 +26,23 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
       
 
     return (
-        <Box className='' w="100%" px={['12px','12px','12px','12px','24px','36px']}>
+        <Box className='w100' >
             {
-                feChatList &&
+                currentFEAgent &&
                 <Box className=''>
                     <Box className='  fx-row ai-ct jc-sb' mt="24px">     
                         
                         <Box className="center gradient_border " w="100%" h="46px">
-                            <Text className="fw700 fz24 gray gradient_content">{feChatList.name}</Text>
+                            <Text className="fw700 fz24 gray gradient_content">{currentFEAgent.name}</Text>
                         </Box>
                         <Image ml={['24px','24px','24px','24px','36px','54px']} src={Close} w="34px" h="34px" className='click' onClick={() => localStorage.removeItem('agentId')}/>
                     </Box>
-                    { descriptionFun(feChatList.description)}
+                    { descriptionFun(currentFEAgent.description)}
                     <SwitchTab onChange={i => setSelectedIdx(i)}/>
                     {
                         selectedIdx === 0 ? <>
                             {
-                                feChatList.conversation.map((item:any) => (
+                                currentFEAgent.conversation.map((item:any) => (
                                 <Box key={item.timestamp} className='fx-col' mt="10px">
                                     <Box className='fx-row ai-ct jc-sb'>
                                         <Text color="#E0E0E0" fontWeight={600} fontSize={['14px','14px','14px','14px','14px','16px']}>{item.role}</Text>

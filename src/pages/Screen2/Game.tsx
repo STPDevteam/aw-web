@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import {  useElementSize, useResizeObserver } from 'usehooks-ts';
 import { Stage } from '@pixi/react';
 import { ConvexProvider, useConvex, useQuery } from 'convex/react';
@@ -9,14 +9,13 @@ import { useHistoricalTime } from '../../hooks/useHistoricalTime.ts';
 import {  GameId } from '../../../convex/aiTown/ids.ts';
 import { useServerGame } from '../../hooks/serverGame.ts';
 import {  Box,  Grid, useBreakpointValue } from '@chakra-ui/react'
-import { GameLeftBorder, GameRightBorder } from '@/images'
 import { AgentList } from '@/pages/Screen2/AgentList'
 import { PixiGame } from './PixiGame'
 import { selectedAgentInfo } from '@/redux/reducer'
 import { useAppSelector } from '@/redux/hooks.ts'
 import { PageLoading } from '@/components'
 import { FEPlayerDetails } from './FEPlayerDetails'
-
+import ReactDOM from 'react-dom';
 
 
 export const mapContainerWidth = 1720
@@ -24,9 +23,10 @@ export const mapContainerHeight = 661
 export const mapLeftWidth = 1145
 export const mapRightWidth = 494
 
-export const Game:React.FC<{ feAgentId: number }>= ({ feAgentId }) => {
+export const Game:React.FC<{ feAgentId: number, currentIndex: number, feAgentsInfo:any[] }>= ({ feAgentId, currentIndex, feAgentsInfo }) => {
   
   const [pageProgress, setPageProgress] = useState<number>(0)
+  const [currentFEAgent, setCurrentFEAgent] = useState<any>()
 
   const agentInfo = useAppSelector(selectedAgentInfo)
   const convex = useConvex();
@@ -85,65 +85,58 @@ export const Game:React.FC<{ feAgentId: number }>= ({ feAgentId }) => {
   // display={isActive ? 'block' : 'none'}
 
   // 1161 / 661  0.56933
+
+
+  const selectedFEAgentId = (id: number) => {
+   
+    const targetAgent = feAgentsInfo.filter(item => item.frontendAgentId === id)
+    if(targetAgent) {
+      setCurrentFEAgent(targetAgent[0])
+    }
+  }
+
+
+  const memoizedFeDetail = useMemo(() => {
+      return currentFEAgent ? <FEPlayerDetails currentFEAgent={currentFEAgent}/>  : null;
+  }, [currentFEAgent]);
+
   return (  
     <Box 
-      className='box_clip fx-row ai-ct jc-sb ' 
-      // w={_w > 1720 ? "1720px" : `${_w}px` }
+      className='map1_border fx-row ai-ct jc-sb ' 
       w='100%'
-      bgColor="#1F1F23" 
       maxW={`${mapContainerWidth}px`} 
       h={_h > 706 ? "706px" : `${_h}px`}
       py="30px"
       px={['4px','4px','12px','24px','24px']}
       pos='relative'
-
-            // borderWidth="2px"
-            // borderStyle='solid'
-            // borderColor={['red','green','yellow','blue','red','pink',]}
-
+      // borderWidth="2px"
+      // borderStyle='solid'
+      // borderColor={['red','green','yellow','blue','red','pink',]}
     >
-      <Box pos='absolute' left="50px" top="44px" zIndex={99}> 
+      <Box pos='absolute' left="50px" top="44px" zIndex={99}  display={pageProgress === 1 ? 'flex' : 'none'} > 
         <AgentList  worldId={worldId}/>
       </Box>         
         
-        <Box maxW={`${mapContainerWidth}px`} className='w100 fx-row ai-ct jc-sb'>
-            <Box
-              bgImage={GameLeftBorder}
-              bgSize="cover"
-              bgPosition='center'
-              bgRepeat="no-repeat"  
-              w={_leftWidth}
-              h={`${h}px`}
-              className='box_clip center'  
-              cursor='all-scroll'
-              pos='relative'
-            > 
-              <Box 
-                className='w100 '  
-                pos='absolute'
-                left="0"
-                top="50%"
-                transform='-50% -50%'
-                zIndex={9999}
-                pointerEvents="none" 
-                display={pageProgress < 1 ? 'block' : 'none'} 
-                style={{ willChange: "opacity, transform", transform: "translateZ(0)" }}
-              >
-                <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setPageProgress(p)}/>
-              </Box>  
-              <Box 
-                display={pageProgress === 1 ? 'flex' : 'none'} 
-                className=''
-                position="absolute"
-                top="0"
-                left="0"
-                width="100%"
-                height="100%"
-                zIndex={1}
-              >
+      <Box  maxW={`${mapContainerWidth}px`} className='map1_border_content w100 fx-row ai-ct jc-sb'>
+        <Box
+          w={_leftWidth}
+          h={`${h}px`}
+          className=' center'  
+          cursor='all-scroll'
+            pos='relative'
+        > 
+ß         {pageProgress < 1 &&  currentIndex === 1 &&
+
+              <LoadingOverlay h={h} w={`${___rightWidth}px`} maxW={_leftWidth * 0.861326} onCompleted={p => setPageProgress(p)} />
+          }
+        
+            <BorderBox  >
+              <Box display={pageProgress === 1 ? 'flex' : 'none'} >
+              
                 <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
                   <ConvexProvider client={convex}>
                     <PixiGame
+                      selectedAgentId={selectedFEAgentId}
                       pixiWidth={_leftWidth}
                       agentInfo={agentInfo}
                       game={game}
@@ -151,27 +144,29 @@ export const Game:React.FC<{ feAgentId: number }>= ({ feAgentId }) => {
                       engineId={engineId}
                       historicalTime={historicalTime}
                       setSelectedElement={setSelectedElement}
+                      onClearFEAgent={() => setCurrentFEAgent(null)}
                     />
                   </ConvexProvider>
                 </Stage>  
-              </Box>
-            </Box>
-            <Box
-              bgImage={GameRightBorder}
-              bgSize="cover"
-              bgPosition='center'
-              bgRepeat="no-repeat"  
-              w={___rightWidth}
-              h={`${h}px`}
-              className='fx jc-ct'
-              overflowY="scroll"
-              onWheel={(e) => e.stopPropagation()} 
-            >       
+              </Box>         
+            </BorderBox>
+
+          
+        </Box>
+        
+        <Box
+          w={___rightWidth}
+          h={`${h}px`}
+          className='fx jc-ct'
+          overflowY="scroll"
+          onWheel={(e) => e.stopPropagation()} 
+        >      
+        <BorderBox>
+          <Box p="15px 20px">
             {
-              feAgentId && feAgentId !== -1 ? 
-              <FEPlayerDetails feAgendId={feAgentId} width={___rightWidth * 0.85}/> : 
+              currentFEAgent ? 
+              <>{memoizedFeDetail}</>: 
               <PlayerDetails
-                width={___rightWidth * 0.85}
                 worldId={worldId} 
                 engineId={engineId}
                 game={game}
@@ -180,8 +175,52 @@ export const Game:React.FC<{ feAgentId: number }>= ({ feAgentId }) => {
                 scrollViewRef={scrollViewRef}
               />
             }
-            </Box>
+          </Box>
+        </BorderBox>        
         </Box>
+      </Box>
     </Box>
   );
 }
+
+
+const BorderBox:React.FC<{ children:React.ReactNode }> = ({ children }) => {
+  return (
+    <Box className='map2_border w100 h100'>
+      <Box  className='map2_border_content w100 h100' p="10px">
+        <Box className='map2_border w100 h100'>
+          <Box className='map2_border_content w100 h100' overflowY="scroll"> 
+            {children}
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
+
+interface LoadingOverlayProps {
+  onCompleted: (p: number) => void;
+  maxW: number;
+  w:  string;
+  h: number
+}
+
+const LoadingOverlay = ({ onCompleted, maxW, w, h}: LoadingOverlayProps): React.ReactPortal => {
+  const portalContent = (   
+      <Box 
+        position="absolute"
+        top={(h+128) / 2}
+        left={"150px"}
+        zIndex={3}
+      >
+        <PageLoading maxW={maxW} onCompleted={onCompleted} />
+      </Box>    
+  );
+
+  return ReactDOM.createPortal(
+    // @ts-ignore
+    portalContent as unknown as React.ReactElement,
+    document.body
+  ) as unknown as React.ReactPortal;
+};

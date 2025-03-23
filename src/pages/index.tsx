@@ -4,7 +4,8 @@ import { Screen3 } from './screen3'
 import { Screen2 } from './Screen2'
 import { Text, Box, Fade } from '@chakra-ui/react'
 import { isMobile } from '@/utils/tool'
-
+import { api } from '../../convex/_generated/api.js'
+import { useQuery } from 'convex/react'
 
 const ScreenIndexContext = createContext<number>(0);
 
@@ -53,6 +54,10 @@ const btns = [
 
 export const Pages = () => {  
   const [currentIndex, setCurrentIndex] = useState(0)
+
+  const feAgentsInfo = useQuery(api.frontendAgent.getAllAgents)
+
+
   return (    
     <Box className='h100' pos='relative' bgColor="#1E1E1E">
       {
@@ -131,7 +136,7 @@ export const Pages = () => {
         isActive={currentIndex === 0} 
         onMoveTo={idx => setCurrentIndex(idx)}
       />
-      <Screen2 isActive={currentIndex === 1} /> 
+      <Screen2 isActive={currentIndex === 1} currentIndex={currentIndex} feAgentsInfo={feAgentsInfo}/> 
       <Screen3 isActive={currentIndex === 2} /> 
     </Box>
   )

@@ -7,6 +7,8 @@ import { GeneralButton, PageLoading, SvgButton } from '@/components'
 import { isMobile } from '@/utils/tool'
 
 export const Screen1:FC<{ onMoveTo: (id: number) => void, isActive: boolean }> = ({ onMoveTo, isActive}) => {
+
+
   return(
     <Box 
       className=' h-screen' 

@@ -15,7 +15,6 @@ import { ServerGame } from '../../hooks/serverGame.ts';
 import SimulatedAgents from '../../components/SimulatedAgents.tsx'; 
 import { mockAgents } from '../../../data/characters.js'
 import { SimulatedAgent} from '@/components/createSimulatedAgentSprite'
-import { mapContainerHeight} from './Game'
 
 export const PixiGame:React.FC<{
   worldId: Id<'worlds'>;
@@ -24,7 +23,9 @@ export const PixiGame:React.FC<{
   historicalTime: number | undefined;
   setSelectedElement: SelectElement;
   pixiWidth: number
-  agentInfo: any
+  agentInfo: any,
+  selectedAgentId: (id: number) => void
+  onClearFEAgent:() => void
 }> = ({
   worldId,
   engineId,
@@ -32,7 +33,9 @@ export const PixiGame:React.FC<{
   historicalTime,
   setSelectedElement,
   agentInfo,
-  pixiWidth
+  pixiWidth,
+  selectedAgentId,
+  onClearFEAgent
 
 }) => {
   // PIXI setup.
@@ -153,7 +156,6 @@ export const PixiGame:React.FC<{
          x: gameSpacePx.x / tileDim,
          y: gameSpacePx.y / tileDim,
        };
-       console.log('gameSpaceTiles11', gameSpaceTiles)
        return gameSpaceTiles
     }
   } 
@@ -162,40 +164,44 @@ export const PixiGame:React.FC<{
 
 
   return (
-      <PixiViewport
-        app={pixiApp} 
-        screenWidth={ pixiWidth }
-        screenHeight={h}
-        worldWidth={width * tileDim}
-        worldHeight={height * tileDim}
-        viewportRef={viewportRef}
-      >
-        <PixiStaticMap
-          map={game.worldMap}
-          onpointerup={onMapPointerUp}
-          onpointerdown={onMapPointerDown}
-        />
-    
-        {memoizedPositionIndicator}
-         {viewportRef.current && (
-          <SimulatedAgents container={viewportRef.current} tileDim={tileDim} mapWidth={width}/>
-        )}
-        
-        {/* {
-          players.map((p) => (
-            <Player
-              engineId={engineId}
-              key={`player-${p.id}`}
-              game={game}
-              player={p}
-              isViewer={p.id === humanPlayerId}
-              onClick={setSelectedElement}
-              historicalTime={historicalTime}
-            />
-          ))
-        } */}
-        {lastDestination && <PositionIndicator destination={lastDestination} tileDim={tileDim} />}
-      </PixiViewport>
+    <PixiViewport
+      app={pixiApp} 
+      screenWidth={ pixiWidth }
+      screenHeight={h}
+      worldWidth={width * tileDim}
+      worldHeight={height * tileDim}
+      viewportRef={viewportRef}
+    >
+      <PixiStaticMap
+        map={game.worldMap}
+        onpointerup={onMapPointerUp}
+        onpointerdown={onMapPointerDown}
+      />
   
-  );
-};
+      {memoizedPositionIndicator}
+        {viewportRef.current && (
+        <SimulatedAgents 
+          container={viewportRef.current} 
+          tileDim={tileDim} mapWidth={width}
+          selectedAgentId={selectedAgentId}
+        />
+      )}
+      
+      {
+        players.map((p) => (
+          <Player
+            engineId={engineId}
+            key={`player-${p.id}`}
+            game={game}
+            player={p}
+            isViewer={p.id === humanPlayerId}
+            onClick={setSelectedElement}
+            historicalTime={historicalTime}
+            onClearFEAgent={onClearFEAgent}
+          />
+        ))
+      }
+      {lastDestination && <PositionIndicator destination={lastDestination} tileDim={tileDim} />}
+    </PixiViewport>
+  )
+}
