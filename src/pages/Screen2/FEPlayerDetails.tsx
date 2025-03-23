@@ -7,11 +7,14 @@ import { SwitchTab } from "@/components"
 
 interface iFEPlayerDetails {
     currentFEAgent: any
+    onClearFEAgent: () => void
 }
 export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
     currentFEAgent,
+    onClearFEAgent
    
 }) => {
+    // console.log('currentFEAgent', currentFEAgent)
     const [selectedIdx, setSelectedIdx] = useState(0)
     const descriptionFun = (d: string | React.ReactNode) => (
         <Box 
@@ -25,6 +28,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
     ) 
       
 
+   
     return (
         <Box className='w100' >
             {
@@ -35,7 +39,12 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
                         <Box className="center gradient_border " w="100%" h="46px">
                             <Text className="fw700 fz24 gray gradient_content">{currentFEAgent.name}</Text>
                         </Box>
-                        <Image ml={['24px','24px','24px','24px','36px','54px']} src={Close} w="34px" h="34px" className='click' onClick={() => localStorage.removeItem('agentId')}/>
+                        <Image 
+                            ml={['24px','24px','24px','24px','36px','54px']} 
+                            src={Close} w="34px" h="34px" 
+                            className='click' 
+                            onClick={onClearFEAgent}
+                        />
                     </Box>
                     { descriptionFun(currentFEAgent.description)}
                     <SwitchTab onChange={i => setSelectedIdx(i)}/>
@@ -53,10 +62,50 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
                                 ))
                             }
                         </>:
-                        <>
-                            { descriptionFun('6:30 to 7:30 - Morning yoga')}
-                        </>
+                        <Box>
+                            <Box 
+                                className='box_clip center  ' 
+                                p="20px" 
+                                bgColor='#838B8D' 
+                                mt="10px">
+                                    <Box className='fx-row ai-ct jc-sb' flexWrap="wrap">
+                                            {
+                                                currentFEAgent.status.map((item:any) => (
+                                                    <Text 
+                                                        w="50%"
+                                                        key={item.title} 
+                                                        color="#293033"
+                                                        fontSize={['14px','14px','14px','14px','14px','16px']}>
+                                                        {item.title}<span>:{item.icon}</span>
+                                                    </Text>
+
+                                                ))
+                                            }
+                                    </Box>
+                            </Box>                            
+
+                            {
+                                currentFEAgent.events.map((item:any) => (
+                                    <Box 
+                                        key={item.action} 
+                                        className='box_clip fx-row ai-ct jc-sb' 
+                                        py="20px" 
+                                        px="20px" 
+                                        whiteSpace="nowrap"
+                                        bgColor='#838B8D' 
+                                        mt="10px"
+                                        color="#293033"
+                                        fontSize={['14px','14px','14px','14px','14px','16px']}
+                                    >
+                                        <Text >{`${item.time}-${item.action}`}</Text>
+                                        <Text>{item.details}</Text>    
+                                </Box>
+
+                                ))
+                            }
+                        </Box>
                     }
+                 
                 </Box>
             }
         </Box>

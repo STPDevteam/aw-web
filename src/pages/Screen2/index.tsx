@@ -11,28 +11,10 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
 export const Screen2:FC<{ isActive: boolean, currentIndex: number,feAgentsInfo:any[] }> = ({ isActive, currentIndex, feAgentsInfo }) => {  
-  const [feAgentId, setFeAgentId] = useState<number>(-1)
+  
   const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
   const dispatch = useAppDispatch()
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const feSelectedAgentId = localStorage.getItem('agentId')
-      getFeDesc(feSelectedAgentId || null)
-    }, 1000)
-    return () => {
-      clearInterval(intervalId)
-      localStorage.removeItem('agentId')
-    }
-  }, []) 
-
-  const getFeDesc = (id: string | null) => {
-    
-    const newId = id ? Number(id.split(':')[1]) : -1;
-    setFeAgentId(prev => (prev === newId ? prev : newId));
-
-    
-  }
     
   return(
     <Box 
@@ -54,7 +36,7 @@ export const Screen2:FC<{ isActive: boolean, currentIndex: number,feAgentsInfo:a
         <Box className='w100 fx-col ai-ct ' >
           <Nav/>
           <Box className='w100 center' mt="20px">
-            <Game feAgentId={feAgentId} currentIndex={currentIndex} feAgentsInfo={feAgentsInfo}/>
+            <Game currentIndex={currentIndex} feAgentsInfo={feAgentsInfo}/>
           </Box>
         </Box>
       </Box>

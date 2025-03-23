@@ -96,7 +96,6 @@ export const Player = ({
           // moveTo({ playerId: player.id, destination: { x: 51, y: 52} })
 
           onClick({ kind: 'player', id: player.id });
-          // localStorage.removeItem('agentId')     
           onClearFEAgent()
         }}
       />

@@ -23,7 +23,7 @@ export const mapContainerHeight = 661
 export const mapLeftWidth = 1145
 export const mapRightWidth = 494
 
-export const Game:React.FC<{ feAgentId: number, currentIndex: number, feAgentsInfo:any[] }>= ({ feAgentId, currentIndex, feAgentsInfo }) => {
+export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ currentIndex, feAgentsInfo }) => {
   
   const [pageProgress, setPageProgress] = useState<number>(0)
   const [currentFEAgent, setCurrentFEAgent] = useState<any>()
@@ -51,7 +51,7 @@ export const Game:React.FC<{ feAgentId: number, currentIndex: number, feAgentsIn
   // Send a periodic heartbeat to our world to keep it alive.
   useWorldHeartbeat();
   const memoizedFeDetail = useMemo(() => {
-    return currentFEAgent ? <FEPlayerDetails currentFEAgent={currentFEAgent}/>  : null;
+    return currentFEAgent ? <FEPlayerDetails currentFEAgent={currentFEAgent} onClearFEAgent={() => setCurrentFEAgent(null)}/>  : null;
 }, [currentFEAgent]);
 
   const worldState = useQuery(api.world.worldState, worldId ? { worldId } : 'skip');
@@ -174,6 +174,7 @@ export const Game:React.FC<{ feAgentId: number, currentIndex: number, feAgentsIn
                 playerId={selectedElement?.id}
                 setSelectedElement={setSelectedElement}
                 scrollViewRef={scrollViewRef}
+                onClearFEAgent={() => setCurrentFEAgent(null)}
               />
             }
           </Box>
