@@ -106,7 +106,7 @@ export const Pages = () => {
       {
         isMobile() ? 
         <Box pos='absolute' bottom="20px" left={0} className='center w100'>
-          <Box w="345px" className=' fx-row ai-ct'>
+          <Box w="345px" className='fx-row ai-ct' zIndex={9}>
             {
               btns.map((item, idx) => (
                 <Box 
