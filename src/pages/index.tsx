@@ -15,7 +15,14 @@ import {
   Nav23,
   Nav31,
   Nav32,
-  Nav33
+  Nav33,
+
+  NavM11,
+  NavM12,
+  NavM21,
+  NavM22,
+  NavM31,
+  NavM32,
 
 } from '@/images'
 import { Font16 } from '@/components'
@@ -34,6 +41,10 @@ const btns = [
     defaultBg: Nav11,
     hoverBg: Nav12,
     selectedBg: Nav13,
+
+    mobileDefaultBg: NavM11,
+    mobileSelectedBg: NavM12,
+
     style: {
       borderRadius: '24px 24px 0px 0px',
       border: '1px solid #838B8D',   
@@ -51,6 +62,8 @@ const btns = [
     defaultBg: Nav21,
     hoverBg: Nav22,
     selectedBg: Nav23,
+    mobileDefaultBg: NavM21,
+    mobileSelectedBg: NavM22,
     style: {
       border: '1px solid #E0E0E0',   
     },
@@ -67,6 +80,8 @@ const btns = [
     defaultBg: Nav31,
     hoverBg: Nav32,
     selectedBg: Nav33,
+    mobileDefaultBg: NavM31,
+    mobileSelectedBg: NavM32,
     style: {
       borderRadius: '0px 0px 24px 24px',
       border: '1px solid #E0E0E0',
@@ -91,26 +106,22 @@ export const Pages = () => {
       {
         isMobile() ? 
         <Box pos='absolute' bottom="20px" left={0} className='center w100'>
-          <Box w="345px" className='fx-row ai-ct'>
+          <Box w="345px" className=' fx-row ai-ct'>
             {
               btns.map((item, idx) => (
                 <Box 
                   key={item.name}
                   onClick={() => setCurrentIndex(idx)}
-                  title={item.name}
-                  style={item.mobileStyle}
                   className='center click'
-                  h="49px"
+                  h="50px"
                   w="115px"
-                  bgColor={idx === currentIndex ? '#293033' : "#838B8D"}
-                  backdropFilter="blur(10px)"
                   color={idx === currentIndex ? '#E0E0E0' : '#293033'}
-                  _hover={{
-                    bgColor: '#1F1F23',
-                    color: '#E0E0E0'
-                  }}
+                  bgImage={idx === currentIndex ? item.mobileSelectedBg : item.mobileDefaultBg}
+                  bgSize="cover"
+                  bgPosition='center'
+                  bgRepeat="no-repeat"  
                 >
-                  <Text className='fz16' fontWeight={350}>{item.name}</Text>
+                  <Font16 t={item.name}/>
                 </Box>
               ))
               }

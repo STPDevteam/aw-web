@@ -47,18 +47,18 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
     return(
         <Box>
 
-            {/* <BorderButton
+            <BorderButton
                 w={256}
-                h={50}
+                h={46}
                 onClick={() => setVisible(!visible)}
                 title={
-                    <Box className='fx-row ai-ct jc-sb w100 '>
-                        <Font16 t="AGENT LIST"/>
+                    <Box className='fx-row ai-ct jc-sb w100 ' h="46px">
+                        <Font16 t="Agent List"/>
                         <Image src={Transform} w="25px" h="18px"/>
                     </Box>
                 }
-            />    */}
-            <ClickButtonWrapper onClick={() => setVisible(!visible)} disable={false} clickableDisabled={true}>
+            />   
+            {/* <ClickButtonWrapper onClick={() => setVisible(!visible)} disable={false} clickableDisabled={true}>
                 <Box 
                     bgImage={ButtonBgMd}
                     bgSize="cover"
@@ -72,31 +72,24 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                     <Font16 t="Agent List"/>
                     <Image src={Transform} w="25px" h="18px"/>
                 </Box>
-            </ClickButtonWrapper>
+            </ClickButtonWrapper> */}
 
             {
                 visible &&  
-                <Box 
-                    // bgImage={PopupDropdown}
-                    // bgSize="cover"
-                    // bgPosition='center'
-                    // bgRepeat="no-repeat"    
-                    h='397px'
-                    w="256px"
-                    // pt="22px"
-                >
-                    <BorderBox>
-                        <Box
-                            overflowY='scroll'
-                            h="calc(100% - 22px)"
-                            // px="30px"
-                            className='w100'
-                            onWheel={(e) => e.stopPropagation()} 
-                        >
-                            { renderedAgents }
+                    <Box className='card1_border w100 h100'  h='397px' w="256px">
+                        <Box  className='card1_border_content w100 h100' p="10px">
+                            <Box className='card2_border w100 h100' >
+                                <Box className='card2_border_content w100 h100' overflowY="scroll"  h="calc(100% - 22px)" onWheel={(e) => e.stopPropagation()} > 
+                                    
+                                        { renderedAgents }
+                                  
+                                </Box>
+                            </Box>
                         </Box>
-                    </BorderBox>
-                </Box>           
+                    </Box>
+
+           
+                  
             }
         </Box>    
     )

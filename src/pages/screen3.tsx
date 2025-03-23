@@ -113,8 +113,8 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
                   pos='absolute'
                   bottom={0}
                   left={0}
-                  className='w100 fx-col jc-ct'          
-                  pl={activeIdx === idx ? '102px' : '26px'} 
+                  className='w100 fx-col jc-ct '          
+                  px={activeIdx === idx ? '102px' : '26px'} 
                   borderRadius='0 0 16px 16px'
                   bgColor='rgba(34, 52, 74, 0.40)'
                   backdropFilter='blur(25px)'

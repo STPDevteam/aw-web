@@ -46,3 +46,12 @@ export { default as Nav23 } from "./nav2_3.png";
 export { default as Nav31 } from "./nav3_1.png";
 export { default as Nav32 } from "./nav3_2.png";
 export { default as Nav33 } from "./nav3_3.png";
+
+export { default as NavM11 } from "./nav_m1_1.png";
+export { default as NavM12 } from "./nav_m1_2.png";
+
+export { default as NavM21 } from "./nav_m2_1.png";
+export { default as NavM22 } from "./nav_m2_2.png";
+
+export { default as NavM31 } from "./nav_m3_1.png";
+export { default as NavM32 } from "./nav_m3_2.png";

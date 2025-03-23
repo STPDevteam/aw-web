@@ -33,14 +33,14 @@ export const BorderButton:React.FC<iBorderButton> = ({
   // const _w = w.map(item => item / 0.822222)
   // console.log(_w)
   return (      
-    <Box className='btn1_border w100 h100'>
+    <Box className='btn1_border w100 h100' h={`${h}px`}>
       <Box  className='btn1_border_content w100 h100' p="2px">
         <Box className='btn2_border w100 h100'>
           <Box className='btn2_border_content w100 h100'> 
             <Button
               className='click'
               w={[(w - 4)*0.5,(w - 4)*0.5,(w - 4)*0.5,(w - 4)*0.7,(w - 4)*0.8,w - 4,]}
-              h={h-4}
+              h={`${h-4}px`}
               onClick={handleClick}
               bg="none"
               color="#E0E0E0" 
