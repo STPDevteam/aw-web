@@ -93,7 +93,8 @@ export const Player = ({
           // console.log("position",player.id , player.position )
           // moveTo({ playerId: player.id, destination: { x: 51, y: 52} })
 
-          onClick({ kind: 'player', id: player.id });          
+          onClick({ kind: 'player', id: player.id });
+          localStorage.removeItem('agentId')     
         }}
       />
     </>

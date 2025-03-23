@@ -6,7 +6,7 @@ import PlayerDetails from '../../components/PlayerDetails.tsx';
 import { api } from '../../../convex/_generated/api';
 import { useWorldHeartbeat } from '../../hooks/useWorldHeartbeat.ts';
 import { useHistoricalTime } from '../../hooks/useHistoricalTime.ts';
-import { GameId } from '../../../convex/aiTown/ids.ts';
+import {  GameId } from '../../../convex/aiTown/ids.ts';
 import { useServerGame } from '../../hooks/serverGame.ts';
 import {  Box,  Grid, useBreakpointValue } from '@chakra-ui/react'
 import { GameLeftBorder, GameRightBorder } from '@/images'
@@ -15,6 +15,7 @@ import { PixiGame } from './PixiGame'
 import { selectedAgentInfo } from '@/redux/reducer'
 import { useAppSelector } from '@/redux/hooks.ts'
 import { PageLoading } from '@/components'
+import { FEPlayerDetails } from './FEPlayerDetails'
 
 
 
@@ -23,7 +24,8 @@ export const mapContainerHeight = 661
 export const mapLeftWidth = 1145
 export const mapRightWidth = 494
 
-export const Game = () => {
+export const Game:React.FC<{ feAgentId: number }>= ({ feAgentId }) => {
+  
   const [pageProgress, setPageProgress] = useState<number>(0)
 
   const agentInfo = useAppSelector(selectedAgentInfo)
@@ -32,6 +34,7 @@ export const Game = () => {
     kind: 'player';
     id: GameId<'players'>;
   }>();
+
 
 
   const [gameWrapperRef, { width:mapWidth, height:mapHeight }] = useElementSize();
@@ -52,12 +55,13 @@ export const Game = () => {
   const { historicalTime, timeManager } = useHistoricalTime(worldState?.engine);
 
   const scrollViewRef = useRef<HTMLDivElement>(null);
+ 
 
   if (!worldId || !engineId || !game) {
     return null;
   } 
 
-
+  
   
   // 1880
 
@@ -73,6 +77,9 @@ export const Game = () => {
 
   const ___rightWidth = _rightWidth > 494 ? 494 : _rightWidth
 
+  
+
+ 
 
  
   // display={isActive ? 'block' : 'none'}
@@ -89,6 +96,11 @@ export const Game = () => {
       py="30px"
       px={['4px','4px','12px','24px','24px']}
       pos='relative'
+
+            // borderWidth="2px"
+            // borderStyle='solid'
+            // borderColor={['red','green','yellow','blue','red','pink',]}
+
     >
       <Box pos='absolute' left="50px" top="44px" zIndex={99}> 
         <AgentList  worldId={worldId}/>
@@ -155,6 +167,9 @@ export const Game = () => {
               overflowY="scroll"
               onWheel={(e) => e.stopPropagation()} 
             >       
+            {
+              feAgentId && feAgentId !== -1 ? 
+              <FEPlayerDetails feAgendId={feAgentId} width={___rightWidth * 0.85}/> : 
               <PlayerDetails
                 width={___rightWidth * 0.85}
                 worldId={worldId} 
@@ -164,6 +179,7 @@ export const Game = () => {
                 setSelectedElement={setSelectedElement}
                 scrollViewRef={scrollViewRef}
               />
+            }
             </Box>
         </Box>
     </Box>

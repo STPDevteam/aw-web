@@ -177,10 +177,11 @@ export const PixiGame:React.FC<{
         />
     
         {memoizedPositionIndicator}
-        {viewportRef.current && (
+         {viewportRef.current && (
           <SimulatedAgents container={viewportRef.current} tileDim={tileDim} mapWidth={width}/>
         )}
-        {
+        
+        {/* {
           players.map((p) => (
             <Player
               engineId={engineId}
@@ -192,7 +193,7 @@ export const PixiGame:React.FC<{
               historicalTime={historicalTime}
             />
           ))
-        }
+        } */}
         {lastDestination && <PositionIndicator destination={lastDestination} tileDim={tileDim} />}
       </PixiViewport>
   

@@ -4,8 +4,6 @@ import { createSimulatedAgentSprite, SimulatedAgent, ExtendedAnimatedSprite} fro
 import { mockAgents } from '../../data/characters';
 import * as map from '../../data/gentle';
 import { orientationDegrees } from '../../convex/util/geometry';
-import { useAppDispatch } from '@/redux/hooks';
-import { activeFEAgentIdAction } from '@/redux/reducer';
 
 type SimulatedAgentsProps = {
   container: PIXI.Container; 
@@ -15,8 +13,6 @@ type SimulatedAgentsProps = {
 
 const SimulatedAgents: React.FC<SimulatedAgentsProps> = React.memo(({ container, tileDim, mapWidth }) => {
   const simulatedContainerRef = useRef<PIXI.Container | null>(null);
-
-  // const dispatch = useAppDispatch()
 
   function animateMovement(
     sprite: PIXI.Sprite | PIXI.AnimatedSprite,
@@ -319,9 +315,10 @@ function animateAgent(
 
            
             sprite.interactive = true;
+            sprite.cursor = "pointer";
            
             sprite.on('pointerdown', () => {              
-              // dispatch(activeFEAgentIdAction( agentsData[idx].id))
+              localStorage.setItem('agentId', agentsData[idx].id)
             });
 
 

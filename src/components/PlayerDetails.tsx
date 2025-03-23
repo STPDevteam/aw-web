@@ -5,15 +5,12 @@ import { SelectElement } from './Player';
 import { Messages } from './Messages';
 import { toastOnError } from '../toasts';
 import { useSendInput } from '../hooks/sendInput';
-import { Player } from '../../convex/aiTown/player';
 import { GameId } from '../../convex/aiTown/ids';
 import { ServerGame } from '../hooks/serverGame';
 import { Box, Image, Text  } from '@chakra-ui/react'
-import { Title } from '@/components'
 import { Close } from '@/images'
 import { ButtonBgMd, } from '@/images'  
-import { useAppSelector } from '@/redux/hooks';
-import { selectActiveFEAgentId } from '@/redux/reducer';
+import { useEffect, useMemo } from 'react';
 
 export default function PlayerDetails({
   worldId,
@@ -23,6 +20,7 @@ export default function PlayerDetails({
   setSelectedElement,
   scrollViewRef,
   width,
+
 }: {
   worldId: Id<'worlds'>;
   engineId: Id<'engines'>;
@@ -30,9 +28,8 @@ export default function PlayerDetails({
   playerId?: GameId<'players'>;
   setSelectedElement: SelectElement;
   scrollViewRef: React.RefObject<HTMLDivElement>;
-  width: number
+  width: number,
 }) {
-  // const activeFEAgentId = useAppSelector(selectActiveFEAgentId)
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId });
 
   const players = [...game.world.players.values()];
@@ -54,6 +51,7 @@ export default function PlayerDetails({
     playerId ? { worldId, playerId } : 'skip',
   );
 
+
   const playerDescription = playerId && game.playerDescriptions.get(playerId);
 
   const startConversation = useSendInput(engineId, 'startConversation');
@@ -61,42 +59,48 @@ export default function PlayerDetails({
   const rejectInvite = useSendInput(engineId, 'rejectInvite');
   const leaveConversation = useSendInput(engineId, 'leaveConversation');
   
-  // console.log('activeFEAgentId', activeFEAgentId)
 
-
-  const descriptionFun = (d: string) => (
+  const descriptionFun = (d: string | React.ReactNode) => (
     <Box className='box_clip center ' w={`${width}px`} px="20px" py="25px" bgColor='#838B8D' mt="10px">
-      <Text className='gray4 fz16'>{d}</Text>
+      <Text className='gray4' fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
     </Box>
-  )
+  ) 
+
 
   if (!playerId) {
     return (
       <Box mt="25px">
+        
         <Box 
-          bgImage={ButtonBgMd}
-          bgSize="cover"
-          bgPosition='center'
-          bgRepeat="no-repeat"    
-          className="center "
-          h={`${width * 0.788 * 0.19637}px`}
-          w={`${width * 0.788}px`}
+          className='center gradient_border'
+          w="100%"
+          h="46px"
         >
-            <Text className="fw600 fz20 gray">Introduction</Text>
+          <Text className="fw600 gray gradient_content" fontSize={['14px','14px','14px','14px','16px','20px']}>Autonomous World Demo: AI Town</Text>         
         </Box>
-        { descriptionFun('Alice, it’s great to meet you! I’ve always been fascinated by the mysteries of the universe. What’s the most intriguing riddle you’re encountered in your research?')}
-      </Box>
+        { descriptionFun('Welcome to AI Town, the first demo of World.Fun autonomous world launchpad, featuring 1,000 live agents living, evolving and socializing in a world of endless possibilities.')}
+        <Box 
+          mt="22px"
+          className='center gradient_border'
+          w="100%"
+          h="46px"
+        >
+          <Text className="fw600 gray gradient_content" fontSize={['14px','14px','14px','14px','16px','20px']}>Engage to Earn World Points</Text>         
+        </Box>
 
+       
+        { descriptionFun(
+          <div>
+            <p>Be the first to engage with World.Fun and earn World Points for future airdrops!</p>
+            <p>⏰ Daily clock-in (free) for 10 World Points</p>
+            <p>🤖 Create agent (10 $STPT) for 40 World Points</p>
+            <p>💬 Engage NPC (1 $STPT) for 500 World Points</p>
+          </div>)}
+      </Box>
     )
   }
-  // if (!playerId) {
-  //   return (
-  //     <div className="h-full text-xl flex text-center items-center white" >
-  //       Click on an agent on the map to see chat history.
-  //     </div>
-  //   );
-  // }
-
+ 
+  
   if (!player) {
     return null;
   }
@@ -164,13 +168,9 @@ export default function PlayerDetails({
       }),
     );
   };
-  // const pendingSuffix = (inputName: string) =>
-  //   [...inflightInputs.values()].find((i) => i.name === inputName) ? ' opacity-50' : '';
-
-  const pendingSuffix = (s: string) => '';
 
 
- 
+  const pendingSuffix = (s: string) => ''; 
 
   return (
     <Box className='' w={`${width}px`}>      
@@ -187,15 +187,14 @@ export default function PlayerDetails({
           >
               <Text className="fw700 fz24 gray">{playerDescription?.name || ''}</Text>
           </Box>
-
-
-        <Image src={Close} w="50px" h="50px" className='click' onClick={() => setSelectedElement(undefined)}/>
+        <Image src={Close} w="34px" h="34px" className='click' onClick={() => {
+          setSelectedElement(undefined)
+          localStorage.removeItem('agentId')
+        }}/>
       </Box>
 
       {canInvite && <Box  onClick={onStartConversation} className='click'>{descriptionFun('Start conversation')}</Box> }
-      {waitingForAccept && descriptionFun('Waiting for accept...')
-     
-      }
+      {waitingForAccept && descriptionFun('Waiting for accept...')}
       {waitingForNearby && descriptionFun('Walking over...')}
       {inConversationWithMe && <Box className='click' onClick={onLeaveConversation}>{descriptionFun('Leave conversation')}</Box>}
       {haveInvite && (

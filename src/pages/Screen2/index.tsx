@@ -1,7 +1,7 @@
 
 
 
-import React, { FC, useEffect } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import {  Box, Text } from '@chakra-ui/react'
 import { Screen2Bg, MapContainer, MapMobile } from '@/images'
 import { Nav } from './Nav' 
@@ -11,10 +11,29 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
 export const Screen2:FC<{ isActive: boolean }> = ({ isActive }) => {  
+  const [feAgentId, setFeAgentId] = useState<number>(-1)
   const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
   const dispatch = useAppDispatch()
 
-  
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const feSelectedAgentId = localStorage.getItem('agentId')
+      getFeDesc(feSelectedAgentId || null)
+    }, 1000)
+    return () => {
+      clearInterval(intervalId)
+      localStorage.removeItem('agentId')
+    }
+  }, []) 
+
+  const getFeDesc = (id: string | null) => {
+    
+    const newId = id ? Number(id.split(':')[1]) : -1;
+    setFeAgentId(prev => (prev === newId ? prev : newId));
+
+    
+  }
+    
   return(
     <Box 
       className='h-screen w100' 
@@ -35,7 +54,7 @@ export const Screen2:FC<{ isActive: boolean }> = ({ isActive }) => {
         <Box className='w100 fx-col ai-ct ' >
           <Nav/>
           <Box className='w100 center' mt="20px">
-            <Game/>
+            <Game feAgentId={feAgentId}/>
           </Box>
         </Box>
       </Box>
