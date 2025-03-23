@@ -12,6 +12,23 @@ type AgentConversationMessage = {
   timestamp: number; // Timestamp when the message was generated
 };
 
+// Define types for agent status
+type AgentStatus = {
+  emotion: string;
+  status: string;
+  current_work: string;
+  energy_level: string;
+  location: string;
+  mood_trend: string;
+};
+
+// Define types for agent events
+type AgentEvent = {
+  time: string;
+  action: string;
+  details: string;
+};
+
 /**
  * Get a frontend agent by ID
  * @param ctx - Query context
@@ -79,6 +96,10 @@ export const generateSingleAgent = action({
       messageCount
     );
     
+    // Generate status and events data
+    const status = generateAgentStatus(name, description);
+    const events = generateAgentEvents(description);
+    
     // Store the agent data
     await ctx.runMutation(api.frontendAgent.insertSingleAgent, {
       agent: {
@@ -86,6 +107,8 @@ export const generateSingleAgent = action({
         name,
         description,
         conversation,
+        status,
+        events,
         lastUpdated: timestamp
       }
     });
@@ -108,6 +131,19 @@ export const insertSingleAgent = mutation({
         content: v.string(),
         timestamp: v.number()
       })),
+      status: v.optional(v.object({
+        emotion: v.string(),
+        status: v.string(),
+        current_work: v.string(),
+        energy_level: v.string(),
+        location: v.string(),
+        mood_trend: v.string()
+      })),
+      events: v.optional(v.array(v.object({
+        time: v.string(),
+        action: v.string(),
+        details: v.string()
+      }))),
       lastUpdated: v.number()
     })
   },
@@ -239,42 +275,53 @@ export const updateSingleAgentConversation = action({
   handler: async (ctx, args) => {
     const { agentId, timestamp } = args;
     
-    // Get the agent
-    const agent = await ctx.runQuery(api.frontendAgent.getFrontendAgentById, { id: agentId });
-    
-    if (!agent) {
-      return { success: false, message: "Agent not found" };
+    try {
+      // Get the agent
+      const agent = await ctx.runQuery(api.frontendAgent.getFrontendAgentById, { id: agentId });
+      
+      if (!agent) {
+        return { success: false, message: "Agent not found" };
+      }
+      
+      // Generate new conversation
+      const messageCount = [2, 4, 6][Math.floor(Math.random() * 3)];
+      const otherAgentId = Math.floor(Math.random() * 400) + 1;
+      const otherName = generateRandomName(otherAgentId);
+      const otherDescription = generateRandomDescription(otherName);
+      
+      const conversation = await generateConversation(
+        agent.name,
+        agent.description,
+        otherName,
+        otherDescription,
+        messageCount
+      );
+      
+      // Generate new status and events
+      const status = generateAgentStatus(agent.name, agent.description);
+      const events = generateAgentEvents(agent.description);
+      
+      // Update the agent
+      await ctx.runMutation(api.frontendAgent.updateAgentData, {
+        id: agent._id,
+        conversation,
+        status,
+        events,
+        lastUpdated: timestamp
+      });
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error(`Error updating agent ${agentId}:`, error);
+      return { success: false, message: `Error: ${error?.message || 'Unknown error'}` };
     }
-    
-    // Generate new conversation
-    const messageCount = [2, 4, 6][Math.floor(Math.random() * 3)];
-    const otherAgentId = Math.floor(Math.random() * 400) + 1;
-    const otherName = generateRandomName(otherAgentId);
-    const otherDescription = generateRandomDescription(otherName);
-    
-    const conversation = await generateConversation(
-      agent.name,
-      agent.description,
-      otherName,
-      otherDescription,
-      messageCount
-    );
-    
-    // Update the agent
-    await ctx.runMutation(api.frontendAgent.updateAgentConversation, {
-      id: agent._id,
-      conversation,
-      lastUpdated: timestamp
-    });
-    
-    return { success: true };
   }
 });
 
 /**
- * Update an agent's conversation
+ * Update an agent's conversation, status, and events
  */
-export const updateAgentConversation = mutation({
+export const updateAgentData = mutation({
   args: {
     id: v.id("frontendAgents"),
     conversation: v.array(v.object({
@@ -282,12 +329,27 @@ export const updateAgentConversation = mutation({
       content: v.string(),
       timestamp: v.number()
     })),
+    status: v.object({
+      emotion: v.string(),
+      status: v.string(),
+      current_work: v.string(),
+      energy_level: v.string(),
+      location: v.string(),
+      mood_trend: v.string()
+    }),
+    events: v.array(v.object({
+      time: v.string(),
+      action: v.string(),
+      details: v.string()
+    })),
     lastUpdated: v.number()
   },
   handler: async (ctx, args) => {
-    const { id, conversation, lastUpdated } = args;
+    const { id, conversation, status, events, lastUpdated } = args;
     await ctx.db.patch(id, {
       conversation,
+      status,
+      events,
       lastUpdated
     });
     return { success: true };
@@ -319,6 +381,150 @@ export const updateAllFrontendAgentConversations = internalMutation({
     }
     
     return { success: true, scheduled: updatedCount };
+  }
+});
+
+/**
+ * Update a single agent's status and events
+ */
+export const updateAgentStatusAndEvents = mutation({
+  args: {
+    id: v.id("frontendAgents"),
+    status: v.object({
+      emotion: v.string(),
+      status: v.string(),
+      current_work: v.string(),
+      energy_level: v.string(),
+      location: v.string(),
+      mood_trend: v.string()
+    }),
+    events: v.array(v.object({
+      time: v.string(),
+      action: v.string(),
+      details: v.string()
+    })),
+    lastUpdated: v.number()
+  },
+  handler: async (ctx, args) => {
+    const { id, status, events, lastUpdated } = args;
+    await ctx.db.patch(id, {
+      status,
+      events,
+      lastUpdated
+    });
+    return { success: true };
+  }
+});
+
+/**
+ * Update a single agent's status and events information
+ */
+export const refreshAgentStatusAndEvents = action({
+  args: {
+    agentId: v.number(),
+    timestamp: v.number()
+  },
+  handler: async (ctx, args) => {
+    const { agentId, timestamp } = args;
+    
+    // Get the agent
+    const agent = await ctx.runQuery(api.frontendAgent.getFrontendAgentById, { id: agentId });
+    
+    if (!agent) {
+      return { success: false, message: "Agent not found" };
+    }
+    
+    // Generate new status and events
+    const status = generateAgentStatus(agent.name, agent.description);
+    const events = generateAgentEvents(agent.description);
+    
+    // Update the agent
+    await ctx.runMutation(api.frontendAgent.updateAgentStatusAndEvents, {
+      id: agent._id,
+      status,
+      events,
+      lastUpdated: timestamp
+    });
+    
+    return { success: true };
+  }
+});
+
+/**
+ * Batch update existing agents to add status and events fields
+ * This is for migrating existing data
+ */
+export const batchAddStatusAndEvents = action({
+  args: {},
+  handler: async (ctx): Promise<{ success: boolean; message: string }> => {
+    // Get all agents
+    const agents = await ctx.runQuery(api.frontendAgent.getAllAgents);
+    const timestamp = Date.now();
+    
+    console.log(`Processing ${agents.length} agents all at once`);
+    
+    let updatedCount = 0;
+    
+    // Update each agent
+    for (const agent of agents) {
+      try {
+        // Generate status and events if missing
+        const status = agent.status || generateAgentStatus(agent.name, agent.description);
+        const events = agent.events || generateAgentEvents(agent.description);
+        
+        // Update the agent
+        await ctx.runMutation(api.frontendAgent.updateAgentStatusAndEvents, {
+          id: agent._id,
+          status,
+          events,
+          lastUpdated: timestamp
+        });
+        
+        updatedCount++;
+      } catch (error) {
+        console.error(`Error updating agent ${agent.frontendAgentId}:`, error);
+        // Continue with the next agent even if one fails
+      }
+    }
+    
+    return { 
+      success: true, 
+      message: `Updated ${updatedCount}/${agents.length} agents with status and events data` 
+    };
+  }
+});
+
+/**
+ * Get all agents for batch processing
+ */
+export const getAllAgents = query({
+  args: {},
+  handler: async (ctx) => {
+    // Get all agents
+    return await ctx.db.query("frontendAgents").collect();
+  }
+});
+
+/**
+ * Check migration progress
+ */
+export const getMigrationProgress = query({
+  args: {},
+  handler: async (ctx) => {
+    // Count total agents
+    const totalAgents = await ctx.db.query("frontendAgents").collect();
+    
+    // Count agents with status and events fields (safely handle undefined)
+    const agentsWithStatusAndEvents = totalAgents.filter(agent => 
+      agent.status !== undefined && agent.events !== undefined
+    );
+    
+    return {
+      total: totalAgents.length,
+      updated: agentsWithStatusAndEvents.length,
+      percentage: totalAgents.length === 0 ? 0 : Math.round((agentsWithStatusAndEvents.length / totalAgents.length) * 100),
+      isComplete: totalAgents.length > 0 && agentsWithStatusAndEvents.length === totalAgents.length
+    };
   }
 });
 
@@ -580,4 +786,104 @@ Example format:
   }
   
   return conversation;
+}
+
+/**
+ * Generate a random status for an agent based on their description
+ */
+function generateAgentStatus(name: string, description: string): AgentStatus {
+  // Possible emotions with emojis
+  const emotions = ["😄", "😎", "🤔", "😌", "🙂", "😊", "🧐", "🤓", "😴", "🥱", "😯", "🤠", "🤩", "😇"];
+  
+  // Possible statuses with emojis
+  const statuses = ["🚶", "🏃", "🧘", "💼", "🚴", "🏋️", "📚", "🎮", "🎧", "💻", "🍽️", "🛌", "🧗", "🏊"];
+  
+  // Possible work activities with emojis
+  const workActivities = ["💻", "📱", "📊", "🔍", "🎨", "📝", "📚", "🎬", "🔧", "🏗️", "🧪", "🔬", "📡", "🎼"];
+  
+  // Possible energy levels (1-5 battery emojis)
+  const energyLevels = ["🔋", "🔋🔋", "🔋🔋🔋", "🔋🔋🔋🔋", "🔋🔋🔋🔋🔋"];
+  
+  // Possible locations with emojis
+  const locations = ["🏠", "🏢", "🏙️", "🌃", "🏫", "🏕️", "🏝️", "🏟️", "🏪", "🏨", "🌲", "🌊", "🏞️", "🗻"];
+  
+  // Possible mood trends with emojis
+  const moodTrends = ["📈", "📉", "➖", "〰️", "🔄"];
+  
+  // Choose random values for each field
+  const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+  const randomWork = workActivities[Math.floor(Math.random() * workActivities.length)];
+  const randomEnergy = energyLevels[Math.floor(Math.random() * energyLevels.length)];
+  const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+  const randomMoodTrend = moodTrends[Math.floor(Math.random() * moodTrends.length)];
+  
+  return {
+    emotion: randomEmotion,
+    status: randomStatus,
+    current_work: randomWork,
+    energy_level: randomEnergy,
+    location: randomLocation,
+    mood_trend: randomMoodTrend
+  };
+}
+
+/**
+ * Generate random daily events for an agent based on their description
+ */
+function generateAgentEvents(description: string): AgentEvent[] {
+  // Define possible time slots
+  const timeSlots = [
+    "6:00 to 7:00", "7:30 to 8:30", "9:00 to 12:00", "12:30 to 13:30",
+    "14:00 to 16:30", "17:00 to 18:00", "18:30 to 19:30", "20:00 to 21:30",
+    "22:00 to 23:00"
+  ];
+  
+  // Define possible activities with their emojis
+  const activities = [
+    { action: "morning run", details: "🏃" },
+    { action: "cycling around the park", details: "🚴" },
+    { action: "meditation session", details: "🧘" },
+    { action: "breakfast and news", details: "🥓" },
+    { action: "remote work", details: "💻" },
+    { action: "team meeting", details: "👥" },
+    { action: "creative brainstorming", details: "🧠" },
+    { action: "lunch with friends", details: "🍔" },
+    { action: "coffee break", details: "☕" },
+    { action: "video editing project", details: "🎬" },
+    { action: "writing session", details: "✍️" },
+    { action: "coding project", details: "👨‍💻" },
+    { action: "gaming session", details: "🎮" },
+    { action: "gym workout", details: "🏋️" },
+    { action: "yoga class", details: "🧘‍♀️" },
+    { action: "swimming", details: "🏊" },
+    { action: "dinner and chill", details: "🍣" },
+    { action: "reading a book", details: "📚" },
+    { action: "watching a movie", details: "🎬" },
+    { action: "stargazing on rooftop", details: "🌌" },
+    { action: "evening walk", details: "🚶‍♂️" },
+    { action: "journaling", details: "📓" },
+    { action: "planning tomorrow", details: "📆" },
+    { action: "video call with family", details: "📱" },
+    { action: "podcast recording", details: "🎙️" },
+    { action: "art project", details: "🎨" },
+    { action: "music practice", details: "🎸" },
+    { action: "language learning", details: "🗣️" },
+    { action: "gardening", details: "🌱" },
+    { action: "cooking new recipe", details: "👨‍🍳" }
+  ];
+  
+  // Create a unique set of events for the day
+  // Randomly select 9 activities for the 9 time slots
+  const shuffledActivities = [...activities].sort(() => 0.5 - Math.random());
+  const selectedActivities = shuffledActivities.slice(0, timeSlots.length);
+  
+  // Create events array
+  const events: AgentEvent[] = timeSlots.map((time, index) => ({
+    time,
+    action: selectedActivities[index].action,
+    details: selectedActivities[index].details
+  }));
+  
+  return events;
 } 

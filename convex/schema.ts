@@ -54,6 +54,21 @@ export default defineSchema({
       content: v.string(),
       timestamp: v.number(),
     })),
+    // Agent status information (optional for backward compatibility)
+    status: v.optional(v.object({
+      emotion: v.string(),
+      status: v.string(),
+      current_work: v.string(),
+      energy_level: v.string(),
+      location: v.string(),
+      mood_trend: v.string(),
+    })),
+    // Agent daily events (optional for backward compatibility)
+    events: v.optional(v.array(v.object({
+      time: v.string(),
+      action: v.string(),
+      details: v.string(),
+    }))),
     // Last update timestamp
     lastUpdated: v.number(),
   })
