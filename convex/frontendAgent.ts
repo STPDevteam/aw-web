@@ -13,14 +13,10 @@ type AgentConversationMessage = {
 };
 
 // Define types for agent status
-type AgentStatus = {
-  emotion: string;
-  status: string;
-  current_work: string;
-  energy_level: string;
-  location: string;
-  mood_trend: string;
-};
+type AgentStatus = Array<{
+  title: string;
+  icon: string;
+}>;
 
 // Define types for agent events
 type AgentEvent = {
@@ -131,14 +127,10 @@ export const insertSingleAgent = mutation({
         content: v.string(),
         timestamp: v.number()
       })),
-      status: v.optional(v.object({
-        emotion: v.string(),
-        status: v.string(),
-        current_work: v.string(),
-        energy_level: v.string(),
-        location: v.string(),
-        mood_trend: v.string()
-      })),
+      status: v.optional(v.array(v.object({
+        title: v.string(),
+        icon: v.string()
+      }))),
       events: v.optional(v.array(v.object({
         time: v.string(),
         action: v.string(),
@@ -173,7 +165,7 @@ export const initializeFrontendAgents = action({
     
     // Calculate next batch to process
     const startId = existingAgents + 1;
-    const batchSize = 10; // Process 10 agents at a time
+    const batchSize = 50; // Process 10 agents at a time
     const endId = Math.min(400, startId + batchSize - 1);
     
     // Start the initialization process
@@ -329,14 +321,20 @@ export const updateAgentData = mutation({
       content: v.string(),
       timestamp: v.number()
     })),
-    status: v.object({
-      emotion: v.string(),
-      status: v.string(),
-      current_work: v.string(),
-      energy_level: v.string(),
-      location: v.string(),
-      mood_trend: v.string()
-    }),
+    status: v.union(
+      v.array(v.object({
+        title: v.string(),
+        icon: v.string()
+      })),
+      v.object({
+        emotion: v.string(),
+        status: v.string(),
+        current_work: v.string(),
+        energy_level: v.string(),
+        location: v.string(),
+        mood_trend: v.string()
+      })
+    ),
     events: v.array(v.object({
       time: v.string(),
       action: v.string(),
@@ -390,14 +388,20 @@ export const updateAllFrontendAgentConversations = internalMutation({
 export const updateAgentStatusAndEvents = mutation({
   args: {
     id: v.id("frontendAgents"),
-    status: v.object({
-      emotion: v.string(),
-      status: v.string(),
-      current_work: v.string(),
-      energy_level: v.string(),
-      location: v.string(),
-      mood_trend: v.string()
-    }),
+    status: v.union(
+      v.array(v.object({
+        title: v.string(),
+        icon: v.string()
+      })),
+      v.object({
+        emotion: v.string(),
+        status: v.string(),
+        current_work: v.string(),
+        energy_level: v.string(),
+        location: v.string(),
+        mood_trend: v.string()
+      })
+    ),
     events: v.array(v.object({
       time: v.string(),
       action: v.string(),
@@ -434,7 +438,7 @@ export const refreshAgentStatusAndEvents = action({
       return { success: false, message: "Agent not found" };
     }
     
-    // Generate new status and events
+    // Generate new status in the new array format
     const status = generateAgentStatus(agent.name, agent.description);
     const events = generateAgentEvents(agent.description);
     
@@ -452,7 +456,6 @@ export const refreshAgentStatusAndEvents = action({
 
 /**
  * Batch update existing agents to add status and events fields
- * This is for migrating existing data
  */
 export const batchAddStatusAndEvents = action({
   args: {},
@@ -469,7 +472,30 @@ export const batchAddStatusAndEvents = action({
     for (const agent of agents) {
       try {
         // Generate status and events if missing
-        const status = agent.status || generateAgentStatus(agent.name, agent.description);
+        let status;
+        
+        // Convert old object format to new array format if needed
+        if (agent.status && !Array.isArray(agent.status)) {
+          // Old format was an object with keys like emotion, status, etc.
+          const oldStatus = agent.status as any;
+          status = [
+            { title: 'Current Work', icon: oldStatus.current_work || "🎨" },
+            { title: 'Emotion', icon: oldStatus.emotion || "😴" },
+          ];
+          
+          // Add other status items if they exist
+          if (oldStatus.status) status.push({ title: 'Status', icon: oldStatus.status });
+          if (oldStatus.energy_level) status.push({ title: 'Energy Level', icon: oldStatus.energy_level });
+          if (oldStatus.location) status.push({ title: 'Location', icon: oldStatus.location });
+          if (oldStatus.mood_trend) status.push({ title: 'Mood Trend', icon: oldStatus.mood_trend });
+        } else if (agent.status && Array.isArray(agent.status)) {
+          // Already in the correct format
+          status = agent.status;
+        } else {
+          // Generate new status if missing
+          status = generateAgentStatus(agent.name, agent.description);
+        }
+        
         const events = agent.events || generateAgentEvents(agent.description);
         
         // Update the agent
@@ -493,6 +519,7 @@ export const batchAddStatusAndEvents = action({
     };
   }
 });
+
 
 /**
  * Get all agents for batch processing
@@ -519,12 +546,67 @@ export const getMigrationProgress = query({
       agent.status !== undefined && agent.events !== undefined
     );
     
+    // Count agents with the new array status format
+    const agentsWithArrayStatus = totalAgents.filter(agent => 
+      agent.status !== undefined && Array.isArray(agent.status)
+    );
+    
     return {
       total: totalAgents.length,
-      updated: agentsWithStatusAndEvents.length,
-      percentage: totalAgents.length === 0 ? 0 : Math.round((agentsWithStatusAndEvents.length / totalAgents.length) * 100),
-      isComplete: totalAgents.length > 0 && agentsWithStatusAndEvents.length === totalAgents.length
+      withStatusAndEvents: agentsWithStatusAndEvents.length,
+      withArrayStatus: agentsWithArrayStatus.length,
+      percentageWithStatusAndEvents: totalAgents.length === 0 ? 0 : Math.round((agentsWithStatusAndEvents.length / totalAgents.length) * 100),
+      percentageWithArrayStatus: totalAgents.length === 0 ? 0 : Math.round((agentsWithArrayStatus.length / totalAgents.length) * 100),
+      isStatusEventsComplete: totalAgents.length > 0 && agentsWithStatusAndEvents.length === totalAgents.length,
+      isArrayFormatComplete: totalAgents.length > 0 && agentsWithArrayStatus.length === totalAgents.length
     };
+  }
+});
+
+
+
+/**
+ * Get agent by internal ID
+ */
+export const getAgentById = query({
+  args: {
+    id: v.id("frontendAgents")
+  },
+  handler: async (ctx, args) => {
+    const { id } = args;
+    return await ctx.db.get(id);
+  }
+});
+
+/**
+ * Update agent status only
+ */
+export const updateAgentStatus = mutation({
+  args: {
+    id: v.id("frontendAgents"),
+    status: v.union(
+      v.array(v.object({
+        title: v.string(),
+        icon: v.string()
+      })),
+      v.object({
+        emotion: v.string(),
+        status: v.string(),
+        current_work: v.string(),
+        energy_level: v.string(),
+        location: v.string(),
+        mood_trend: v.string()
+      })
+    ),
+    lastUpdated: v.number()
+  },
+  handler: async (ctx, args) => {
+    const { id, status, lastUpdated } = args;
+    await ctx.db.patch(id, {
+      status,
+      lastUpdated
+    });
+    return { success: true };
   }
 });
 
@@ -792,40 +874,40 @@ Example format:
  * Generate a random status for an agent based on their description
  */
 function generateAgentStatus(name: string, description: string): AgentStatus {
-  // Possible emotions with emojis
-  const emotions = ["😄", "😎", "🤔", "😌", "🙂", "😊", "🧐", "🤓", "😴", "🥱", "😯", "🤠", "🤩", "😇"];
+  // Status items with titles and icons
+  const statusItems = [
+    { title: 'Current Work', possibleIcons: ["💻", "📱", "📊", "🔍", "🎨", "📝", "📚", "🎬", "🔧", "🏗️", "🧪", "🔬", "📡", "🎼"] },
+    { title: 'Emotion', possibleIcons: ["😄", "😎", "🤔", "😌", "🙂", "😊", "🧐", "🤓", "😴", "🥱", "😯", "🤠", "🤩", "😇"] },
+    { title: 'Status', possibleIcons: ["🚶", "🏃", "🧘", "💼", "🚴", "🏋️", "📚", "🎮", "🎧", "💻", "🍽️", "🛌", "🧗", "🏊"] },
+    { title: 'Energy Level', possibleIcons: ["🔋", "🔋🔋", "🔋🔋🔋", "🔋🔋🔋🔋", "🔋🔋🔋🔋🔋"] },
+    { title: 'Location', possibleIcons: ["🏠", "🏢", "🏙️", "🌃", "🏫", "🏕️", "🏝️", "🏟️", "🏪", "🏨", "🌲", "🌊", "🏞️", "🗻"] },
+    { title: 'Mood Trend', possibleIcons: ["📈", "📉", "➖", "〰️", "🔄"] }
+  ];
   
-  // Possible statuses with emojis
-  const statuses = ["🚶", "🏃", "🧘", "💼", "🚴", "🏋️", "📚", "🎮", "🎧", "💻", "🍽️", "🛌", "🧗", "🏊"];
+  // Randomly select which status items to include (at least 2)
+  const selectedIndices = new Set<number>();
+  // Always include Current Work and Emotion as examples
+  selectedIndices.add(0); // Current Work
+  selectedIndices.add(1); // Emotion
   
-  // Possible work activities with emojis
-  const workActivities = ["💻", "📱", "📊", "🔍", "🎨", "📝", "📚", "🎬", "🔧", "🏗️", "🧪", "🔬", "📡", "🎼"];
+  // Randomly add more items if we want (optional)
+  while (selectedIndices.size < Math.min(4, statusItems.length) && Math.random() > 0.3) {
+    const randomIndex = Math.floor(Math.random() * statusItems.length);
+    selectedIndices.add(randomIndex);
+  }
   
-  // Possible energy levels (1-5 battery emojis)
-  const energyLevels = ["🔋", "🔋🔋", "🔋🔋🔋", "🔋🔋🔋🔋", "🔋🔋🔋🔋🔋"];
+  // Create the status array with random icons for selected items
+  const status: AgentStatus = Array.from(selectedIndices).map(index => {
+    const item = statusItems[index];
+    const randomIcon = item.possibleIcons[Math.floor(Math.random() * item.possibleIcons.length)];
+    
+    return {
+      title: item.title,
+      icon: randomIcon
+    };
+  });
   
-  // Possible locations with emojis
-  const locations = ["🏠", "🏢", "🏙️", "🌃", "🏫", "🏕️", "🏝️", "🏟️", "🏪", "🏨", "🌲", "🌊", "🏞️", "🗻"];
-  
-  // Possible mood trends with emojis
-  const moodTrends = ["📈", "📉", "➖", "〰️", "🔄"];
-  
-  // Choose random values for each field
-  const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
-  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-  const randomWork = workActivities[Math.floor(Math.random() * workActivities.length)];
-  const randomEnergy = energyLevels[Math.floor(Math.random() * energyLevels.length)];
-  const randomLocation = locations[Math.floor(Math.random() * locations.length)];
-  const randomMoodTrend = moodTrends[Math.floor(Math.random() * moodTrends.length)];
-  
-  return {
-    emotion: randomEmotion,
-    status: randomStatus,
-    current_work: randomWork,
-    energy_level: randomEnergy,
-    location: randomLocation,
-    mood_trend: randomMoodTrend
-  };
+  return status;
 }
 
 /**
@@ -841,36 +923,36 @@ function generateAgentEvents(description: string): AgentEvent[] {
   
   // Define possible activities with their emojis
   const activities = [
-    { action: "morning run", details: "🏃" },
-    { action: "cycling around the park", details: "🚴" },
-    { action: "meditation session", details: "🧘" },
-    { action: "breakfast and news", details: "🥓" },
-    { action: "remote work", details: "💻" },
-    { action: "team meeting", details: "👥" },
-    { action: "creative brainstorming", details: "🧠" },
-    { action: "lunch with friends", details: "🍔" },
-    { action: "coffee break", details: "☕" },
-    { action: "video editing project", details: "🎬" },
-    { action: "writing session", details: "✍️" },
-    { action: "coding project", details: "👨‍💻" },
-    { action: "gaming session", details: "🎮" },
-    { action: "gym workout", details: "🏋️" },
-    { action: "yoga class", details: "🧘‍♀️" },
-    { action: "swimming", details: "🏊" },
-    { action: "dinner and chill", details: "🍣" },
-    { action: "reading a book", details: "📚" },
-    { action: "watching a movie", details: "🎬" },
-    { action: "stargazing on rooftop", details: "🌌" },
-    { action: "evening walk", details: "🚶‍♂️" },
-    { action: "journaling", details: "📓" },
-    { action: "planning tomorrow", details: "📆" },
-    { action: "video call with family", details: "📱" },
-    { action: "podcast recording", details: "🎙️" },
-    { action: "art project", details: "🎨" },
-    { action: "music practice", details: "🎸" },
-    { action: "language learning", details: "🗣️" },
-    { action: "gardening", details: "🌱" },
-    { action: "cooking new recipe", details: "👨‍🍳" }
+    { action: "Morning run", details: "🏃" },
+    { action: "Cycling around the park", details: "🚴" },
+    { action: "Meditation session", details: "🧘" },
+    { action: "Breakfast and news", details: "🥓" },
+    { action: "Remote work", details: "💻" },
+    { action: "Team meeting", details: "👥" },
+    { action: "Creative brainstorming", details: "🧠" },
+    { action: "Lunch with friends", details: "🍔" },
+    { action: "Coffee break", details: "☕" },
+    { action: "Video editing project", details: "🎬" },
+    { action: "Writing session", details: "✍️" },
+    { action: "Coding project", details: "👨‍💻" },
+    { action: "Gaming session", details: "🎮" },
+    { action: "Gym workout", details: "🏋️" },
+    { action: "Yoga class", details: "🧘‍♀️" },
+    { action: "Swimming", details: "🏊" },
+    { action: "Dinner and chill", details: "🍣" },
+    { action: "Reading a book", details: "📚" },
+    { action: "Watching a movie", details: "🎬" },
+    { action: "Stargazing on rooftop", details: "🌌" },
+    { action: "Evening walk", details: "🚶‍♂️" },
+    { action: "Journaling", details: "📓" },
+    { action: "Planning tomorrow", details: "📆" },
+    { action: "Video call with family", details: "📱" },
+    { action: "Podcast recording", details: "🎙️" },
+    { action: "Art project", details: "🎨" },
+    { action: "Music practice", details: "🎸" },
+    { action: "Language learning", details: "🗣️" },
+    { action: "Gardening", details: "🌱" },
+    { action: "Cooking new recipe", details: "👨‍🍳" }
   ];
   
   // Create a unique set of events for the day
@@ -886,4 +968,144 @@ function generateAgentEvents(description: string): AgentEvent[] {
   }));
   
   return events;
-} 
+}
+
+/**
+ * Remove status field from all agents to fix schema validation issue
+ */
+export const removeAllAgentStatusAndEventsFields = action({
+  args: {},
+  handler: async (ctx): Promise<{ success: boolean; message: string }> => {
+    // Get all agents
+    const agents = await ctx.runQuery(api.frontendAgent.getAllAgents);
+    
+    console.log(`Found ${agents.length} agents, removing status and events field from all`);
+    
+    let updatedCount = 0;
+    let errorCount = 0;
+    
+    // Update each agent to remove status field
+    for (const agent of agents) {
+      try {
+        await ctx.runMutation(api.frontendAgent.removeAgentStatusAndEventsField, {
+          id: agent._id
+        });
+        
+        updatedCount++;
+      } catch (error) {
+        console.error(`Error updating agent ${agent.frontendAgentId}:`, error);
+        errorCount++;
+        // Continue with the next agent even if one fails
+      }
+    }
+    
+    return { 
+      success: true, 
+      message: `Removed status field from ${updatedCount} agents. Errors: ${errorCount}` 
+    };
+  }
+});
+
+/**
+ * Remove status field from a single agent
+ */
+export const removeAgentStatusAndEventsField = mutation({
+  args: {
+    id: v.id("frontendAgents")
+  },
+  handler: async (ctx, args) => {
+    const { id } = args;
+    
+    // Use unset to remove the status field entirely
+    await ctx.db.patch(id, {
+      status: undefined,
+      events: undefined
+    });
+    
+    return { success: true };
+  }
+});
+
+/**
+ * Remove status field from the specific problematic agent
+ */
+export const removeProblemAgentStatusField = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // 有问题的文档ID是"n170174pv6tqcj8xfzhssvhrr57cn3yc"
+    const id = "n170174pv6tqcj8xfzhssvhrr57cn3yc" as Id<"frontendAgents">;
+    
+    try {
+      // 直接删除status字段
+      await ctx.db.patch(id, {
+        status: undefined
+      });
+      return { success: true, message: "Successfully removed status field from problem agent" };
+    } catch (error) {
+      console.error("Error removing status field:", error);
+      return { success: false, message: `Error: ${error}` };
+    }
+  }
+});
+
+/**
+ * Migrate all agents from old status format to new array format safely
+ * This function can be run after schema validation is fixed
+ */
+export const runStatusFormatMigration = action({
+  args: {},
+  handler: async (ctx): Promise<{ success: boolean; message: string }> => {
+    // Get all agents
+    const agents = await ctx.runQuery(api.frontendAgent.getAllAgents);
+    const timestamp = Date.now();
+    
+    console.log(`Found ${agents.length} agents, checking for old status format`);
+    
+    let migratedCount = 0;
+    let skipCount = 0;
+    let errorCount = 0;
+    
+    // Update each agent with old format
+    for (const agent of agents) {
+      try {
+        // Only convert agents with old status format
+        if (!agent.status || Array.isArray(agent.status)) {
+          skipCount++;
+          continue;
+        }
+        
+        // Convert old format to new format
+        const oldStatus = agent.status as any;
+        const newStatus = [
+          { title: 'Current Work', icon: oldStatus.current_work || "🎨" },
+          { title: 'Emotion', icon: oldStatus.emotion || "😴" }
+        ];
+        
+        // Add other status items if they exist
+        if (oldStatus.status) newStatus.push({ title: 'Status', icon: oldStatus.status });
+        if (oldStatus.energy_level) newStatus.push({ title: 'Energy Level', icon: oldStatus.energy_level });
+        if (oldStatus.location) newStatus.push({ title: 'Location', icon: oldStatus.location });
+        if (oldStatus.mood_trend) newStatus.push({ title: 'Mood Trend', icon: oldStatus.mood_trend });
+        
+        // Update agent with new format
+        await ctx.runMutation(api.frontendAgent.updateAgentStatus, {
+          id: agent._id,
+          status: newStatus,
+          lastUpdated: timestamp
+        });
+        
+        migratedCount++;
+        console.log(`Migrated agent ${agent.frontendAgentId} to new status format`);
+      } catch (error) {
+        console.error(`Error migrating agent ${agent.frontendAgentId}:`, error);
+        errorCount++;
+        // Continue with the next agent even if one fails
+      }
+    }
+    
+    return { 
+      success: true, 
+      message: `Migration complete: Migrated ${migratedCount} agents, skipped ${skipCount} agents, encountered ${errorCount} errors` 
+    };
+  }
+}); 
