@@ -133,14 +133,14 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
           <p>
             <span>Introducing the first-ever live demo of 1,000 AI agents running in real-time – our tribute to</span>
             <a className='gray click underline' href='https://github.com/joonspk-research/generative_agents' target='_blank'> Stanford Smallville</a> 
-            <span> and</span>
-            <a className='gray click underline' href='https://github.com/a16z-infra/ai-town'  target='_blank'> a16z AI Town</a>.
+            <span> and </span>
+            <a className='gray click underline' href='https://github.com/a16z-infra/ai-town'  target='_blank'>a16z AI Town</a>.
           </p>
           <p style={{ marginTop: '15px' }}>
-            <span>Built in collaboration with our core AI contributor</span>
-            <a className='gray click underline'  href='https://zhiqiangxie.com/'  target='_blank'> Zhiqiang Xie</a>
-            <span> from Stanford University, this simulation brings his</span>
-            <a className='gray click underline'  href='https://arxiv.org/abs/2411.03519'  target='_blank'> AI Metropolis </a>
+            <span>Built in collaboration with our core AI contributor </span>
+            <a className='gray click underline'  href='https://zhiqiangxie.com/'  target='_blank'>Zhiqiang Xie</a>
+            <span> from Stanford University, this simulation brings his </span>
+            <a className='gray click underline'  href='https://arxiv.org/abs/2411.03519'  target='_blank'>AI Metropolis </a>
             <span> paper to life, enabling massively multi-agent simulations while drastically reducing compute and inferencing costs.</span>
 
           </p>
