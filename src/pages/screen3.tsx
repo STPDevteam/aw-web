@@ -53,7 +53,8 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
     }
   },[columns, width])
 
-  return (
+  const titleHeight = window.innerHeight * 0.2388
+  return (  
     <Box 
       className="h-screen fx-row w100" 
       bg="linear-gradient(180deg, #101010 0%, #293033 100%)"
@@ -62,7 +63,8 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
       { columns as number > 2 && <Box w="160px" className=''/>}
       <Box className='fx-col ai-ct w100 h100 '>
         <Box
-          height={['105px','142px','165px','175px','175px','215px']}
+          // height={['105px','142px','165px','175px','175px','215px']}
+          h={['105px','142px','165px',titleHeight* 0.7,titleHeight * 0.8,titleHeight]}
           className='w100 fx-col ai-ct jc-ct'
         >
           <Text className='gray fm3' fontSize={['24px','32px','36px','36px','40px', '48px']}>Launchpad</Text>

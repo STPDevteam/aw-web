@@ -15,6 +15,7 @@ import { ServerGame } from '../../hooks/serverGame.ts';
 import SimulatedAgents from '../../components/SimulatedAgents.tsx'; 
 import { mockAgents } from '../../../data/characters.js'
 import { SimulatedAgent} from '@/components/createSimulatedAgentSprite'
+import * as map from '../../../data/gentle.js';
 
 export const PixiGame:React.FC<{
   worldId: Id<'worlds'>;
@@ -130,6 +131,16 @@ export const PixiGame:React.FC<{
     }
   },[agentInfo])
 
+  useEffect(() => {
+    if(viewportRef.current) {
+      viewportRef.current.animate({
+        position: new PIXI.Point(map.mapwidth / 2 * tileDim, map.mapheight / 2 * tileDim),
+        scale: 0.1,
+      })
+    }
+    
+  },[])
+
   // Zoom on the user's avatar when it is created
   useEffect(() => {
     if (!viewportRef.current || humanPlayerId === undefined) return;
@@ -185,7 +196,7 @@ export const PixiGame:React.FC<{
           tileDim={tileDim} mapWidth={width}
           selectedAgentId={selectedAgentId}
         />
-      )}
+      )} 
       
       {
         players.map((p) => (
