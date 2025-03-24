@@ -132,7 +132,7 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
                     </Box>
                 
                   }
-                  { mapLoadingStatus === 'loading' &&   //
+                  { mapLoadingStatus === 'loading' &&  
                     <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setMapLoadingStatus(p === 1 ? 'end' : 'loading')} />
                   }
                 </Box>

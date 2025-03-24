@@ -10,7 +10,7 @@ import { Notification, PageLoading } from '@/components'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
-export const Screen2:FC<{ feAgentsInfo:any }> = ({  feAgentsInfo }) => {  
+export const Screen2:FC<{ feAgentsInfo:any, currentIndex: number }> = ({  feAgentsInfo, currentIndex }) => {  
   
   const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
   const dispatch = useAppDispatch()
@@ -20,6 +20,7 @@ export const Screen2:FC<{ feAgentsInfo:any }> = ({  feAgentsInfo }) => {
   return(
 
       <Box 
+        display={currentIndex === 1 ? 'block' : 'none'}
         className='h-screen w100' 
         bgImage={[null,null,Screen2Bg,Screen2Bg,Screen2Bg]}
         bgSize="cover"
