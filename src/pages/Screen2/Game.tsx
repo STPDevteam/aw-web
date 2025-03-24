@@ -25,6 +25,7 @@ export const mapRightWidth = 494
 
 export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
   
+  const [delayRender, setDelayRender] = useState(false)
 
   const [currentFEAgent, setCurrentFEAgent] = useState<any>()
   const [mapLoadingStatus, setMapLoadingStatus] = useState<'notStarted' | 'loading' | 'end'>('notStarted')
@@ -49,6 +50,13 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
 
   // Send a periodic heartbeat to our world to keep it alive.
   useWorldHeartbeat();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDelayRender(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const memoizedFeDetail = useMemo(() => {
     return currentFEAgent ? <FEPlayerDetails currentFEAgent={currentFEAgent} onClearFEAgent={() => setCurrentFEAgent(null)}/>  : null;
 }, [currentFEAgent]);
@@ -137,25 +145,28 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
                   }
                 </Box>
               }
-          
+
+              {
+                delayRender && 
+                <Box className='box_clip20 ' h="calc(100% - 1px)" display={ mapLoadingStatus === 'end' ? 'block' : 'none'}>
+                  <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
+                    <ConvexProvider client={convex}>
+                      <PixiGame
+                        selectedAgentId={selectedFEAgentId}
+                        pixiWidth={_leftWidth}
+                        agentInfo={agentInfo}
+                        game={game}
+                        worldId={worldId}
+                        engineId={engineId}
+                        historicalTime={historicalTime}
+                        setSelectedElement={setSelectedElement}
+                        onClearFEAgent={() => setCurrentFEAgent(null)}
+                      />
+                    </ConvexProvider>
+                  </Stage>  
+                </Box>
+              }
            
-              <Box className='box_clip20 ' h="calc(100% - 1px)" display={ mapLoadingStatus === 'end' ? 'block' : 'none'}>
-                <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
-                  <ConvexProvider client={convex}>
-                    <PixiGame
-                      selectedAgentId={selectedFEAgentId}
-                      pixiWidth={_leftWidth}
-                      agentInfo={agentInfo}
-                      game={game}
-                      worldId={worldId}
-                      engineId={engineId}
-                      historicalTime={historicalTime}
-                      setSelectedElement={setSelectedElement}
-                      onClearFEAgent={() => setCurrentFEAgent(null)}
-                    />
-                  </ConvexProvider>
-                </Stage>  
-              </Box>
           
           </BorderBox>
         </Box>
