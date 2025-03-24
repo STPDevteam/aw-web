@@ -61,15 +61,41 @@ export default function PlayerDetails({
   
 
   const descriptionFun = (d: string | React.ReactNode) => (
-    <Box className='box_clip center w100' p="20px" bgColor='#838B8D' mt="10px">
+    <Box 
+      className='box_clip center w100'
+      bgColor='#838B8D' 
+      mt="10px"
+      p={['10px','10px','10px','14px','16px', '20px']}
+     
+    >
       <Text className='gray4 fm3' fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
     </Box>
   ) 
+  const descriptionFun2 = (d: string | React.ReactNode) => (
+    <Box 
+      className='box_clip center w100'
+      bgColor='#838B8D' 
+      mt="10px"
+      p={['10px','10px','10px','10px','10px', '12px','20px']}
+     
+    >
+      <Text className='gray4 fm3' fontSize={['12px','12px','12px','12px','12px','14px','16px']}>{d}</Text>
+    </Box>
+  ) 
 
+ 
 
   if (!playerId) {
     return (
       <Box className='h100'>
+        {/* <Box
+          mb="10px"
+          h="10px"
+          w="10px"
+           borderWidth="1px"
+        borderStyle='solid'
+        borderColor={['red','green','yellow','blue','pink','green','red']}
+        /> */}
         <Box 
           className='center gradient_border'
           w="100%"
@@ -77,7 +103,7 @@ export default function PlayerDetails({
         >
           <Text className="fm1 fw600 gray gradient_content" fontSize={['14px','14px','14px','14px','16px','20px']}>Autonomous World Demo: AI Town</Text>         
         </Box>
-        { descriptionFun('Welcome to AI Town, the first demo of World.Fun autonomous world launchpad, featuring 1,000 live agents living, evolving and socializing in a world of endless possibilities.')}
+        { descriptionFun2('Welcome to AI Town, the first demo of World.Fun autonomous world launchpad, featuring 1,000 live agents living, evolving and socializing in a world of endless possibilities.')}
         <Box 
           mt="22px"
           className='center gradient_border'
@@ -88,18 +114,25 @@ export default function PlayerDetails({
         </Box>
 
        
-        { descriptionFun(
+        { descriptionFun2(
           <div>
-            <p>Be the first to engage with World.Fun and earn World Points for future airdrops!</p>
-            <p>⏰ Daily clock-in (free) for 10 World Points</p>
-            <p>🤖 Create agent (10 $STPT) for 40 World Points</p>
-            <p>💬 Engage NPC (1 $STPT) for 500 World Points</p>
+            <p>Be the first to engage with World.Fun and earn World Points for future airdrops! </p>
+            <p>⏰ Daily clock-in (free) to earn 10 World Points</p>
+            <p>🤖Create agent (10 $STPT) to earn 40 World Points</p>
+            <p>💬 Engage NPC (1 $STPT) to earn 500 World Points</p>
+            <p>🌍 Join world (coming soon)</p>
           </div>)}
       </Box>
     )
   }
  
   
+ 
+
+
+
+
+
   if (!player) {
     return null;
   }

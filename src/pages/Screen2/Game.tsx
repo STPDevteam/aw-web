@@ -131,8 +131,8 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
           color='#838B8D'
         >
           <p>
-            <span>Introducing the first-ever live demo of 1,000 AI agents running in real-time – our tribute to</span>
-            <a className='gray click underline' href='https://github.com/joonspk-research/generative_agents' target='_blank'> Stanford Smallville</a> 
+            <span>Introducing the first-ever live demo of 1,000 AI agents running in real-time – our tribute to </span>
+            <a className='gray click underline' href='https://github.com/joonspk-research/generative_agents' target='_blank'>Stanford Smallville</a> 
             <span> and </span>
             <a className='gray click underline' href='https://github.com/a16z-infra/ai-town'  target='_blank'>a16z AI Town</a>.
           </p>
@@ -250,9 +250,7 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
                     </ConvexProvider>
                   </Stage>  
                 </Box>
-              }
-           
-          
+              }          
           </BorderBox>
         </Box>
         
