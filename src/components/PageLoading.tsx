@@ -49,7 +49,7 @@ export const PageLoading: FC<iPageLoading> = ({
     <Box className="w100">
         {
             loadingProgress === 1 ? null :
-            <Box px={['20px','20px','30px','40px','80px']} className="center w100">
+            <Box px={['20px','20px','30px','40px','80px']} className="center w100 ">
                 <Box w={maxW} >
                     <MotionImage
                         src={MapLoading}

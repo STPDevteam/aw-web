@@ -37,7 +37,7 @@ export const Notification: FC<iNotification> = ({
     return (
         <Modal isOpen={visible} onClose={onClose} isCentered closeOnOverlayClick={closeOnOverlay}>
             <ModalOverlay />
-            <ModalContent  w="621px" h="280px"  maxWidth="none" bgColor="transparent">
+            <ModalContent  w="594px" h="260px"  maxWidth="none" bgColor="transparent">
                 <ModalBody 
                     p="0"
                     className="fx-col ai-ct "  
@@ -48,11 +48,11 @@ export const Notification: FC<iNotification> = ({
 
                 >
                     <Box className="fx-row ai-ct jc-sb w100">
-                        <Box w="42px" h="42px"/>
-                        <Text className="gray fz24 fw700" mt="18px">{title}</Text>  
-                        <Image src={Close} w="42px" h="42px" className="click" onClick={onClose}/>          
+                        <Box w="35px" h="35px"/>
+                        <Text className="gray" fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} mt="20px">{title}</Text>  
+                        <Image src={Close}  w="35px" h="35px" className="click" onClick={onClose}/>          
                     </Box>
-                    <Text className="gray fz20 fw700" mt="94px">{content}</Text>             
+                    <Text className="gray " fontWeight={400} fontSize={['16px','16px','16px','16px','18px','20px']} mt="99px">{content}</Text>             
                 </ModalBody>                
             </ModalContent>
         </Modal>

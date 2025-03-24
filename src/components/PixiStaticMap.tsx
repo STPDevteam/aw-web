@@ -111,7 +111,8 @@ export const PixiStaticMap = PixiComponent('StaticMap', {
     container.y = 0;
 
     // Set the hit area manually to ensure `pointerdown` events are delivered to this container.
-    container.interactive = true;
+    // container.interactive = true;
+    container.eventMode= 'dynamic' // 'none'/'passive'/'auto'/'static'/'dynamic'
     container.hitArea = new PIXI.Rectangle(
       0,
       0,

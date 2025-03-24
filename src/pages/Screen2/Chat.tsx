@@ -119,31 +119,26 @@ export const Chat:React.FC<iChat> = ({ worldId, startChat, agentCreated, endChat
     }
     return (
         <Box>
-            {/* <GeneralButton 
-                onClick={handleRandomEncounter}
-                title='Send to Chat with NPC'
-                size="md2"
-                loading={btnLoading}
-            /> */}
+        
             <BasePopup
                 visible={randomOpen}
                 onClose={onClose}
                 title={title}
                 content={
-                    <Box mt="30px" overflowY="scroll" maxH="432px" onWheel={(e) => e.stopPropagation()} >
+                    <Box p="40px" overflowY="scroll" maxH="514px" onWheel={(e) => e.stopPropagation()} >
                         {
                             conversationList.map((item:any) => (
-                                <Box key={item.text} mt="20px">
+                                <Box key={item.text} mt="10px">
                                     <Box className='fx-row ai-ct jc-sb'>
                                         {
-                                            item.isAgent ? <Text className='fz24 gray fw700'>{item.speaker}</Text> : <div/>
+                                            item.isAgent ? <Text className='gray ' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>{item.speaker}</Text> : <div/>
                                         }
                                         {
-                                            item.isAgent ? <div/> : <Text className='fz24 gray fw700'>{item.speaker}</Text>
+                                            item.isAgent ? <div/> : <Text className='gray ' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>{item.speaker}</Text>
                                         }
                                     </Box>
 
-                                    <Box  className='center box_clip' p="24px 28px" mt="10px" w="553px"  bgColor="#838B8D">                        
+                                    <Box  className='center box_clip' p="20px" mt="10px" w="515px"  bgColor="#838B8D">                        
                                         <Text className='gray2 fz400'>{item.text}</Text>
                                     </Box>
                                 </Box>

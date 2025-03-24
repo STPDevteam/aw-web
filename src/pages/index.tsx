@@ -93,13 +93,17 @@ const btns = [
 ]
 
 
-
-
 export const Pages = () => {  
+  const [isScreen2Alive, setScreen2Alive] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const feAgentsInfo = useQuery(api.frontendAgent.getAllAgents)
 
+  useEffect(() => {
+    if(currentIndex === 1) {
+      setScreen2Alive(true)
+    }
+  },[currentIndex])
 
   return (    
     <Box className='h100' pos='relative' bgColor="#1E1E1E">
@@ -177,7 +181,7 @@ export const Pages = () => {
         isActive={currentIndex === 0} 
         onMoveTo={idx => setCurrentIndex(idx)}
       />
-      <Screen2 isActive={currentIndex === 1} currentIndex={currentIndex} feAgentsInfo={feAgentsInfo}/> 
+      {isScreen2Alive && <Screen2 currentIndex={currentIndex} feAgentsInfo={feAgentsInfo}/>}
       <Screen3 isActive={currentIndex === 2} /> 
     </Box>
   )

@@ -46,8 +46,6 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
 
   const game = useServerGame(worldId)
 
- 
-
   // Send a periodic heartbeat to our world to keep it alive.
   useWorldHeartbeat();
   const memoizedFeDetail = useMemo(() => {
@@ -56,39 +54,20 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
 
   const worldState = useQuery(api.world.worldState, worldId ? { worldId } : 'skip');
   const { historicalTime, timeManager } = useHistoricalTime(worldState?.engine);
-
   const scrollViewRef = useRef<HTMLDivElement>(null);
  
-
   if (!worldId || !engineId || !game) {
     return null;
   } 
 
-  
-  
-  // 1880
-
   const h = 0.351595 * window.innerWidth > 661 ? 661 : 0.351595 * window.innerWidth
   const _h = 0.375531 * window.innerWidth 
-  
 
   const _leftWidth = h / 0.56933 
-  // 494 / 1880 = 0.262765
   const _rightWidth = 0.262765 * window.innerWidth 
-  // 1720 / 1880 = 0.914893
   const _w =  0.914893 * window.innerWidth 
 
   const ___rightWidth = _rightWidth > 494 ? 494 : _rightWidth
-
-  
-
- 
-
- 
-  // display={isActive ? 'block' : 'none'}
-
-  // 1161 / 661  0.56933
-
 
   const selectedFEAgentId = (id: number) => {
    
@@ -122,32 +101,36 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
         <Box
           w={_leftWidth}
           h={`${h}px`}
-          className=' center'  
+          className='center'  
           cursor='all-scroll'
-            pos='relative'
+          pos='relative'
         > 
-         {pageProgress < 1 &&  currentIndex === 1 && <LoadingOverlay h={h} w={`${___rightWidth}px`} maxW={_leftWidth * 0.861326} onCompleted={p => setPageProgress(p)} /> }
-          <BorderBox  >
-            <Box 
-              display={pageProgress === 1 ? 'flex' : 'none'} 
-            >
-            
-              <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
-                <ConvexProvider client={convex}>
-                  <PixiGame
-                    selectedAgentId={selectedFEAgentId}
-                    pixiWidth={_leftWidth}
-                    agentInfo={agentInfo}
-                    game={game}
-                    worldId={worldId}
-                    engineId={engineId}
-                    historicalTime={historicalTime}
-                    setSelectedElement={setSelectedElement}
-                    onClearFEAgent={() => setCurrentFEAgent(null)}
-                  />
-                </ConvexProvider>
-              </Stage>  
-            </Box>         
+          <BorderBox >
+            { pageProgress < 1 &&  currentIndex === 1 &&  // 
+            <Box className='center h100 w100'>
+              <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setPageProgress(p)} />
+            </Box>
+            }
+            {
+               pageProgress === 1  && //
+              <Box className='box_clip20 ' h="calc(100% - 1px)">
+                <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
+                  <ConvexProvider client={convex}>
+                    <PixiGame
+                      selectedAgentId={selectedFEAgentId}
+                      pixiWidth={_leftWidth}
+                      agentInfo={agentInfo}
+                      game={game}
+                      worldId={worldId}
+                      engineId={engineId}
+                      historicalTime={historicalTime}
+                      setSelectedElement={setSelectedElement}
+                      onClearFEAgent={() => setCurrentFEAgent(null)}
+                    />
+                  </ConvexProvider>
+                </Stage>  
+              </Box>
+            }
           </BorderBox>
         </Box>
         
@@ -200,17 +183,18 @@ export const BorderBox:React.FC<{ children:React.ReactNode }> = ({ children }) =
 interface LoadingOverlayProps {
   onCompleted: (p: number) => void;
   maxW: number;
-  w:  string;
+ 
   h: number
 }
 
-const LoadingOverlay = ({ onCompleted, maxW, w, h}: LoadingOverlayProps): React.ReactPortal => {
+const LoadingOverlay = ({ onCompleted, maxW, h}: LoadingOverlayProps): React.ReactPortal => {
   const portalContent = (   
       <Box 
         position="absolute"
-        top={(h+128) / 2}
-        left={"150px"}
+        top={`calc(100% - ${h}px) `}
+        // left="150px"
         zIndex={3}
+        className='bd2 w100 center'
       >
         <PageLoading maxW={maxW} onCompleted={onCompleted} />
       </Box>    

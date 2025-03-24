@@ -2,7 +2,7 @@
 import type { FC } from "react"
 import React, { useEffect } from "react"
 import { Box, Image, Text, Modal, ModalOverlay, ModalContent, ModalBody } from "@chakra-ui/react"
-import { GeneralButton }  from '@/components'
+import { GeneralButton, BorderButton }  from '@/components'
 import { Close, PopupLg } from '@/images'
 
 interface iBasePopup {
@@ -14,6 +14,10 @@ interface iBasePopup {
     onOK?: () => void
     okText?: string
     okLoading?: boolean
+    modalSize?: {
+        w: string
+        h: string
+    }
 }
 
 export const BasePopup: FC<iBasePopup> = ({ 
@@ -24,7 +28,8 @@ export const BasePopup: FC<iBasePopup> = ({
     closeOnOverlay = true,
     onOK,
     okText,
-    okLoading = false
+    okLoading = false,
+    modalSize
 }) => {
 
      useEffect(() => {
@@ -50,7 +55,7 @@ export const BasePopup: FC<iBasePopup> = ({
     return (
         <Modal isOpen={visible} onClose={onClose} isCentered closeOnOverlayClick={closeOnOverlay}>
             <ModalOverlay />
-            <ModalContent  w="621px" h="625px"  maxWidth="none" bgColor="transparent">
+            <ModalContent  w={modalSize?.w || '594px'} h={modalSize?.h || '604px'}  maxWidth="none" bgColor="transparent">
                 <ModalBody 
                     p="0"
                     className="fx-col ai-ct "  
@@ -61,12 +66,23 @@ export const BasePopup: FC<iBasePopup> = ({
 
                 >
                     <Box className="fx-row ai-ct jc-sb w100">
-                        <Box w="42px" h="42px"/>
-                        <Text className="gray fz24 fw700" mt="18px">{title}</Text>  
-                        <Image src={Close} w="42px" h="42px" className="click" onClick={onClose}/>          
+                        <Box w="35px" h="35px"/>
+                        <Text className="gray" fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} mt="20px">{title}</Text>  
+                        <Image src={Close} w="35px" h="35px" className="click" onClick={onClose}/>          
                     </Box>
                     { content }      
-                    {okText && <GeneralButton size="lg" loading={okLoading} title={okText} onClick={onHandle} style={{ marginTop:'58px' }}/>}
+                    {okText && 
+                    <Box pos='absolute' bottom="20px" w={450} className=" ">
+                        <BorderButton
+                            isFixedWidth={true}
+                            loading={okLoading} 
+                            w={450}
+                            h={50}
+                            onClick={onHandle}
+                            title={okText}
+                        />   
+                    </Box>
+                    }
                 </ModalBody>                
             </ModalContent>            
         </Modal>

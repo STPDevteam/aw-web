@@ -110,7 +110,7 @@ export const Nav = () => {
                         dispatch(alertInfoAction({
                             open: true, 
                             title: 'Claim',
-                            content: 'Claimed! World points +10'
+                            content: 'Claimed! World Points +10'
                         }))
                         setCanCheckIn(false)
                     }

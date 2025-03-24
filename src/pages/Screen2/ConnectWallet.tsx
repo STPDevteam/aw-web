@@ -110,12 +110,12 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                     content={
                         <Box mt="30px" mb="150px">
                             <Box className="fx-row ai-ct">
-                                <Image src={Logo} w="80px" h="80px" borderRadius="50%" />
-                                <Text className="fz24 gray" ml="24px">@{`${account?.address.substring(0,4)}...${account?.address.substring(account?.address.length - 4,)}`}</Text>
+                                <Image src={Logo} w={['60px','60px','60px','70px','80px','90px']} h={['60px','60px','60px','70px','80px','90px']}  borderRadius="50%" />
+                                <Text className='gray ' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} ml="15px">@{`${account?.address.substring(0,4)}...${account?.address.substring(account?.address.length - 4,)}`}</Text>
                             </Box>
-                            <Text className="fz24 gray fw700" mt="50px">World Points: <span className="fw400">{points || '--'}</span></Text>
-                            <Box className="box_clip center" mt="10px" w="553px" h="60px" bgColor="#838B8D">
-                                <Text className="gray2 fz20">{ account?.address }</Text>
+                            <Text className=" gray" fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} mt="30px">World Points: <span className="fw400">{points || '--'}</span></Text>
+                            <Box className="box_clip center" mt="10px" w="515px" h="60px" bgColor="#838B8D">
+                                <Text color="#293033" fontWeight={350} fontSize={['16px']}>{ account?.address }</Text>
                             </Box>
                         </Box>
                     }

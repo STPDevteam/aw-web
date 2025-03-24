@@ -1,8 +1,8 @@
 .agent_input {
-    width: 553px;
+    width: 515px;
     height: 60px;
     background-color: #838B8D;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 400;
     color: #E0E0E0;
     margin-top: 10px;
@@ -26,18 +26,15 @@
    
 .agent_input::placeholder {
     color: #293033;
-    font-size: 20px;
+    font-size: 16px;
 } 
 
 
 .agent_textarea {
-   
-
-
-    width: 553px;
+    width: 515px;
     height: 116px;
     background-color: #838B8D;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 400;
     color: #E0E0E0;
     margin-top: 10px;
@@ -61,5 +58,5 @@
 }
 .agent_textarea::placeholder {
     color: #293033;
-    font-size: 20px;
+    font-size: 16px;
 }

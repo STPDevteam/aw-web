@@ -1,7 +1,7 @@
 
 import React, {  useState, useEffect } from 'react'
 import { Text, Box, Image } from '@chakra-ui/react'
-import { GeneralButton, BasePopup, CreateInput } from '@/components'
+import { GeneralButton, BasePopup, CreateInput, Font16, BorderButton } from '@/components'
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
@@ -247,19 +247,12 @@ export const MyAgent:React.FC<iMyAgent> = ({
 
     return (
         <Box>
-            {/* <GeneralButton 
-                onClick={handleAgent}
-                title={AGENT_CREATED ? 'My Agent' : 'Create Agent'}
-                size='sm'
-                loading={btnLoading}
-            /> */}
-
             <BasePopup
-                visible={createAgentOpen}
+                visible={createAgentOpen} 
                 onClose={handleCreateClose}
                 title="Create Agent"
                 content={
-                    <Box mt="30px">
+                    <Box p="40px">
                         <CreateInput 
                             title='Name'
                             maxLen={name.maxLen}
@@ -283,22 +276,23 @@ export const MyAgent:React.FC<iMyAgent> = ({
             </BasePopup>
 
             <BasePopup
-                visible={myAgentOpen}
+                visible={myAgentOpen} // 
                 onClose={closeMy}
                 title="My Agent"
+                
                 content={
-                    <Box mt="30px">
+                    <Box p="40px">
                         <Box className='fx-row ai-ct'>
-                            <Image src={Logo} w="80px" h="80px"  borderRadius="50%"/>
-                            <Box ml="24px">
-                                <Text className='fz24 gray fw700'>Name</Text>
-                                <Text className='fz24 gray' mt="10px">{myAgentInfo.name}</Text>
+                            <Image src={Logo} w={['60px','60px','60px','70px','80px','90px']} h={['60px','60px','60px','70px','80px','90px']} borderRadius="50%"/>
+                            <Box ml="15px">
+                                <Text className='gray ' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>Name</Text>
+                                <Text className='' mt="10px" color='#838B8D'  fontWeight={400} fontSize={['16px','16px','16px','16px','18px','20px']}>{myAgentInfo.name}</Text>
                             </Box>
                         </Box>
 
-                        <Text className='fz24 gray fw700' mt="70px">Description</Text>
-                        <Box className='center box_clip' p="24px 28px" mt="10px" w="553px" h="116px" bgColor="#838B8D">                        
-                            <Text className='gray2 fz400'>{myAgentInfo.description}</Text>
+                        <Text className=' gray'  fontWeight={600}  fontSize={['16px','16px','16px','16px','18px','20px']} mt="30px">Description</Text>
+                        <Box className='center box_clip' p="20px" mt="10px" w="515pxpx" h="110px" bgColor="#838B8D">                        
+                            <Font16 c="#293033" t={myAgentInfo.description}/>
                         </Box>
                     </Box>
                 }
@@ -311,29 +305,41 @@ export const MyAgent:React.FC<iMyAgent> = ({
             </BasePopup>
 
             <BasePopup
-                visible={confirmDeleteOpen}
+                visible={confirmDeleteOpen} 
                 onClose={() => closeConfirmDelete(false)}
                 title="Delete"
                 content={
                     <Box className='h100 fx-col ai-ct'>
-                        <Text className='gray fz20' mt="200px" maxW="376px" textAlign="center">
-                            Are you sure you want to delete this agent? 
-                            <br/>
-                            This action cannot be undone.
-                        </Text>
-                        <Box className='fx-row ai-ct w100' mt="192px">
-                            <GeneralButton 
-                                size='sm' 
-                                loading={deleteLoading} 
-                                title="Ok" 
-                                onClick={deleteAgent} 
-                            />
-                            <GeneralButton 
-                                style={{ marginLeft: '40px' }}
-                                size='sm' 
-                                title="Cancel" 
-                                onClick={() => closeConfirmDelete(false)} 
-                            />
+                        <Box className=' w100 center' h="calc(100% - 20px)">
+                            <Text className='gray' maxW="356px" fontSize={['16px','16px','16px','16px','18px','20px']}>
+                                Are you sure you want to delete this agent? 
+                                <br/>
+                                This action cannot be undone.
+                            </Text>
+                        </Box>
+                        <Box className='fx-row ai-ct w100 jc-sb' pos='absolute' bottom='20px' px="82px">
+                        
+
+                            <Box w="180px" h="46px" >
+                                <BorderButton
+                                    isFixedWidth={true}
+                                    loading={deleteLoading} 
+                                    w={180}
+                                    h={46}
+                                    onClick={deleteAgent}
+                                    title='Ok'
+                                /> 
+                            </Box>
+                            <Box w="180px" h="46px" className=''>
+                                <BorderButton
+                                    isFixedWidth={true}
+                                    loading={deleteLoading} 
+                                    w={180}
+                                    h={46}
+                                    onClick={() => closeConfirmDelete(false)}
+                                    title='Cancel'
+                                /> 
+                            </Box>                           
                         </Box>
                     </Box>
                 }
