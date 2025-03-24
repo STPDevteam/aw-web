@@ -203,8 +203,8 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
                 >
 
                   {
-                    isNewHand && 
-                    <Box ref={newRef} onClick={hideGuide} className='click h100 w100 jc-sb fx-row ai-ct' bgColor="rgba(0,0,0,0.8)" px={['90px','90px','90px','126px','144px','180px']}>
+                    isNewHand &&  // 
+                    <Box ref={newRef} onWheel={(e) => null} onClick={hideGuide} h="calc(100% + 1px)" className='box_clip click  w100 jc-sb fx-row ai-ct' bgColor="rgba(0,0,0,0.8)" px={['90px','90px','90px','126px','144px','180px']}>
                       <Box className='fx-col ai-ct '>
                         <Box className='fx-row ai-ct'>
                           <Image src={Mouse1} w={['35px','35px','35px','49px','56px','71px',]} h={['55px','55px','55px','77px','88px','111px']}/>
