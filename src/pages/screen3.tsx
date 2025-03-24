@@ -67,8 +67,8 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
           h={['105px','142px','165px',titleHeight* 0.7,titleHeight * 0.8,titleHeight]}
           className='w100 fx-col ai-ct jc-ct'
         >
-          <Text className='gray fm3' fontSize={['24px','32px','36px','36px','40px', '48px']}>Launchpad</Text>
-          <Text className='gray fm3' fontSize={['14px','14px','14px','16px','22px', '24px']}>World.Fun Beta Coming Soon</Text>
+          <Text className='gray fm3' fontSize={['24px','24px','24px','28px','32px', '36px']}>Launchpad</Text>
+          <Text className=' fm3' color="#838B8D" fontSize={['14px','14px','14px','14px','14px', '16px']}>World.Fun Beta Coming Soon</Text>
         </Box>
         <Grid
           bg="linear-gradient(180deg, #101010 0%, #293033 100%)"
@@ -129,8 +129,8 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
                   transition="width 0.5s ease"
                   
                 >
-                  <Text className='fm1 gray' fontSize={['14px','18px','22px','22px','22px', '26px']}>{titles[idx].t1}</Text>
-                  <Text className='fm2 gray' fontSize={['12px','14px','14px','14px','14px','16px']}>{titles[idx].t2}</Text>
+                  <Text className='fm1 gray' wordBreak="break-all" fontSize={['14px','18px','18px','20px','20px', '24px']}>{titles[idx].t1}</Text>
+                  <Text className='fm2 gray' fontSize={['12px','12px','12px','12px','13px','14px']}>{titles[idx].t2}</Text>
                 </Box>
               </Box>
             );

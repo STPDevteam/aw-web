@@ -181,7 +181,7 @@ export default function PlayerDetails({
             w="100%"
             h="46px"
           >
-            <Text className="fm2 fw600 gray gradient_content" fontSize={['16px','16px','16px','16px','20px','24px']}>{playerDescription?.name || ''}</Text>         
+            <Text className="fm2 gradient_content" color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{playerDescription?.name || ''}</Text>         
           </Box>
 
         <Image src={Close} w="34px" h="34px" className='click' onClick={() => {
