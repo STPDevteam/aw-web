@@ -262,7 +262,7 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
           onWheel={(e) => e.stopPropagation()} 
         >      
         <BorderBox>
-          <Box p="15px 20px">
+          <Box p={['15px 6px','15px 6px','15px 6px','15px 6px','15px 6px','15px 20px',]} >
             {
               currentFEAgent ? 
               <>{memoizedFeDetail}</>: 
