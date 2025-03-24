@@ -120,7 +120,7 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
                   bottom={0}
                   left={0}
                   className='w100 fx-col jc-ct '          
-                  px={activeIdx === idx ? '102px' : '26px'} 
+                  px={activeIdx === idx ? ['12px','12px','30px','60px','80px','102px'] : ['8px','8px','12px','16px','20px','26px']} 
                   borderRadius='0 0 16px 16px'
                   bgColor='rgba(34, 52, 74, 0.40)'
                   backdropFilter='blur(25px)'
@@ -129,7 +129,7 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
                   transition="width 0.5s ease"
                   
                 >
-                  <Text className='fm1 gray' wordBreak="break-all" fontSize={['14px','18px','18px','20px','20px', '24px']}>{titles[idx].t1}</Text>
+                  <Text className='fm1 gray'  fontSize={['14px','18px','18px','20px','20px', '24px']}>{titles[idx].t1}</Text>
                   <Text className='fm2 gray' fontSize={['12px','12px','12px','12px','13px','14px']}>{titles[idx].t2}</Text>
                 </Box>
               </Box>
