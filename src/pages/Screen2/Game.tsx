@@ -8,12 +8,12 @@ import { useWorldHeartbeat } from '../../hooks/useWorldHeartbeat.ts';
 import { useHistoricalTime } from '../../hooks/useHistoricalTime.ts';
 import {  GameId } from '../../../convex/aiTown/ids.ts';
 import { useServerGame } from '../../hooks/serverGame.ts';
-import {  Box,  Grid, useBreakpointValue } from '@chakra-ui/react'
+import {  Box,  Text } from '@chakra-ui/react'
 import { AgentList } from '@/pages/Screen2/AgentList'
 import { PixiGame } from './PixiGame'
 import { selectedAgentInfo } from '@/redux/reducer'
 import { useAppSelector } from '@/redux/hooks.ts'
-import { PageLoading } from '@/components'
+import { PageLoading, BorderButton } from '@/components'
 import { FEPlayerDetails } from './FEPlayerDetails'
 import ReactDOM from 'react-dom';
 
@@ -23,10 +23,11 @@ export const mapContainerHeight = 661
 export const mapLeftWidth = 1145
 export const mapRightWidth = 494
 
-export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ currentIndex, feAgentsInfo }) => {
+export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
   
-  const [pageProgress, setPageProgress] = useState<number>(0)
+
   const [currentFEAgent, setCurrentFEAgent] = useState<any>()
+  const [mapLoadingStatus, setMapLoadingStatus] = useState<'notStarted' | 'loading' | 'end'>('notStarted')
 
   const agentInfo = useAppSelector(selectedAgentInfo)
   const convex = useConvex();
@@ -78,7 +79,7 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
   }
 
 
- 
+  
 
   return (  
     <Box 
@@ -93,7 +94,7 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
       // borderStyle='solid'
       // borderColor={['red','green','yellow','blue','red','pink',]}
     >
-      <Box pos='absolute' left="50px" top="44px" zIndex={99}  display={pageProgress === 1 ? 'flex' : 'none'} > 
+      <Box pos='absolute' left="50px" top="44px" zIndex={99}  display={mapLoadingStatus === 'end' ? 'flex' : 'none'} > 
         <AgentList  worldId={worldId}/>
       </Box>         
         
@@ -102,18 +103,43 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
           w={_leftWidth}
           h={`${h}px`}
           className='center'  
-          cursor='all-scroll'
+          cursor={ mapLoadingStatus === 'end' ? 'all-scroll' : 'default'}
           pos='relative'
         > 
           <BorderBox >
-            { pageProgress < 1 &&  currentIndex === 1 &&  // 
-            <Box className='center h100 w100'>
-              <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setPageProgress(p)} />
-            </Box>
-            }
-            {
-               pageProgress === 1  && //
-              <Box className='box_clip20 ' h="calc(100% - 1px)">
+              {
+                 mapLoadingStatus !== 'end' && //
+                <Box className='center h100 w100 fx-col ai-ct'>
+                  { mapLoadingStatus === 'notStarted' && 
+                    <Box className='fx-col ai-ct'>
+                      <Text
+                        fontWeight={350} 
+                        fontSize={['14px','14px','14px','14px','14px','16px']}
+                        className='fm3'
+                        color='#838B8D'
+                        maxW="700px"
+                      >Welcome to AI Town, the first demo of World.Fun autonomous world launchpad, featuring 1,000 live agents living, evolving and socializing in a world of endless possibilities.
+                      </Text>
+                      <Box w="369px" mt="100px">
+                        <BorderButton
+                          isFixedWidth={true}
+                          w={369}
+                          h={58}
+                          onClick={() => setMapLoadingStatus('loading')}
+                          title="Launch 1,000-Agent AI Town"
+                        />          
+                      </Box>
+                    </Box>
+                
+                  }
+                  { mapLoadingStatus === 'loading' &&   //
+                    <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setMapLoadingStatus(p === 1 ? 'end' : 'loading')} />
+                  }
+                </Box>
+              }
+          
+           
+              <Box className='box_clip20 ' h="calc(100% - 1px)" display={ mapLoadingStatus === 'end' ? 'block' : 'none'}>
                 <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
                   <ConvexProvider client={convex}>
                     <PixiGame
@@ -130,7 +156,7 @@ export const Game:React.FC<{  currentIndex: number, feAgentsInfo:any[] }>= ({ cu
                   </ConvexProvider>
                 </Stage>  
               </Box>
-            }
+          
           </BorderBox>
         </Box>
         

@@ -181,7 +181,7 @@ export const Pages = () => {
         isActive={currentIndex === 0} 
         onMoveTo={idx => setCurrentIndex(idx)}
       />
-      {isScreen2Alive && <Screen2 currentIndex={currentIndex} feAgentsInfo={feAgentsInfo}/>}
+      {isScreen2Alive && <Screen2 feAgentsInfo={feAgentsInfo}/>}
       <Screen3 isActive={currentIndex === 2} /> 
     </Box>
   )

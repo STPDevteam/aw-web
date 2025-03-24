@@ -10,7 +10,7 @@ import { Notification, PageLoading } from '@/components'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
-export const Screen2:FC<{currentIndex: number,feAgentsInfo:any }> = ({  currentIndex, feAgentsInfo }) => {  
+export const Screen2:FC<{ feAgentsInfo:any }> = ({  feAgentsInfo }) => {  
   
   const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
   const dispatch = useAppDispatch()
@@ -37,7 +37,7 @@ export const Screen2:FC<{currentIndex: number,feAgentsInfo:any }> = ({  currentI
           <Box className='w100 fx-col ai-ct h100' >
             <Nav/>
             <Box className='w100 center h100' mt="20px">
-              <Game currentIndex={currentIndex} feAgentsInfo={feAgentsInfo}/>
+              <Game feAgentsInfo={feAgentsInfo}/>
             </Box>
           </Box>
         </Box>

@@ -196,7 +196,7 @@ export default function PlayerDetails({
       {inConversationWithMe && <Box className='click' onClick={onLeaveConversation}>{descriptionFun('Leave conversation')}</Box>}
       {haveInvite && (
         <>
-          <a
+          {/* <a
             className={
               'mt-6  text-white shadow-solid text-xl cursor-pointer pointer-events-auto' +
               pendingSuffix('acceptInvite')
@@ -217,7 +217,7 @@ export default function PlayerDetails({
             <div className="h-full text-center">
               <span>Reject</span>
             </div>
-          </a>
+          </a> */}
         </>
       )}
       { !playerConversation && player.activity && player.activity.until > Date.now()  && descriptionFun(player.activity.description) }

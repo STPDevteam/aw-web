@@ -34,17 +34,17 @@ export const Screen1:FC<{ onMoveTo: (id: number) => void, isActive: boolean }> =
       </Box>
 
       {
-        !isMobile() && 
-        <Box pos='absolute' bottom="46px" left="50%" transform="translateX(-50%)">
+        // !isMobile() && 
+        // <Box pos='absolute' bottom="46px" left="50%" transform="translateX(-50%)">
           
-          <BorderButton
-            w={369}
-            h={58}
-            onClick={() => onMoveTo(1)}
-            title="Launch 1,000-Agent AI Town"
-          />          
+        //   <BorderButton
+        //     w={369}
+        //     h={58}
+        //     onClick={() => onMoveTo(1)}
+        //     title="Launch 1,000-Agent AI Town"
+        //   />          
           
-        </Box>
+        // </Box>
       }
 
      

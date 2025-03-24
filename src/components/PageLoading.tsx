@@ -49,7 +49,7 @@ export const PageLoading: FC<iPageLoading> = ({
     <Box className="w100">
         {
             loadingProgress === 1 ? null :
-            <Box px={['20px','20px','30px','40px','80px']} className="center w100 ">
+            <Box px={['20px','20px','30px','40px','80px']} className="center w100">
                 <Box w={maxW} >
                     <MotionImage
                         src={MapLoading}
@@ -60,10 +60,10 @@ export const PageLoading: FC<iPageLoading> = ({
                             x: `${loadingProgress * maxW}px`,
                             rotateY: '180deg'
                         }}
-                        transition={{ duration: 0, ease: "linear", }}
+                        transition={{ duration: 0.5, ease: "linear", }}
                     />
                     
-                    <Box h="10px" borderRadius="12px" bgColor="rgba(217, 217, 217, 0.15)">
+                    <Box h="10px" borderRadius="12px" bgColor="rgba(217, 217, 217, 0.15)" w={maxW}>
                         <Box
                             w={`${loadingProgress * 100}%`}
                             h="10px"
