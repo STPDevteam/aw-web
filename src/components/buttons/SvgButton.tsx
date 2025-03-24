@@ -66,6 +66,7 @@ export const SvgButton:React.FC<iSvgButton> = ({
             {loading ? 
                 <Spinner size="md" color="white" h='24px' w='24px' pos="absolute"/> : 
                 <Text   
+                    className="fm2"
                     fontSize={['14px','14px','14px','14px','16px']} 
                     pos="absolute" 
                     fontWeight={350}

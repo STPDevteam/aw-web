@@ -4,11 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
 @font-face {
-  font-family: 'Messina Sans';
-  src: url('./styles/MessinaSans-Book.ttf');
-  font-weight: normal;
-  font-style: normal;
+  font-family: 'fm1';
+  src: url(/assets/fonts/messinasans-semibold.ttf);
+
+}
+
+@font-face {
+  font-family: 'fm2';
+  src: url(/assets/fonts/messinasans_book.ttf);
+
+}
+@font-face {
+  font-family: 'fm3';
+  src: url(/assets/fonts/officetimesround_regular.otf)
+
 }
 
 @font-face {
@@ -20,7 +32,8 @@
   font-family: 'VCR OSD Mono';
   src: url(/assets/fonts/vcr_osd_mono.ttf);
 }
-.fp-watermark {
+
+/* .fp-watermark {
   display: none !important;
 }  
 .font-display {
@@ -33,7 +46,7 @@
 
 .font-system {
   font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-}
+} */
 
 :root {
   --foreground-rgb: 0, 0, 0;

@@ -12,6 +12,7 @@ interface iBorderButton {
   w: number;
   h: number;
   isFixedWidth?: boolean
+  titleDiv?: React.ReactNode
 }
 
 export const BorderButton:React.FC<iBorderButton> = ({  
@@ -21,7 +22,8 @@ export const BorderButton:React.FC<iBorderButton> = ({
   title,
   w,
   h,
-  isFixedWidth
+  isFixedWidth,
+  titleDiv
 }) => {
   // const [isHovered, setIsHovered] = useState(false);
   
@@ -40,7 +42,7 @@ export const BorderButton:React.FC<iBorderButton> = ({
         <Box className='btn2_border w100 h100'>
           <Box className='btn2_border_content w100 h100'> 
             <Button
-              className='click box_clip'
+              className='click box_clip fm2'
               w={isFixedWidth ? [w-4] : [(w - 4)*0.5,(w - 4)*0.5,(w - 4)*0.5,(w - 4)*0.7,(w - 4)*0.8,w - 4,]}
               h={`${h-4}px`}
               onClick={handleClick}
@@ -56,8 +58,12 @@ export const BorderButton:React.FC<iBorderButton> = ({
             >   
               {loading ? 
                 <Spinner size="md" color="white" h='24px' w='24px' pos="absolute"/> : 
-                <Text className='' w="100%" color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{title}</Text>
+                <>
+                  {titleDiv || <Text className='fm2' w="100%" color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{title}</Text>}
+                </>
+                
               }
+           
             </Button>   
           </Box>
         </Box>

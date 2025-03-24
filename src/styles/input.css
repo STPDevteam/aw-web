@@ -6,7 +6,7 @@
     font-weight: 400;
     color: #E0E0E0;
     margin-top: 10px;
-
+    font-family: 'fm3' !important;
     clip-path: polygon(
         10px 0, 
         calc(100% - 10px) 0, 
@@ -27,6 +27,7 @@
 .agent_input::placeholder {
     color: #293033;
     font-size: 16px;
+    font-family: 'fm3' !important;
 } 
 
 
@@ -38,7 +39,7 @@
     font-weight: 400;
     color: #E0E0E0;
     margin-top: 10px;
-
+    font-family: 'fm3' !important;
     clip-path: polygon(
         10px 0, 
         calc(100% - 10px) 0, 
@@ -59,4 +60,5 @@
 .agent_textarea::placeholder {
     color: #293033;
     font-size: 16px;
+    font-family: 'fm3' !important;
 }

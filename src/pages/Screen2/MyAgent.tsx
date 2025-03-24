@@ -285,13 +285,13 @@ export const MyAgent:React.FC<iMyAgent> = ({
                         <Box className='fx-row ai-ct'>
                             <Image src={Logo} w={['60px','60px','60px','70px','80px','90px']} h={['60px','60px','60px','70px','80px','90px']} borderRadius="50%"/>
                             <Box ml="15px">
-                                <Text className='gray ' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>Name</Text>
-                                <Text className='' mt="10px" color='#838B8D'  fontWeight={400} fontSize={['16px','16px','16px','16px','18px','20px']}>{myAgentInfo.name}</Text>
+                                <Text className='gray fm2' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>Name</Text>
+                                <Text className='fm3' mt="10px" color='#838B8D'  fontWeight={400} fontSize={['16px','16px','16px','16px','18px','20px']}>{myAgentInfo.name}</Text>
                             </Box>
                         </Box>
 
-                        <Text className=' gray'  fontWeight={600}  fontSize={['16px','16px','16px','16px','18px','20px']} mt="30px">Description</Text>
-                        <Box className='center box_clip' p="20px" mt="10px" w="515pxpx" h="110px" bgColor="#838B8D">                        
+                        <Text className='fm2 gray'  fontWeight={600}  fontSize={['16px','16px','16px','16px','18px','20px']} mt="30px">Description</Text>
+                        <Box className='center box_clip fm3' p="20px" mt="10px" w="515pxpx" bgColor="#838B8D">                        
                             <Font16 c="#293033" t={myAgentInfo.description}/>
                         </Box>
                     </Box>
@@ -305,13 +305,13 @@ export const MyAgent:React.FC<iMyAgent> = ({
             </BasePopup>
 
             <BasePopup
-                visible={confirmDeleteOpen} 
+                visible={confirmDeleteOpen}  // 
                 onClose={() => closeConfirmDelete(false)}
                 title="Delete"
                 content={
                     <Box className='h100 fx-col ai-ct'>
-                        <Box className=' w100 center' h="calc(100% - 20px)">
-                            <Text className='gray' maxW="356px" fontSize={['16px','16px','16px','16px','18px','20px']}>
+                        <Box className=' w100 center ' h="calc(100% - 20px)">
+                            <Text className='gray fm3' maxW="366px" fontSize={['16px','16px','16px','16px','18px','20px']}>
                                 Are you sure you want to delete this agent? 
                                 <br/>
                                 This action cannot be undone.
@@ -319,7 +319,6 @@ export const MyAgent:React.FC<iMyAgent> = ({
                         </Box>
                         <Box className='fx-row ai-ct w100 jc-sb' pos='absolute' bottom='20px' px="82px">
                         
-
                             <Box w="180px" h="46px" >
                                 <BorderButton
                                     isFixedWidth={true}

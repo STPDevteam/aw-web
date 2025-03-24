@@ -71,17 +71,20 @@ export function Messages({
   }
   const messageNodes: { time: number; node: React.ReactNode }[] = messages.map((m) => {
     const node = (
-      <div key={`text-${m._id}`} className=" mb-6 ">
-        <div className="flex gap-4">
-          <span className="uppercase flex-grow gray">{m.authorName}</span>
+      <Box key={`text-${m._id}`} className=" " >
+        <Box className="fx-row ai-ct jc-sb " mt="10px">
+          <Text color="#E0E0E0" fontSize={['14px','14px','14px','14px','14px','16px']} className='fm2'>{m.authorName}</Text>
           <time dateTime={m._creationTime.toString()} className='gray1'>
             {new Date(m._creationTime).toLocaleString()}
           </time>
-        </div>
-        <div className={clsx('bubble', m.author === humanPlayerId && 'bubble-mine')}>
-          <p className="bg-white -mx-3 -my-1">{m.text}</p>
-        </div>
-      </div>
+        </Box>
+        {/* <div className={clsx('bubble', m.author === humanPlayerId && 'bubble-mine')}>
+          <p className="bg-white -mx-3 -my-1" >{m.text}</p>
+        </div> */}
+        <Box className='box_clip' p="20px" bgColor='#838B8D' mt="10px">
+          <Text className='fm3' color="#101010" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{m.text}</Text>
+        </Box>
+      </Box>
     );
     return { node, time: m._creationTime };
   });
@@ -99,7 +102,7 @@ export function Messages({
       if (started) {
         membershipNodes.push({
           node: (
-            <div key={`joined-${playerId}`} className="mb-6">
+            <div key={`joined-${playerId}`} className="mb-6 fm3">
               <p className="gray1 text-center">{playerName} joined the conversation.</p>
             </div>
           ),
@@ -114,7 +117,7 @@ export function Messages({
       const started = conversation.doc.created;
       membershipNodes.push({
         node: (
-          <div key={`joined-${playerId}`} className=" mb-6">
+          <div key={`joined-${playerId}`} className="fm3 mb-6">
             <p className="gray1 text-center">{playerName} joined the conversation.</p>
           </div>
         ),
@@ -123,7 +126,7 @@ export function Messages({
       const ended = conversation.doc.ended;
       membershipNodes.push({
         node: (
-          <div key={`left-${playerId}`} className=" mb-6">
+          <div key={`left-${playerId}`} className="fm3 mb-6">
             <p className="gray1 text-center">{playerName} left the conversation.</p>
           </div>
         ),

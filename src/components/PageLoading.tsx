@@ -74,8 +74,8 @@ export const PageLoading: FC<iPageLoading> = ({
                         </Box>
                 
                         <Box className="fx-row ai-ct jc-sb" mt="8px">
-                            <Text className="fz20 gray">Loading...</Text>
-                            <Text className="fz20 gray">{`${Math.round(loadingProgress * 100)} %`}</Text>
+                            <Text className="fz20 gray fm2">Loading...</Text>
+                            <Text className="fz20 gray fm2">{`${Math.round(loadingProgress * 100)} %`}</Text>
                         </Box>
                 </Box>
             </Box>

@@ -116,7 +116,7 @@ export const Pages = () => {
                 <Box 
                   key={item.name}
                   onClick={() => setCurrentIndex(idx)}
-                  className='center click'
+                  className='center click fm2'
                   h="50px"
                   w="115px"
                   color={idx === currentIndex ? '#E0E0E0' : '#293033'}
@@ -145,7 +145,7 @@ export const Pages = () => {
                       bgPosition='center'
                       bgRepeat="no-repeat"  
 
-                      className='center click'
+                      className='center click fm2'
                       h="80px"
                       w="115px"                      
                       color={idx === currentIndex ? '#E0E0E0' : '#293033'}

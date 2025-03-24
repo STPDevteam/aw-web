@@ -61,8 +61,8 @@ export default function PlayerDetails({
   
 
   const descriptionFun = (d: string | React.ReactNode) => (
-    <Box className='box_clip center w100' px="20px" py="25px" bgColor='#838B8D' mt="10px">
-      <Text className='gray4' fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
+    <Box className='box_clip center w100' p="20px" bgColor='#838B8D' mt="10px">
+      <Text className='gray4 fm3' fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
     </Box>
   ) 
 
@@ -75,7 +75,7 @@ export default function PlayerDetails({
           w="100%"
           h="46px"
         >
-          <Text className="fw600 gray gradient_content" fontSize={['14px','14px','14px','14px','16px','20px']}>Autonomous World Demo: AI Town</Text>         
+          <Text className="fm1 fw600 gray gradient_content" fontSize={['14px','14px','14px','14px','16px','20px']}>Autonomous World Demo: AI Town</Text>         
         </Box>
         { descriptionFun('Welcome to AI Town, the first demo of World.Fun autonomous world launchpad, featuring 1,000 live agents living, evolving and socializing in a world of endless possibilities.')}
         <Box 
@@ -84,7 +84,7 @@ export default function PlayerDetails({
           w="100%"
           h="46px"
         >
-          <Text className="fw600 gray gradient_content" fontSize={['14px','14px','14px','14px','16px','20px']}>Engage to Earn World Points</Text>         
+          <Text className="fm1 fw600 gray gradient_content" fontSize={['14px','14px','14px','14px','16px','20px']}>Engage to Earn World Points</Text>         
         </Box>
 
        
@@ -181,7 +181,7 @@ export default function PlayerDetails({
             w="100%"
             h="46px"
           >
-            <Text className="fw600 gray gradient_content" fontSize={['16px','16px','16px','16px','20px','24px']}>{playerDescription?.name || ''}</Text>         
+            <Text className="fm2 fw600 gray gradient_content" fontSize={['16px','16px','16px','16px','20px','24px']}>{playerDescription?.name || ''}</Text>         
           </Box>
 
         <Image src={Close} w="34px" h="34px" className='click' onClick={() => {
@@ -238,7 +238,7 @@ export default function PlayerDetails({
       )}
       {!playerConversation && previousConversation && (
         <div style={{ }} className=''>
-          { descriptionFun('Previous conversation')}
+          {/* { descriptionFun('Previous conversation')} */}
 
           <Messages
             worldId={worldId}

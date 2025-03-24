@@ -49,10 +49,10 @@ export const Notification: FC<iNotification> = ({
                 >
                     <Box className="fx-row ai-ct jc-sb w100">
                         <Box w="35px" h="35px"/>
-                        <Text className="gray" fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} mt="20px">{title}</Text>  
+                        <Text className="gray fm2" fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} mt="20px">{title}</Text>  
                         <Image src={Close}  w="35px" h="35px" className="click" onClick={onClose}/>          
                     </Box>
-                    <Text className="gray " fontWeight={400} fontSize={['16px','16px','16px','16px','18px','20px']} mt="99px">{content}</Text>             
+                    <Text className="gray fm3" fontWeight={400} fontSize={['16px','16px','16px','16px','18px','20px']} mt="99px">{content}</Text>             
                 </ModalBody>                
             </ModalContent>
         </Modal>

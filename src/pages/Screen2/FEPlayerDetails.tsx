@@ -23,7 +23,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
             py="25px" 
             bgColor='#838B8D' 
             mt="10px">
-          <Text className='gradient_content' fontWeight={400} color="#101010" fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
+          <Text className='gradient_content fm3' fontWeight={400} color="#101010" fontSize={['14px','14px','14px','14px','14px','16px']}>{d}</Text>
         </Box>
     ) 
       
@@ -37,7 +37,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
                     <Box className='  fx-row ai-ct jc-sb' >     
                         
                         <Box className="center gradient_border " w="100%" h="46px">
-                            <Text className="gradient_content" color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{currentFEAgent.name}</Text>
+                            <Text className="gradient_content fm2" color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{currentFEAgent.name}</Text>
                         </Box>
                         <Image 
                             ml={['24px','24px','24px','24px','36px','54px']} 
@@ -53,7 +53,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
                             {
                                 currentFEAgent.conversation.map((item:any) => (
                                 <Box key={item.timestamp} className='fx-col' mt="10px">
-                                    <Box className='fx-row ai-ct jc-sb'>
+                                    <Box className='fx-row ai-ct jc-sb fm3'>
                                         <Text color="#E0E0E0" fontWeight={600} fontSize={['14px','14px','14px','14px','14px','16px']}>{item.role}</Text>
                                         <Text color="#838B8D" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{formatYYYYMMDDHHMMSS(item.timestamp) }</Text>
                                     </Box>
@@ -73,6 +73,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
                                                 currentFEAgent.status.map((item:any) => (
                                                     <Text 
                                                         w="50%"
+                                                        className='fm3'
                                                         key={item.title} 
                                                         color="#293033"
                                                         fontSize={['14px','14px','14px','14px','14px','16px']}>
@@ -88,7 +89,7 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
                                 currentFEAgent.events.map((item:any) => (
                                     <Box 
                                         key={item.action} 
-                                        className='box_clip fx-row ai-ct jc-sb' 
+                                        className='box_clip fx-row ai-ct jc-sb fm3' 
                                         py="20px" 
                                         px="20px" 
                                         whiteSpace="nowrap"

@@ -142,14 +142,17 @@ export const Nav = () => {
                         h={[46]}
                         bgColor='#293033' 
                         disabled={isConnected ? (!!!canCheckIn) : false}
-                        className=" click box_clip" 
+                        className=" click box_clip " 
                         boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
                         _hover={{
                             bgColor: '#838B8D'
                         }}
                     >
-                        <Font16 t={checkStatus === null ? 'Daily Clock-in' :
-                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}/>
+                        <div className='fm2'>
+                            <Font16 t={checkStatus === null ? 'Daily Clock-in' :
+                                (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}/>
+
+                        </div>
                     </Button>
 
 
@@ -186,7 +189,9 @@ export const Nav = () => {
                         }}
                     >
                         <Image src={PointsImg} w="24px" h="25px" mr="5px" />     
-                        <Font16 t={`World Points: ${checkStatus ? checkStatus?.currentPoints : 0}`}/>                       
+                        <div className='fm2'>
+                            <Font16 t={`World Points: ${checkStatus ? checkStatus?.currentPoints : 0}`}/>     
+                        </div>                  
                     </Button>
                    
                   

@@ -129,7 +129,7 @@ export const PixiGame:React.FC<{
       }
     }
   },[agentInfo])
-  
+
   // Zoom on the user's avatar when it is created
   useEffect(() => {
     if (!viewportRef.current || humanPlayerId === undefined) return;

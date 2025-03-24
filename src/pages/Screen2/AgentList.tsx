@@ -51,32 +51,18 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                 w={256}
                 h={46}
                 onClick={() => setVisible(!visible)}
-                title={
-                    <Box className='fx-row ai-ct jc-sb w100 ' h="46px">
+                title=""
+                isFixedWidth={true}
+                titleDiv={
+                    <Box className='fx-row ai-ct jc-sb w100  ' h="46px"  >
                         <Font16 t="Agent List"/>
                         <Image src={Transform} w="25px" h="18px"/>
                     </Box>
                 }
             />   
-            {/* <ClickButtonWrapper onClick={() => setVisible(!visible)} disable={false} clickableDisabled={true}>
-                <Box 
-                    bgImage={ButtonBgMd}
-                    bgSize="cover"
-                    bgPosition='center'
-                    bgRepeat="no-repeat"    
-                    className="click fx-row ai-ct jc-sb"
-                    h='50px'
-                    w="256px"
-                    px="24px"
-                >
-                    <Font16 t="Agent List"/>
-                    <Image src={Transform} w="25px" h="18px"/>
-                </Box>
-            </ClickButtonWrapper> */}
-
             {
-                visible &&  
-                    <Box className='card1_border w100 h100'  h='397px' w="256px">
+                visible &&   //
+                    <Box className='card1_border  h100 '  h='397px' >
                         <Box  className='card1_border_content w100 h100' p="10px">
                             <Box className='card2_border w100 h100' >
                                 <Box className='card2_border_content w100 h100' overflowY="scroll"  h="calc(100% - 22px)" onWheel={(e) => e.stopPropagation()} > 
@@ -86,10 +72,7 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                                 </Box>
                             </Box>
                         </Box>
-                    </Box>
-
-           
-                  
+                    </Box>                  
             }
         </Box>    
     )
@@ -115,7 +98,7 @@ const ListItem:FC<{ item:any, idx: number, focusAgent:() => void }>= ({ item,idx
                 color: '#293033'
                 }}
             >
-                    <Text color="#E0E0E0" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{item.name}</Text>
+                    <Text color="#E0E0E0" className='fm3' fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{item.name}</Text>
 
                 {
                     isSpecialAgent && 

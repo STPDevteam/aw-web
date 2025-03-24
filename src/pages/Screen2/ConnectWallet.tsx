@@ -74,7 +74,7 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                               bgColor: '#838B8D'
                           }}
                       >
-                          <Text fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','14px','16px']}>
+                          <Text className='fm2' fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','14px','16px']}>
                           Login
                           </Text>
                       </Button>
@@ -90,7 +90,9 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                         boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
                         px={['12px','12px','12px','15px','15px']}
                       >
-                          <Font16 t={`@${account?.displayName}`} c="#1F1F23"/>
+                          <div className='fm2'>
+                            <Font16 t={`@${account?.displayName}`} c="#1F1F23"/>
+                          </div>
                           <Image 
                               src={ArrowBottom} 
                               h="8px"
@@ -111,11 +113,11 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                         <Box mt="30px" mb="150px">
                             <Box className="fx-row ai-ct">
                                 <Image src={Logo} w={['60px','60px','60px','70px','80px','90px']} h={['60px','60px','60px','70px','80px','90px']}  borderRadius="50%" />
-                                <Text className='gray ' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} ml="15px">@{`${account?.address.substring(0,4)}...${account?.address.substring(account?.address.length - 4,)}`}</Text>
+                                <Text className='gray fm2' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} ml="15px">@{`${account?.address.substring(0,4)}...${account?.address.substring(account?.address.length - 4,)}`}</Text>
                             </Box>
-                            <Text className=" gray" fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} mt="30px">World Points: <span className="fw400">{points || '--'}</span></Text>
+                            <Text className="fm2 gray" fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']} mt="30px">World Points: <span className="fw400">{points || '--'}</span></Text>
                             <Box className="box_clip center" mt="10px" w="515px" h="60px" bgColor="#838B8D">
-                                <Text color="#293033" fontWeight={350} fontSize={['16px']}>{ account?.address }</Text>
+                                <Text color="#293033" fontWeight={350} fontSize={['16px']} className='fm3'>{ account?.address }</Text>
                             </Box>
                         </Box>
                     }

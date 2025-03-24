@@ -131,14 +131,14 @@ export const Chat:React.FC<iChat> = ({ worldId, startChat, agentCreated, endChat
                                 <Box key={item.text} mt="10px">
                                     <Box className='fx-row ai-ct jc-sb'>
                                         {
-                                            item.isAgent ? <Text className='gray ' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>{item.speaker}</Text> : <div/>
+                                            item.isAgent ? <Text className='gray fm2' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>{item.speaker}</Text> : <div/>
                                         }
                                         {
-                                            item.isAgent ? <div/> : <Text className='gray ' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>{item.speaker}</Text>
+                                            item.isAgent ? <div/> : <Text className='gray fm2' fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>{item.speaker}</Text>
                                         }
                                     </Box>
 
-                                    <Box  className='center box_clip' p="20px" mt="10px" w="515px"  bgColor="#838B8D">                        
+                                    <Box  className='center box_clip fm3' p="20px" mt="10px" w="515px"  bgColor="#838B8D">                        
                                         <Text className='gray2 fz400'>{item.text}</Text>
                                     </Box>
                                 </Box>

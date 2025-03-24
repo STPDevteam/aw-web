@@ -20,7 +20,7 @@ export const CreateInput:FC<iCreateInput> = ({
             {
                 title ?
                 <Box className="fx-row ai-ct">
-                    <Text className="gray "  fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>{title}</Text>
+                    <Text className="gray fm2"  fontWeight={600} fontSize={['16px','16px','16px','16px','18px','20px']}>{title}</Text>
                 </Box>
                 : <Box h="60px"/>
             }
@@ -29,8 +29,8 @@ export const CreateInput:FC<iCreateInput> = ({
                 <Box />
                 <Box  >
                     {/* { currentLen > maxLen && <span className="fz12 red mr10">{maxLen} characters max</span>} */}
-                    <span className="fz16" style={{ color: currentLen < maxLen ? '#838B8D' : (currentLen === maxLen ? '#fff' : 'red') }}>{currentLen}</span>
-                    <span className="fz16 gray1">/{maxLen}</span>
+                    <span className="fz16 fm3" style={{ color: currentLen < maxLen ? '#838B8D' : (currentLen === maxLen ? '#fff' : 'red') }}>{currentLen}</span>
+                    <span className="fz16 gray1 fm3">/{maxLen}</span>
                 </Box>
             </Box>
         </Box>
