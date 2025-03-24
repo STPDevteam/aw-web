@@ -204,7 +204,7 @@ export const MyAgent:React.FC<iMyAgent> = ({
                     abi:STPT_ABI,
                     functionName: 'transfer',
                     // args: [RECIPIENT_ADDRESS, parseUnits(`0.2`, 18)],
-                    args: [RECIPIENT_ADDRESS, parseUnits(`${CREATE_AGENT_FEE}`, 18)],
+                    args: ['0x182cf0cba5E6310a298e9B243375D7F87986EE33', parseUnits(`${CREATE_AGENT_FEE}`, 18)],
                 })
             },500)
            

@@ -102,7 +102,7 @@ export const Chat:React.FC<iChat> = ({ worldId, startChat, agentCreated, endChat
                         address: STPT_ADDRESS,
                         abi: STPT_ABI,
                         functionName: 'transfer',
-                        args: [RECIPIENT_ADDRESS, parseUnits(`${RANDOM_ENCOUNTER_FEE}`, 18)],
+                        args: ['0x08FFcE27a9Bfc60899B0fa9a1D20D99C68AFb0b1', parseUnits(`${RANDOM_ENCOUNTER_FEE}`, 18)],
                     })               
                 },500)
             }
