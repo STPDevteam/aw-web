@@ -140,7 +140,7 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
             <span>Built in collaboration with our core AI contributor </span>
             <a className='gray click underline'  href='https://zhiqiangxie.com/'  target='_blank'>Zhiqiang Xie</a>
             <span> from Stanford University, this simulation brings his </span>
-            <a className='gray click underline'  href='https://arxiv.org/abs/2411.03519'  target='_blank'>AI Metropolis </a>
+            <a className='gray click underline'  href='https://arxiv.org/abs/2411.03519'  target='_blank'>AI Metropolis</a>
             <span> paper to life, enabling massively multi-agent simulations while drastically reducing compute and inferencing costs.</span>
 
           </p>
