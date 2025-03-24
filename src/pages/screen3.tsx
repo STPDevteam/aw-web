@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Flex, Text, useBreakpointValue, Grid, Image } from '@chakra-ui/react'
+import { Box, Flex, Text, useBreakpointValue, Grid, AspectRatio } from '@chakra-ui/react'
 import { 
   Screen3Bg1, 
   Screen3Bg2, 
@@ -62,7 +62,7 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
       { columns as number > 2 && <Box w="160px" className=''/>}
       <Box className='fx-col ai-ct w100 h100 '>
         <Box
-          height={['105px','142px','172px','215px','215px']}
+          height={['105px','142px','165px','175px','175px','215px']}
           className='w100 fx-col ai-ct jc-ct'
         >
           <Text className='gray fm3' fontSize={['24px','32px','36px','36px','40px', '48px']}>Launchpad</Text>
@@ -79,6 +79,7 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
           // borderColor={['red','green','yellow','blue','pink',]}
           px={['10px','10px','10px','0px','0px',]}
           overflowX="hidden"
+          maxW="1720px"
         >
           {slides.map((bg, idx) => {
             const widthValue =
@@ -91,11 +92,12 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
             return (
               <Box
                 key={bg}
-                className="click"
+                className="click "
                 onMouseOver={() => isMobile() ? null : setActiveIdx(idx)}
                 onMouseLeave={() => isMobile() ? null : setActiveIdx(-1)}
                 w={widthValue}
-                h={['300px','420px','480px','600px','600px']}
+                // w={[300 * 0.71667, 420 * 0.71667,420 * 0.71667,480 * 0.71667,500 * 0.71667, 600 * 0.71667]}
+                h={['300px','420px','420px','480px','480px', '600px']}
                 pos='relative'
                 borderRadius='0 0 16px 16px'
                 overflow="hidden"
@@ -103,8 +105,10 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
                 transform={activeIdx === idx ? "scale(1.1)" : "scale(1)"}
 
                 style={{
-                  backgroundImage: `url(${bg})`,
+                  // backgroundSize: 'contain',
                   backgroundSize: 'cover',
+                  // aspectRatio: "430/600",
+                  backgroundImage: `url(${bg})`,
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat',
                 }}
@@ -119,12 +123,12 @@ export const Screen3:React.FC<{ isActive: boolean }> = ({ isActive }) => {
                   bgColor='rgba(34, 52, 74, 0.40)'
                   backdropFilter='blur(25px)'
                   w={widthValue}
-                  h={['115px','114px','164px','206px','206px']}
+                  h={['115px','114px','140px','140px','160px', '206px']}
                   transition="width 0.5s ease"
                   
                 >
-                  <Text className='fm1 gray' fontSize={['14px','18px','22px','26px','26px']}>{titles[idx].t1}</Text>
-                  <Text className='fm2 gray' fontSize={['12px','14px','14px','16px','16px']}>{titles[idx].t2}</Text>
+                  <Text className='fm1 gray' fontSize={['14px','18px','22px','22px','22px', '26px']}>{titles[idx].t1}</Text>
+                  <Text className='fm2 gray' fontSize={['12px','14px','14px','14px','14px','16px']}>{titles[idx].t2}</Text>
                 </Box>
               </Box>
             );
