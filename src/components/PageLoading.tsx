@@ -58,7 +58,6 @@ export const PageLoading: FC<iPageLoading> = ({
                         mb="5px"
                         animate={{
                             x: `${loadingProgress * maxW}px`,
-                            rotateY: '180deg'
                         }}
                         transition={{ duration: 0.5, ease: "linear", }}
                     />

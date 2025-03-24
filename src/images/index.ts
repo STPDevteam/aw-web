@@ -55,3 +55,7 @@ export { default as NavM22 } from "./nav_m2_2.png";
 
 export { default as NavM31 } from "./nav_m3_1.png";
 export { default as NavM32 } from "./nav_m3_2.png";
+
+export { default as Mouse1 } from "./mouse1.png";
+export { default as Mouse2 } from "./mouse2.png";
+export { default as Mouse3 } from "./mouse3.png";
