@@ -26,8 +26,8 @@ export const mapRightWidth = 494
 export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
   
   const [delayRender, setDelayRender] = useState(false)
-  const [isNewHand,  setNewHand] = useState(true)
-
+  const [guideOpen, setGuideOpen] = useState(false)
+  
   const [currentFEAgent, setCurrentFEAgent] = useState<any>()
   const [mapLoadingStatus, setMapLoadingStatus] = useState<'notStarted' | 'loading' | 'end'>('notStarted')
 
@@ -62,33 +62,39 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
   const newRef = useRef<HTMLDivElement | null>(null)
 
   function handleClickOutside(event:MouseEvent) {
-    if (newRef.current && event.target instanceof Node && !newRef.current.contains(event.target)) {
+    if (guideOpen && newRef.current && event.target instanceof Node && !newRef.current.contains(event.target)) {
       hideGuide()
     }
   }
+
   function hideGuide() {
-    setNewHand(false)
-    localStorage.setItem('isNewHand','no')
+
+    setGuideOpen(false)
+    localStorage.setItem('guide_page_alive','no')
   }
 
   useEffect(() => {    
-    const isNewHand = localStorage.getItem('isNewHand')
-    if(isNewHand && isNewHand === 'no') {
-      setNewHand(false)
-    }else {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
+    document.addEventListener("mousedown", handleClickOutside)
     const timer = setTimeout(() => {
       setDelayRender(true);
     }, 3000)
   
     return () => {
       clearTimeout(timer)
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
 
+  useEffect(() => {
+    if(mapLoadingStatus === 'end') {
+      const guide_page_alive = localStorage.getItem('guide_page_alive')
+      if(!!!guide_page_alive) {
+        setGuideOpen(true)
+      }
+    }
+
+  
+  },[mapLoadingStatus])
 
   if (!worldId || !engineId || !game) {
     return null;
@@ -163,7 +169,7 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
         <AgentList  worldId={worldId}/>
       </Box>         
         
-      <Box  maxW={`${mapContainerWidth}px`} className='map1_border_content w100 fx-row ai-ct jc-sb'>
+      <Box maxW={`${mapContainerWidth}px`} className='map1_border_content w100 fx-row ai-ct jc-sb'>
         <Box
           w={_leftWidth}
           h={`${h}px`}
@@ -172,7 +178,6 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
           pos='relative'
         > 
           <BorderBox >
-           
               {
                  mapLoadingStatus !== 'end' && 
                 <Box className='center h100 w100 fx-col ai-ct'>
@@ -201,9 +206,8 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
                   h="calc(100% - 1px)" 
                   display={ mapLoadingStatus === 'end' ? 'block' : 'none'}
                 >
-
                   {
-                    isNewHand &&  //  
+                    guideOpen && 
                     <Box 
                       ref={newRef} 
                       onWheel={(e) => null}  
@@ -212,11 +216,7 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
                       bgColor="rgba(0,0,0,0.8)" 
                       w="100%"
                       h="100%"
-                     
-
-                      pos='absolute'
-                    
-                   
+                      pos='absolute'                   
                       px={['90px','90px','90px','126px','144px','180px']}
                     >
                       <Box className='fx-col ai-ct '>
