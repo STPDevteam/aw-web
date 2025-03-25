@@ -3,15 +3,15 @@ import { Box, Text,Button, Image, Tooltip} from '@chakra-ui/react'
 import { Font16, SvgButton, BorderButton} from '@/components'
 import { ConnectWallet } from './ConnectWallet'
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../convex/_generated/api.js'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks.js'
-import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, selectMyAgentPopupVisible } from '@/redux/reducer/agentReducer.js'
+import { api } from '../../../convex/_generated/api'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, selectMyAgentPopupVisible } from '@/redux/reducer/agentReducer'
 import {  useAccount, useSignMessage} from 'wagmi'
 import { MyAgent } from './MyAgent'
 import { Chat } from './Chat'
 import { PointsImg } from '@/images'
 import { motion } from "framer-motion"
-import { openLink } from '@/utils/tool.js';
+import { openLink } from '@/utils/tool'
 
 const MotionBox = motion(Box)
 
@@ -37,6 +37,9 @@ export const Nav = () => {
       
     // console.log('checkStatus', checkStatus)
     // console.log('canCheckIn', canCheckIn)
+
+    // const { formattedTime, isEnd, clearTimer } = useCountdown(checkStatus?.nextResetTime - checkStatus.)
+
 
     const worldStatus = useQuery(api.world.defaultWorldStatus)
     const worldId = worldStatus?.worldId   
@@ -155,8 +158,35 @@ export const Nav = () => {
         { name: 'Create Agent', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: true })) },
     ]
 
-   
-    return(
+    // const isClaimed = isConnected && checkStatus && checkStatus?.canCheckIn === false
+
+    // const [countdown, setCountdown] = useState<string>('--')
+
+    // const formatTime = (seconds: number) => {
+    //     const hours = Math.floor(seconds / 3600);
+    //     const minutes = Math.floor((seconds % 3600) / 60);
+    //     const secs = seconds % 60;
+        
+    //     const formattedHours = String(hours).padStart(2, '0');
+    //     const formattedMinutes = String(minutes).padStart(2, '0');
+    //     const formattedSeconds = String(secs).padStart(2, '0');
+    //     return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+    // }
+    
+    // useEffect(() => {
+    //     if(isClaimed && checkStatus) {
+    //         const { nextResetTime, lastCheckIn } = checkStatus
+    //         console.log('checkStatus', checkStatus)
+    //         if(nextResetTime && lastCheckIn) {
+    //             const t = nextResetTime - lastCheckIn
+    //             const restTime =  formatTime(t/1000)
+               
+
+    //         }
+    //     }
+    // },[isClaimed, checkStatus])
+
+    return( 
         <Box className='w100' maxW="1720px" mb="20px">
             <Box className='fx-row ai-ct jc-sb w100'>
                 {/*  left */}
@@ -186,14 +216,17 @@ export const Nav = () => {
                         disable={isConnected ? (!!!canCheckIn) : false}
                         w={180}
                         h={46}
-                        title={checkStatus === null ? 'Daily Clock-in' :
-                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}
+                        title={
+                            // isClaimed ? 'hh:mm:ss' : 'Daily Clock-in'
+                            checkStatus === null ? 'Daily Clock-in' :
+                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')
+                        }
                         onClick={onClaim}
                     />  
                      <BorderButton
                         w={180}
                         h={46}
-                        title='Buy $STPT'
+                        title='Get $STPT'
                         onClick={() => openLink('https://aerodrome.finance/swap?from=0x833589fcd6edb6e08f4c7c32d4f71b54bda02913&to=0x4489d0a0345ecb216a3994de780d453c7fa6312c&chain0=8453&chain1=8453')}
                     />
 
