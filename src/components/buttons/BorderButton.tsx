@@ -13,6 +13,7 @@ interface iBorderButton {
   isFixedWidth?: boolean
   titleDiv?: React.ReactNode
   hover?: string
+  disableStillHasHoverEvent?: boolean
   tooltip?: {
     label: string
     size: 'md' | 'sm'
@@ -29,7 +30,8 @@ export const BorderButton:React.FC<iBorderButton> = ({
   isFixedWidth,
   titleDiv,
   hover,
-  tooltip
+  tooltip,
+  disableStillHasHoverEvent = false
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   
@@ -68,17 +70,17 @@ export const BorderButton:React.FC<iBorderButton> = ({
             bgColor='none'
             >
                 <Button
-                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseEnter={ () => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                   className='click box_clip fm2'
                   w={isFixedWidth ? [w-4] : [(w - 4)*0.5,(w - 4)*0.5,(w - 4)*0.5,(w - 4)*0.7,(w - 4)*0.8,w - 4,]}
                   h={`${h-4}px`}
                   onClick={handleClick}
-                  bg="none"
+                  bg={disableStillHasHoverEvent ? '#7E8081' : 'none'}
                   color="#E0E0E0" 
                   _hover={{ 
                       color: disable ? '#E0E0E0' : '#293033',
-                      bgColor: '#838B8D',
+                      bgColor: disableStillHasHoverEvent ? '#7E8081' : '#838B8D',
                   }}
                   _active={{ bg: "transparent" }}
                   _focus={{ boxShadow: "none" }}

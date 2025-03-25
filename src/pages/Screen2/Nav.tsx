@@ -16,30 +16,17 @@ import { openLink } from '@/utils/tool'
 const MotionBox = motion(Box)
 
 export const Nav = () => {
+    const [countdown, setCountdown] = useState<string>('--')
     const [canCheckIn, setCanCheckIn] = useState<any>(false)
-
     const [visible, setVisible] = useState<boolean>(false)
     const [walletOpen, setWalletOpen] = useState<boolean>(false)
-   
-    const [startChat, setStartChat] = useState<boolean>(false)
-
-
-
-    // const [quickCreateOpen, setQuickCreateOpen] = useState(false)
-    // const [quickMyOpen, setQuickMyOpen] = useState(false)
-    // const [quickConfirmOpen, setQuickConfirmOpen] = useState(false)
-
     const { address, isConnected } = useAccount()
     const dispatch = useAppDispatch()
     const myAgentPopupVisible = useAppSelector(selectMyAgentPopupVisible)  
     const dailyCheckIn = useMutation(api.wallet.dailyCheckIn)       
     const checkStatus = useQuery(api.wallet.getCheckInStatus,{ walletAddress: address ?? '' })
       
-    // console.log('checkStatus', checkStatus)
     // console.log('canCheckIn', canCheckIn)
-
-    // const { formattedTime, isEnd, clearTimer } = useCountdown(checkStatus?.nextResetTime - checkStatus.)
-
 
     const worldStatus = useQuery(api.world.defaultWorldStatus)
     const worldId = worldStatus?.worldId   
@@ -56,6 +43,31 @@ export const Nav = () => {
     useEffect(() => {   
         setCanCheckIn(checkStatus?.canCheckIn || false)
     }, [checkStatus?.canCheckIn])
+
+    const isClaimed = isConnected && checkStatus && checkStatus?.canCheckIn === false
+
+    
+
+    useEffect(() => {
+        if (isClaimed && checkStatus) {
+          const { nextResetTime } = checkStatus;
+          if (nextResetTime) {
+            const updateCountdown = () => {
+              const remainingSeconds = Math.max(0, Math.floor((nextResetTime - Date.now()) / 1000));
+              setCountdown(formatTime(remainingSeconds));
+              if (remainingSeconds === 0) {
+                setCanCheckIn(true);
+              }
+            };
+      
+            updateCountdown(); 
+            const timerId = setInterval(updateCountdown, 1000);
+            return () => clearInterval(timerId);
+          }
+        }
+    }, [isClaimed, checkStatus, setCanCheckIn])
+      
+    
 
     useEffect(() => {
         if(address && isConnected) {
@@ -158,33 +170,19 @@ export const Nav = () => {
         { name: 'Create Agent', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: true })) },
     ]
 
-    // const isClaimed = isConnected && checkStatus && checkStatus?.canCheckIn === false
+   
 
-    // const [countdown, setCountdown] = useState<string>('--')
-
-    // const formatTime = (seconds: number) => {
-    //     const hours = Math.floor(seconds / 3600);
-    //     const minutes = Math.floor((seconds % 3600) / 60);
-    //     const secs = seconds % 60;
+    const formatTime = (seconds: number) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
         
-    //     const formattedHours = String(hours).padStart(2, '0');
-    //     const formattedMinutes = String(minutes).padStart(2, '0');
-    //     const formattedSeconds = String(secs).padStart(2, '0');
-    //     return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
-    // }
-    
-    // useEffect(() => {
-    //     if(isClaimed && checkStatus) {
-    //         const { nextResetTime, lastCheckIn } = checkStatus
-    //         console.log('checkStatus', checkStatus)
-    //         if(nextResetTime && lastCheckIn) {
-    //             const t = nextResetTime - lastCheckIn
-    //             const restTime =  formatTime(t/1000)
-               
+        const formattedHours = String(hours).padStart(2, '0');
+        const formattedMinutes = String(minutes).padStart(2, '0');
+        const formattedSeconds = String(secs).padStart(2, '0');
+        return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+    }
 
-    //         }
-    //     }
-    // },[isClaimed, checkStatus])
 
     return( 
         <Box className='w100' maxW="1720px" mb="20px">
@@ -201,6 +199,7 @@ export const Nav = () => {
                     />
 
                     <BorderButton
+                        disableStillHasHoverEvent={true}
                         w={180}
                         h={46}
                         hover="Coming Soon"
@@ -217,7 +216,7 @@ export const Nav = () => {
                         w={180}
                         h={46}
                         title={
-                            // isClaimed ? 'hh:mm:ss' : 'Daily Clock-in'
+                            // isClaimed ? countdown : 'Daily Clock-in'
                             checkStatus === null ? 'Daily Clock-in' :
                             (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')
                         }
