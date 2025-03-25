@@ -16,7 +16,8 @@ export const Screen2:FC<{ feAgentsInfo:any, currentIndex: number }> = ({  feAgen
   const dispatch = useAppDispatch()
    
 
-    
+  const _h = 0.375531 * window.innerWidth 
+  const worldHeight = _h > 706 ? "706px" : `${_h}px`
   return(
     <ProgressiveBackground
           blurAmount={20}              
@@ -33,16 +34,16 @@ export const Screen2:FC<{ feAgentsInfo:any, currentIndex: number }> = ({  feAgen
         >
      
         <Box 
-          className='w100 fx-row ai-ct h100 '  
+          className='w100 fx-row ai-ct h100'  
           display={['none','none','none','flex','flex']}
         > 
           <Box minW="115px" w="160px" h="100px"/>
           
 
-          <Box className=' w100 fx-col ai-ct ' >
+          <Box className=' w100 center fx-col' >
             <Nav/>
-            <Box className='h100 '>
-              <Game feAgentsInfo={feAgentsInfo}/>
+            <Box h={worldHeight}>
+              <Game worldHeight={worldHeight} feAgentsInfo={feAgentsInfo}/>
             </Box>
           </Box>
 

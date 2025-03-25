@@ -23,7 +23,7 @@ export const mapContainerHeight = 661
 export const mapLeftWidth = 1145
 export const mapRightWidth = 494
 
-export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
+export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAgentsInfo, worldHeight }) => {
   
   const [delayRender, setDelayRender] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
@@ -101,7 +101,6 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
   } 
 
   const h = 0.351595 * window.innerWidth > 661 ? 661 : 0.351595 * window.innerWidth
-  const _h = 0.375531 * window.innerWidth 
 
   const _leftWidth = h / 0.56933 
   const _rightWidth = 0.262765 * window.innerWidth 
@@ -154,10 +153,10 @@ export const Game:React.FC<{ feAgentsInfo:any[] }>= ({  feAgentsInfo }) => {
 
   return (  
     <Box 
-      className='map1_border fx-row ai-ct jc-sb ' 
+      className='map1_border fx-row ai-ct jc-sb' 
       w='100%'
       maxW={`${mapContainerWidth}px`} 
-      h={_h > 706 ? "706px" : `${_h}px`}
+      h={worldHeight}
       py="30px"
       px={['4px','4px','12px','24px','24px']}
       pos='relative'
