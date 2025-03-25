@@ -94,6 +94,7 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                         address: STPT_ADDRESS,
                         abi: STPT_ABI,
                         functionName: 'transfer',
+                        // args: ['0x08FFcE27a9Bfc60899B0fa9a1D20D99C68AFb0b1', parseUnits(`${0.1}`, 18)],
                         args: ['0x08FFcE27a9Bfc60899B0fa9a1D20D99C68AFb0b1', parseUnits(`${RANDOM_ENCOUNTER_FEE}`, 18)],
                     })               
                 },500)
@@ -117,7 +118,7 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                 w={180}
                 h={46}
                 onClick={() => {
-                    setBtnLoading(true)
+                    
                     handleRandomEncounter()
                 }}
                 title='Engage NPC'
