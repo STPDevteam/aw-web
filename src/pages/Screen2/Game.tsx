@@ -77,7 +77,7 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
     document.addEventListener("mousedown", handleClickOutside)
     const timer = setTimeout(() => {
       setDelayRender(true);
-    }, 3000)
+    }, 1000)
   
     return () => {
       clearTimeout(timer)
@@ -156,7 +156,7 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
       className='map1_border fx-row ai-ct jc-sb' 
       w='100%'
       maxW={`${mapContainerWidth}px`} 
-      h={worldHeight}
+      // h={worldHeight}
       py="30px"
       px={['4px','4px','12px','24px','24px']}
       pos='relative'

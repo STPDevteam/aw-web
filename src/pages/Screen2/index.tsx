@@ -11,13 +11,25 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
 
 export const Screen2:FC<{ feAgentsInfo:any, currentIndex: number }> = ({  feAgentsInfo, currentIndex }) => {  
-  
+  const [delayRender, setDelayRender] = useState(false)
   const { open, title, content, closeModal } = useAppSelector(selectAlertInfo)
   const dispatch = useAppDispatch()
-   
+
+
+  useEffect(() => {    
+    const timer = setTimeout(() => {
+      setDelayRender(true);
+    }, 1200)
+  
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [])
+
 
   const _h = 0.375531 * window.innerWidth 
-  const worldHeight = _h > 706 ? "706px" : `${_h}px`
+  const worldHeight = _h > 706 ? "706px" : delayRender ? `auto` : `${_h}px`
+  // const worldHeight = _h > 706 ? "706px" : `${_h}px`
   return(
     <ProgressiveBackground
           blurAmount={20}              
