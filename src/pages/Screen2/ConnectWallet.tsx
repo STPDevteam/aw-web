@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect, useRef } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { ClickButtonWrapper, SvgButton, BasePopup, Font16,  } from '@/components'
+import { ClickButtonWrapper, BorderButton, BasePopup, Font16,  } from '@/components'
 import { Image, Text, Box, Button } from "@chakra-ui/react"
 import { ArrowBottom, Logo } from '@/images'
 import { useAccount, useDisconnect, useConnect } from 'wagmi';
@@ -62,25 +62,33 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                 {(() => {
                   if (!connected) {
                     return (
-
-                      <Button 
-                          w={[180]}
-                          h={[46]}
-                          onClick={openConnectModal}
-                          bgColor='#293033' 
-                          className=" click box_clip" 
-                          boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
-                          _hover={{
-                              bgColor: '#838B8D'
-                          }}
-                      >
-                          <Text className='fm2' fontWeight={350}  color="#E0E0E0" fontSize={['14px','14px','14px','14px','14px','16px']}>
-                          Login
-                          </Text>
-                      </Button>
+                      <BorderButton
+                        w={180}
+                        h={46}
+                        title='Login'
+                        onClick={openConnectModal}
+                      />                       
                     )
                   }
-                  return (                   
+                  return (               
+                    // <BorderButton
+                    //   w={180}
+                    //   h={46}
+                    //   title=""
+                    //   onClick={openConnectModal}
+                    //   titleDiv={
+                    //     <Box className='fm2 fx-row ai-ct jc-sb w100 bd1' h="46px" bgColor='white'>
+                    //         <Font16 t={`@${account?.displayName}`}/>
+                    //         <Image 
+                    //           src={ArrowBottom} 
+                    //           h="8px"
+                    //           w="15.2px" 
+                    //           transform={ menuIsOpen ? 'rotate(-180deg)' : 'rotate(0deg)'} 
+                    //           transition="transform 0.3s"
+                    //       />  
+                    //     </Box>
+                    //   }
+                    // />   
                     <ClickButtonWrapper onClick={menuOpen}>
                       <Box 
                         w={[180]}
@@ -88,7 +96,7 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                         bgColor='#E0E0E0' 
                         className="fx-row ai-ct jc-sb click box_clip" 
                         boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
-                        px={['12px','12px','12px','15px','15px']}
+                        px={['12px','12px','12px','12px', '15px']}
                       >
                           <div className='fm2'>
                             <Font16 t={`@${account?.displayName}`} c="#1F1F23"/>

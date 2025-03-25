@@ -11,6 +11,7 @@ import { MyAgent } from './MyAgent'
 import { Chat } from './Chat'
 import { PointsImg } from '@/images'
 import { motion } from "framer-motion"
+import { openLink } from '@/utils/tool.js';
 
 const MotionBox = motion(Box)
 
@@ -170,7 +171,6 @@ export const Nav = () => {
                     />
 
                     <BorderButton
-                        isFixedWidth={true}
                         w={180}
                         h={46}
                         hover="Coming Soon"
@@ -184,13 +184,19 @@ export const Nav = () => {
 
                     <BorderButton
                         disable={isConnected ? (!!!canCheckIn) : false}
-                        isFixedWidth={true}
                         w={180}
                         h={46}
                         title={checkStatus === null ? 'Daily Clock-in' :
                             (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}
                         onClick={onClaim}
-                    /> 
+                    />  
+                     <BorderButton
+                        w={180}
+                        h={46}
+                        title='Buy $STPT'
+                        onClick={() => openLink('https://aerodrome.finance/swap?from=0x833589fcd6edb6e08f4c7c32d4f71b54bda02913&to=0x4489d0a0345ecb216a3994de780d453c7fa6312c&chain0=8453&chain1=8453')}
+                    />
+
                     
                     <Box pos='relative' className='' >
                         <ConnectWallet 

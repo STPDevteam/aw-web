@@ -122,7 +122,6 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
         <Box>
             
                 <BorderButton
-                    isFixedWidth={true}
                     loading={btnLoading} 
                     w={180}
                     h={46}

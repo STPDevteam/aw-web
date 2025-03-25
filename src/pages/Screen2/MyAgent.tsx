@@ -264,7 +264,6 @@ export const MyAgent:React.FC<iMyAgent> = ({
     return (
         <Box>
              <BorderButton
-                isFixedWidth={true}
                 disable={AGENT_CREATED}
                 loading={btnLoading} 
                 w={180}
