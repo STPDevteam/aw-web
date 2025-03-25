@@ -50,11 +50,19 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
 
     useEffect(() => {
         if(hash && isConfirmed) {
-            startEncounter()            
+               
+            dispatch(alertInfoAction({
+                open: true,
+                title: 'Successful',
+                content: 'Engage NPC complete! World Points +40.',
+                closeModal:() =>  startEncounter() 
+            }))   
+
         }
     },[hash, isConfirmed])
 
-    const startEncounter = async() => {
+    const startEncounter = async() => {            
+
         if(worldId) {
             setBtnLoading(true)
             const a = await simulateConversationWithAgent({
