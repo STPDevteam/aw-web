@@ -199,12 +199,16 @@ export const Nav = () => {
                     />
 
                     <BorderButton
-                        disableStillHasHoverEvent={true}
+                        disable={true}
                         w={180}
                         h={46}
-                        hover="Coming Soon"
                         title='Join World'
                         onClick={() => null}
+                        tooltip = {{
+                            label: 'Coming Soon',
+                            size: 'sm'
+                        }}
+
                     />                   
                 </Box>      
 
