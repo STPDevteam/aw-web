@@ -55,12 +55,15 @@ export const Nav = () => {
         
  
 
+ 
+      
+    
     useEffect(() => {
         if (isClaimed && checkStatus) {
           const { nextResetTime } = checkStatus;
           if (nextResetTime) {
             const updateCountdown = () => {
-              const remainingSeconds = Math.max(0, Math.floor((nextResetTime - Date.now()) / 1000));
+              const remainingSeconds = Math.max(0, Math.floor((nextResetTime - new Date().getTime() ) / 1000));
               setCountdown(formatTime(remainingSeconds));
               if (remainingSeconds === 0) {
                 setCanCheckIn(true);
@@ -72,7 +75,7 @@ export const Nav = () => {
             return () => clearInterval(timerId);
           }
         }
-    }, [isClaimed, checkStatus, setCanCheckIn])
+    }, [isClaimed, checkStatus])
       
     
 
@@ -184,6 +187,7 @@ export const Nav = () => {
     }
     const onClaim = () => {
         // 
+     
         checkWalletConnected(async() => {
 
             const a = await window.ethereum.request({
