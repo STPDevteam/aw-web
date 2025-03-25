@@ -6,7 +6,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
 import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, openCreateAction, selectMyAgentPopupVisible, selectOpenCreate } from '@/redux/reducer/agentReducer.js';
-import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, RECIPIENT_ADDRESS, STPT_ADDRESS } from '@/config'
+import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CREATE_ADDRESS_ADDRESS, STPT_ADDRESS } from '@/config'
 import {  useWaitForTransactionReceipt, useAccount, useWriteContract, type BaseError, useChainId } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
 import { Logo } from '@/images'
@@ -191,8 +191,8 @@ export const MyAgent:React.FC<iMyAgent> = ({
                     address: STPT_ADDRESS,
                     abi:STPT_ABI,
                     functionName: 'transfer',
-                    // args: ['0x182cf0cba5E6310a298e9B243375D7F87986EE33', parseUnits(`0.2`, 18)],
-                    args: ['0x182cf0cba5E6310a298e9B243375D7F87986EE33', parseUnits(`${CREATE_AGENT_FEE}`, 18)],
+                    // args: [CREATE_ADDRESS_ADDRESS, parseUnits(`0.2`, 18)],
+                    args: [CREATE_ADDRESS_ADDRESS, parseUnits(`${CREATE_AGENT_FEE}`, 18)],
                 })
             },500)
            

@@ -6,7 +6,7 @@ import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch } from '@/redux/hooks.js';
 import { alertInfoAction, openConnectWalletAction, openCreateAction } from '@/redux/reducer/agentReducer.js';
-import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, RECIPIENT_ADDRESS, STPT_ADDRESS } from '@/config'
+import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CHAT_ADDRESS, STPT_ADDRESS } from '@/config'
 import {  useWaitForTransactionReceipt, useAccount, useWriteContract, type BaseError, } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
 import { parseUnits } from 'viem';
@@ -102,8 +102,8 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                         address: STPT_ADDRESS,
                         abi: STPT_ABI,
                         functionName: 'transfer',
-                        // args: ['0x08FFcE27a9Bfc60899B0fa9a1D20D99C68AFb0b1', parseUnits(`${0.1}`, 18)],
-                        args: ['0x08FFcE27a9Bfc60899B0fa9a1D20D99C68AFb0b1', parseUnits(`${RANDOM_ENCOUNTER_FEE}`, 18)],
+                        // args: [CHAT_ADDRESS, parseUnits(`${0.1}`, 18)],
+                        args: [CHAT_ADDRESS, parseUnits(`${RANDOM_ENCOUNTER_FEE}`, 18)],
                     })               
                 },500)
             }

@@ -6,12 +6,16 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, selectMyAgentPopupVisible } from '@/redux/reducer/agentReducer'
-import {  useAccount, useSignMessage} from 'wagmi'
+import {  useWaitForTransactionReceipt, useAccount, useWriteContract, useSignMessage} from 'wagmi'
 import { MyAgent } from './MyAgent'
 import { Chat } from './Chat'
 import { PointsImg } from '@/images'
 import { motion } from "framer-motion"
 import { openLink } from '@/utils/tool'
+import { SIGN_IN_ADDRESS, STPT_ADDRESS } from '@/config'
+import STPT_ABI from '@/contract/STPT_ABI.json'
+import { parseUnits } from 'viem'
+
 
 const MotionBox = motion(Box)
 
@@ -46,7 +50,10 @@ export const Nav = () => {
 
     const isClaimed = isConnected && checkStatus && checkStatus?.canCheckIn === false
 
-    
+    const { data: hash, writeContract, isPending, error } = useWriteContract()
+    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({hash})
+        
+ 
 
     useEffect(() => {
         if (isClaimed && checkStatus) {
@@ -100,6 +107,27 @@ export const Nav = () => {
         };
     }, [visible])
 
+
+    useEffect(() => {
+        if(hash && isConfirmed) {
+            onDailyCheckIn()            
+        }
+    },[hash, isConfirmed])
+
+
+    useEffect(() => {
+        if (error) {
+            if ((error as any).code === 4001 || error?.message?.includes('User rejected')) {
+                dispatch(alertInfoAction({
+                    open: true,
+                    title: 'Warning',
+                    content: 'User rejected the request.',
+                }))
+            }
+        }
+    }, [error])
+
+
     const onLogin = async() => {
         const w = await walletLogin({ walletAddress: address as string })
         localStorage.setItem('loginAddress', `${address}`)        
@@ -141,24 +169,43 @@ export const Nav = () => {
         }
     }
 
+    const onDailyCheckIn = async() => {
+        
+        const a = await dailyCheckIn({ walletAddress: address as `0x${string}` })
+
+        if(a && a.success) {
+            dispatch(alertInfoAction({
+                open: true, 
+                title: 'Claim',
+                content: 'Claimed! World Points +10'
+            }))
+            setCanCheckIn(false)
+        }
+    }
     const onClaim = () => {
+        // 
         checkWalletConnected(async() => {
-            signInWithWallet().then(async(res: any) => {
-                if(res) {
-                    // transfer free, then dailyCheckIn
 
-                    const a = await dailyCheckIn({ walletAddress: address as `0x${string}` })
-
-                    if(a && a.success) {
-                        dispatch(alertInfoAction({
-                            open: true, 
-                            title: 'Claim',
-                            content: 'Claimed! World Points +10'
-                        }))
-                        setCanCheckIn(false)
-                    }
-                }
+            const a = await window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: '0x2105' }],
             })
+            setTimeout(async() => {
+                await writeContract({
+                    address: STPT_ADDRESS,
+                    abi:STPT_ABI,
+                    functionName: 'transfer',
+                    args: [SIGN_IN_ADDRESS, parseUnits(`${0}`, 18)],
+                })
+            },500)
+
+            // signInWithWallet().then(async(res: any) => {
+            //     if(res) {
+            //         // transfer free, then dailyCheckIn
+
+                    
+            //     }
+            // })
 
         })
     }    
