@@ -109,7 +109,7 @@ export const Pages = () => {
     <Box className='h100' pos='relative' bgColor="#1E1E1E">
       {
         isMobile() ? 
-        <Box pos='absolute' bottom="20px" left={0} className='center w100'>
+        <Box pos='absolute' bottom="20px" left={0} className='center w100'  zIndex={2}>
           <Box w="345px" className='fx-row ai-ct' zIndex={9}>
             {
               btns.map((item, idx) => (
@@ -119,8 +119,8 @@ export const Pages = () => {
                   className='center click fm2'
                   h="50px"
                   w="115px"
-                  color={idx === currentIndex ? '#E0E0E0' : '#293033'}
-                  bgImage={idx === currentIndex ? item.mobileSelectedBg : item.mobileDefaultBg}
+                  color={idx !== currentIndex ? '#E0E0E0' : '#293033'}
+                  bgImage={idx !== currentIndex ? item.mobileSelectedBg : item.mobileDefaultBg}
                   bgSize="cover"
                   bgPosition='center'
                   bgRepeat="no-repeat"  
@@ -131,7 +131,7 @@ export const Pages = () => {
               }
           </Box>
         </Box>:
-        <Box pos='absolute' left="1px" top={0} className='h100 fx ai-ct' w="125px"  >
+        <Box pos='absolute' left="1px" top={0} className='h100 fx ai-ct' w="125px"  zIndex={2}>
           <Box className='fx-row ai-ct' h="240px">
             <Box h="240px" className=''>
               {

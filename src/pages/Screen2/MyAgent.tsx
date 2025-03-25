@@ -5,7 +5,7 @@ import { GeneralButton, BasePopup, CreateInput, Font16, BorderButton } from '@/c
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
-import { alertInfoAction, openConnectWalletAction, openCreateAction, selectOpenCreate } from '@/redux/reducer/agentReducer.js';
+import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, openCreateAction, selectMyAgentPopupVisible, selectOpenCreate } from '@/redux/reducer/agentReducer.js';
 import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, RECIPIENT_ADDRESS, STPT_ADDRESS } from '@/config'
 import {  useWaitForTransactionReceipt, useAccount, useWriteContract, type BaseError, useChainId } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
@@ -21,32 +21,36 @@ interface iInput {
 
 interface iMyAgent {
     worldId: any
-    createAgentOpen: boolean
-    closeCreate: () => void
-    myAgentOpen: boolean
-    closeMy: () => void
+    // createAgentOpen: boolean
+    // closeCreate: () => void
+    // myAgentOpen: boolean
+    // closeMy: () => void
+    // confirmDeleteOpen: boolean
+    // closeConfirmDelete: (v: boolean) => void
     createdPlayers: any 
-    createAutoOpen:() => void
-    confirmDeleteOpen: boolean
-    closeConfirmDelete: (v: boolean) => void
+    // createAutoOpen:() => void
+
+
 
 }
 export const MyAgent:React.FC<iMyAgent> = ({ 
     worldId, 
-    createAgentOpen, 
-    closeCreate, 
-    myAgentOpen,
-    closeMy,
-    createAutoOpen,
+    // createAgentOpen, 
+    // closeCreate, 
+    // myAgentOpen,
+    // closeMy,
+    // confirmDeleteOpen,
+    // closeConfirmDelete
+    // createAutoOpen,
     createdPlayers,
-    confirmDeleteOpen,
-    closeConfirmDelete
+  
+
 }) => {
 
     const { address, isConnected } = useAccount()
     
     const [deleteLoading, setDeleteLoading] = useState<boolean>(false)
-    // const [confirmOpen, setConfirmOpen] = useState<boolean>(false)
+    const [btnLoading, setBtnLoading] = useState(false)
     const [name, setName] = useState<iInput>({
             value: '',
             maxLen: 15,
@@ -60,7 +64,6 @@ export const MyAgent:React.FC<iMyAgent> = ({
         msg: '',
         disable: true
     })
-    const dispatch = useAppDispatch()
     
 
     const createPlayer = useMutation(api.player.createPlayer)
@@ -71,8 +74,10 @@ export const MyAgent:React.FC<iMyAgent> = ({
     const { data: hash, writeContract, isPending, error } = useWriteContract()
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({hash})
 
-    const [btnLoading, setBtnLoading] = useState(false)
-    
+
+
+
+
     
     const [myAgentInfo, setMyAgentInfo] = useState<any>({
         character: '',
@@ -86,11 +91,14 @@ export const MyAgent:React.FC<iMyAgent> = ({
         _id: '',
     })
 
-    const openCreate = useAppSelector(selectOpenCreate)    
+    const openCreate = useAppSelector(selectOpenCreate)  
+    const myAgentPopupVisible = useAppSelector(selectMyAgentPopupVisible)  
+    const dispatch = useAppDispatch()
+
 
 
     useEffect(() => {
-        openCreate && createAutoOpen()
+        openCreate && dispatch(myAgentPopupVisibleAction({...myAgentPopupVisible, createOpen: true}))
     },[openCreate])
 
     useEffect(() => {
@@ -142,30 +150,10 @@ export const MyAgent:React.FC<iMyAgent> = ({
         }
     }
 
-    // const handleAgent = () => {
-    //     if(isConnected && address) {
-    //         if(AGENT_CREATED) {    
-    //             setMyAgentOpen(true)
-    //         }else {
-    //             setCreateOpen(true)
-    //         }
-    //     }else {
-    //         dispatch(openConnectWalletAction(true))
-    //     }
-    // }
+   
 
 
-     const handleCreateClose = () => {
-        closeCreateModal()
-        dispatch(alertInfoAction({
-            open: true,
-            title: 'Warning',
-            content: 'Cancelled'
-        }))
-       
-        dispatch(openCreateAction(false))
-    }
-
+    
     const onChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value
 
@@ -191,7 +179,7 @@ export const MyAgent:React.FC<iMyAgent> = ({
 
     const onCreateAgent = async() => {      
         if(!!name.value.length && !!prompt.value.length && !name.disable && !prompt.disable) {
-            closeCreate()
+            dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: false }))
             setBtnLoading(true)      
             
             const a = await window.ethereum.request({
@@ -203,7 +191,7 @@ export const MyAgent:React.FC<iMyAgent> = ({
                     address: STPT_ADDRESS,
                     abi:STPT_ABI,
                     functionName: 'transfer',
-                    // args: [RECIPIENT_ADDRESS, parseUnits(`0.2`, 18)],
+                    // args: ['0x182cf0cba5E6310a298e9B243375D7F87986EE33', parseUnits(`0.2`, 18)],
                     args: ['0x182cf0cba5E6310a298e9B243375D7F87986EE33', parseUnits(`${CREATE_AGENT_FEE}`, 18)],
                 })
             },500)
@@ -224,7 +212,8 @@ export const MyAgent:React.FC<iMyAgent> = ({
             msg: '',
             disable: true
         })
-        closeCreate()
+        dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: false }))
+
     }
 
     const deleteAgent = async() => {
@@ -233,8 +222,9 @@ export const MyAgent:React.FC<iMyAgent> = ({
             const a = await deletePlayer({walletAddress: address})
             setDeleteLoading(false)
             if(a && a.success) {
-                closeConfirmDelete(false)
-                closeMy()
+                dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, myOpen: false, confirmOpen: false }))
+
+
                 dispatch(alertInfoAction({
                     open: true,
                     title: 'Successful',
@@ -245,10 +235,44 @@ export const MyAgent:React.FC<iMyAgent> = ({
     }
 
 
+     const handleAgent = () => {
+        if(isConnected && address) {
+            if(AGENT_CREATED) {    
+                dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, myOpen: true }))
+            }else {
+                dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: true }))
+            }
+        }else {
+            dispatch(openConnectWalletAction(true))
+        }
+    }
+
+
+    const handleCreateClose = () => {
+        closeCreateModal()
+        dispatch(alertInfoAction({
+            open: true,
+            title: 'Warning',
+            content: 'Cancelled'
+        }))
+       
+        dispatch(openCreateAction(false))
+    }
+
+
+
     return (
         <Box>
+             <BorderButton
+                isFixedWidth={true}
+                loading={btnLoading} 
+                w={180}
+                h={46}
+                onClick={handleAgent}
+                title={AGENT_CREATED ? 'My Agent' : 'Create Agent'}
+            /> 
             <BasePopup
-                visible={createAgentOpen} 
+                visible={myAgentPopupVisible.createOpen} 
                 onClose={handleCreateClose}
                 title="Create Agent"
                 content={
@@ -276,8 +300,8 @@ export const MyAgent:React.FC<iMyAgent> = ({
             </BasePopup>
 
             <BasePopup
-                visible={myAgentOpen} // 
-                onClose={closeMy}
+                visible={myAgentPopupVisible.myOpen} // 
+                onClose={() => dispatch(myAgentPopupVisibleAction({...myAgentPopupVisible, myOpen: false }))}
                 title="My Agent"
                 
                 content={
@@ -297,24 +321,24 @@ export const MyAgent:React.FC<iMyAgent> = ({
                     </Box>
                 }
                 onOK={() => {
-                    closeMy()
-                    closeConfirmDelete(true)
+                    dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, myOpen: false, confirmOpen: true }))
+             
                 }}
                 okText="Delete Agent"
             >
             </BasePopup>
 
             <BasePopup
-                visible={confirmDeleteOpen}  // 
-                onClose={() => closeConfirmDelete(false)}
+                visible={myAgentPopupVisible.confirmOpen}  // 
+                onClose={() =>  dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, confirmOpen: false }))  }
                 title="Delete"
                 content={
                     <Box className='h100 fx-col ai-ct'>
                         <Box className=' w100 center ' h="calc(100% - 20px)">
-                            <Text className='gray fm3' maxW="366px" fontSize={['16px','16px','16px','16px','18px','20px']}>
-                                Are you sure you want to delete this agent? 
-                                <br/>
-                                This action cannot be undone.
+                            <Text className='gray fm3' whiteSpace='nowrap' maxW="400px" fontSize={['16px','16px','16px','16px','18px','20px']}>
+                                <p>Are you sure you want to delete this agent?</p> 
+                                <p>This action cannot be undone.</p>
+                                
                             </Text>
                         </Box>
                         <Box className='fx-row ai-ct w100 jc-sb' pos='absolute' bottom='20px' px="82px">
@@ -332,10 +356,9 @@ export const MyAgent:React.FC<iMyAgent> = ({
                             <Box w="180px" h="46px" className=''>
                                 <BorderButton
                                     isFixedWidth={true}
-                                    loading={deleteLoading} 
                                     w={180}
                                     h={46}
-                                    onClick={() => closeConfirmDelete(false)}
+                                    onClick={() => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, confirmOpen: false })) }
                                     title='Cancel'
                                 /> 
                             </Box>                           
@@ -344,8 +367,6 @@ export const MyAgent:React.FC<iMyAgent> = ({
                 }
             >
             </BasePopup>
-
-
         </Box>
     )
 }

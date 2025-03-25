@@ -13,6 +13,11 @@ interface iAgentState {
   }
   openCreate: boolean
 
+  myAgentPopupVisible: {
+    createOpen: boolean
+    myOpen: boolean
+    confirmOpen: boolean
+  }
 }
 
 const initialState: iAgentState = {
@@ -25,7 +30,11 @@ const initialState: iAgentState = {
     closeModal: () => null
   },
   openCreate: false,
-  
+  myAgentPopupVisible: {
+    createOpen: false,
+    myOpen: false,
+    confirmOpen: false
+  }
 }
 
 const marketSlice = createSlice({
@@ -44,6 +53,9 @@ const marketSlice = createSlice({
     openCreateAction: (state, action: PayloadAction<iAgentState['openCreate']>) => {
       state.openCreate = action.payload
     },
+    myAgentPopupVisibleAction: (state, action: PayloadAction<iAgentState['myAgentPopupVisible']>) => {
+      state.myAgentPopupVisible = action.payload
+    },
    
   }
 })
@@ -53,7 +65,7 @@ export const {
   openConnectWalletAction,
   alertInfoAction,
   openCreateAction,
-
+  myAgentPopupVisibleAction
 } = marketSlice.actions
 
 
@@ -61,6 +73,7 @@ export const selectedAgentInfo = (state: RootState) => state.agentReducer.select
 export const selectOpenConnectWallet = (state: RootState) => state.agentReducer.openConnectWallet
 export const selectAlertInfo = (state: RootState) => state.agentReducer.alertInfo
 export const selectOpenCreate = (state: RootState) => state.agentReducer.openCreate
+export const selectMyAgentPopupVisible = (state: RootState) => state.agentReducer.myAgentPopupVisible
 
 export const agentReducer = marketSlice.reducer
 

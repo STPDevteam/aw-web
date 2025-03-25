@@ -10,7 +10,7 @@ import { alertInfoAction, openConnectWalletAction, selectOpenConnectWallet } fro
 
 interface iConnectWallet {
   points: undefined | number 
-  menuOpen: (v: boolean) => void
+  menuOpen: () => void
   closeWalletOpen: () => void
   walletOpen: boolean
   menuIsOpen: boolean
@@ -81,7 +81,7 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                     )
                   }
                   return (                   
-                    <ClickButtonWrapper onClick={() => menuOpen(true)}>
+                    <ClickButtonWrapper onClick={menuOpen}>
                       <Box 
                         w={[180]}
                         h={[46]}

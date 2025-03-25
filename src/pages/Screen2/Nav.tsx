@@ -1,11 +1,11 @@
 import React, {  useState, useEffect, useRef } from 'react'
 import { Box, Text,Button, Image, Tooltip} from '@chakra-ui/react'
-import { Font16, SvgButton } from '@/components'
+import { Font16, SvgButton, BorderButton} from '@/components'
 import { ConnectWallet } from './ConnectWallet'
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
-import { useAppDispatch } from '@/redux/hooks.js'
-import { alertInfoAction, openConnectWalletAction } from '@/redux/reducer/agentReducer.js'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks.js'
+import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, selectMyAgentPopupVisible } from '@/redux/reducer/agentReducer.js'
 import {  useAccount, useSignMessage} from 'wagmi'
 import { MyAgent } from './MyAgent'
 import { Chat } from './Chat'
@@ -19,14 +19,18 @@ export const Nav = () => {
 
     const [visible, setVisible] = useState<boolean>(false)
     const [walletOpen, setWalletOpen] = useState<boolean>(false)
-    const [createAgentOpen, setCreateAgentOpen] = useState<boolean>(false)
-    const [myAgentOpen, setMyAgentOpen] = useState<boolean>(false)
+   
     const [startChat, setStartChat] = useState<boolean>(false)
-    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false)
 
+
+
+    // const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+    // const [quickMyOpen, setQuickMyOpen] = useState(false)
+    // const [quickConfirmOpen, setQuickConfirmOpen] = useState(false)
 
     const { address, isConnected } = useAccount()
     const dispatch = useAppDispatch()
+    const myAgentPopupVisible = useAppSelector(selectMyAgentPopupVisible)  
     const dailyCheckIn = useMutation(api.wallet.dailyCheckIn)       
     const checkStatus = useQuery(api.wallet.getCheckInStatus,{ walletAddress: address ?? '' })
       
@@ -123,85 +127,56 @@ export const Nav = () => {
 
     const memu = AGENT_CREATED ? [ // 
         { name: 'Wallet', event: () => setWalletOpen(true) },
-        { name: 'Profile', event: () => setMyAgentOpen(true) },
-        { name: 'Engage NPC', event: () => setStartChat(true) },
-        { name: 'Join World', event: () => null, hover: 'Coming Soon' },
-        { name: 'Delete Agent', event: () => setConfirmDeleteOpen(true) }
+        { name: 'Agent Profile', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, myOpen: true })) },
+        { name: 'Delete Agent', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, confirmOpen: true }))  }
     ]: [
-        { name: 'Create Agent', event: () => setCreateAgentOpen(true) },
+        { name: 'Wallet', event: () => setWalletOpen(true) },
+        { name: 'Create Agent', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: true })) },
     ]
 
    
     return(
-        <Box className='w100' maxW="1720px" >
+        <Box className='w100' maxW="1720px" mb="20px">
             <Box className='fx-row ai-ct jc-sb w100'>
-                <Box className='fx-row ai-ct jc-sb'>
-                    <Button 
-                        onClick={onClaim}
-                        w={[180]}
-                        h={[46]}
-                        bgColor='#293033' 
-                        disabled={isConnected ? (!!!canCheckIn) : false}
-                        className=" click box_clip " 
-                        boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
-                        _hover={{
-                            bgColor: '#838B8D'
-                        }}
-                    >
-                        <div className='fm2'>
-                            <Font16 t={checkStatus === null ? 'Daily Clock-in' :
-                                (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}/>
-
-                        </div>
-                    </Button>
-
-
+                {/*  left */}
+                <Box className='fx-row ai-ct jc-sb' gap={['8px','8px','8px','12px','12px','24px']}>
                     <MyAgent 
                         worldId={worldId} 
-                        createAgentOpen={createAgentOpen}
-                        closeCreate={() => setCreateAgentOpen(false)}
-                        myAgentOpen={myAgentOpen}
-                        closeMy={() => setMyAgentOpen(false)}
                         createdPlayers={createdPlayers}
-                        createAutoOpen={() => setCreateAgentOpen(true)}
-                        confirmDeleteOpen={confirmDeleteOpen}
-                        closeConfirmDelete={(v: boolean) => setConfirmDeleteOpen(v)}
                     />
                     <Chat 
                         worldId={worldId} 
-                        startChat={startChat}
                         agentCreated={AGENT_CREATED as boolean}
-                        endChat={() => setStartChat(false)}
                     />
-                  
-                </Box>               
-                <Box className='fx-row ai-ct '>
-                    <Button 
-                        mr="20px"
-                        w={[180]}
-                        h={[46]}
-                        bgColor='#838B8D' 
-                        className="fx-row ai-ct jc-sb click box_clip" 
-                        boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
-                        px={['12px','12px','12px','15px','15px']}
-                        _hover={{
-                            bgColor: '#838B8D'
-                        }}
-                    >
-                        <Image src={PointsImg} w="24px" h="25px" mr="5px" />     
-                        <div className='fm2'>
-                            <Font16 t={`World Points: ${checkStatus ? checkStatus?.currentPoints : 0}`}/>     
-                        </div>                  
-                    </Button>
-                   
-                  
 
+                    <BorderButton
+                        isFixedWidth={true}
+                        w={180}
+                        h={46}
+                        hover="Coming Soon"
+                        title='Join World'
+                        onClick={() => null}
+                    />                   
+                </Box>      
 
+                {/*  right */}
+                <Box className='fx-row ai-ct' gap={['8px','8px','8px','12px','12px','24px']}>
+
+                    <BorderButton
+                        disable={isConnected ? (!!!canCheckIn) : false}
+                        isFixedWidth={true}
+                        w={180}
+                        h={46}
+                        title={checkStatus === null ? 'Daily Clock-in' :
+                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')}
+                        onClick={onClaim}
+                    /> 
+                    
                     <Box pos='relative' className='' >
                         <ConnectWallet 
                             menuIsOpen={visible}
                             points={checkStatus ? checkStatus?.currentPoints : 0}
-                            menuOpen={() => setVisible(true)}
+                            menuOpen={() => setVisible(!visible)}
                             walletOpen={walletOpen}
                             closeWalletOpen={() => setWalletOpen(false)}
                         />    
@@ -220,11 +195,28 @@ export const Nav = () => {
                                 exit={{ opacity: 0, scale: 0.9, y: -10 }} 
                                 transition={{ duration: 0.2 }} 
                             >
+                                <Button 
+                                    mb="1px"
+                                    w={[180]}
+                                    h={[46]}
+                                    bgColor='#838B8D' 
+                                    className="fx-row ai-ct jc-sb click box_clip" 
+                                    boxShadow=" 1px 1px 1px 0px rgba(0, 0, 0, 0.40) inset"
+                                    px={['12px','12px','12px','15px','15px']}
+                                    _hover={{
+                                        bgColor: '#838B8D'
+                                    }}
+                                >
+                                    <Image src={PointsImg} w="24px" h="25px" mr="5px" />     
+                                    <div className='fm2'>
+                                        <Font16 t={`World Points: ${checkStatus ? checkStatus?.currentPoints : 0}`}/>     
+                                    </div>                  
+                                </Button>
+
                                 {
                                     memu.map(item => (
                                         <SvgButton
                                             loading={false}
-                                            hover={item.hover}
                                             onClick={item.event}
                                             name={item.name}
                                             w={[180]}
@@ -238,7 +230,6 @@ export const Nav = () => {
                     </Box>
                 </Box>
             </Box>      
-            
         </Box>    
     )
 }

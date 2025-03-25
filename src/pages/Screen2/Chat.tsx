@@ -1,7 +1,7 @@
 
 import React, {  useState, useEffect } from 'react'
 import { Text, Box, Image } from '@chakra-ui/react'
-import { GeneralButton, BasePopup } from '@/components'
+import { BorderButton, BasePopup } from '@/components'
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch } from '@/redux/hooks.js';
@@ -14,11 +14,10 @@ import { parseUnits } from 'viem';
 
 interface iChat {
     worldId: any
-    startChat: boolean
     agentCreated: boolean
-    endChat: () => void
+ 
 }
-export const Chat:React.FC<iChat> = ({ worldId, startChat, agentCreated, endChat}) => {
+export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
 
     const [randomOpen, setRandomOpen] = useState<boolean>(false)
     const [btnLoading, setBtnLoading] = useState<boolean>(false)
@@ -33,13 +32,6 @@ export const Chat:React.FC<iChat> = ({ worldId, startChat, agentCreated, endChat
     const simulateConversationWithAgent = useAction(api.player.simulateConversationWithAgent)
     
 
-    useEffect(() => {
-        if(startChat) {
-            handleRandomEncounter()
-        }else {
-            onClose()
-        }
-    },[startChat])
 
     useEffect(() => {
         if (error) {
@@ -115,11 +107,21 @@ export const Chat:React.FC<iChat> = ({ worldId, startChat, agentCreated, endChat
     const onClose = () => {
         setRandomOpen(false)
         setConversationList([])
-        endChat()
+        setBtnLoading(false)
     }
     return (
         <Box>
-        
+            <BorderButton
+                isFixedWidth={true}
+                loading={btnLoading} 
+                w={180}
+                h={46}
+                onClick={() => {
+                    setBtnLoading(true)
+                    handleRandomEncounter()
+                }}
+                title='Engage NPC'
+            /> 
             <BasePopup
                 visible={randomOpen}
                 onClose={onClose}
