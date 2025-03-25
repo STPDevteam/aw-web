@@ -83,6 +83,8 @@ export const BorderButton:React.FC<iBorderButton> = ({
                   _active={{ bg: "transparent" }}
                   _focus={{ boxShadow: "none" }}
                   disabled={disable}
+                  _disabled={{ bg: "#7E8081" }}
+                  // 
                 >   
                   {loading ? 
                     <Spinner size="md" color="white" h='24px' w='24px' pos="absolute"/> : 

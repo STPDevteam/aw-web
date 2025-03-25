@@ -265,12 +265,12 @@ export const MyAgent:React.FC<iMyAgent> = ({
         <Box>
              <BorderButton
                 isFixedWidth={true}
+                disable={AGENT_CREATED}
                 loading={btnLoading} 
                 w={180}
                 h={46}
                 onClick={handleAgent}
-                title={AGENT_CREATED ? 'My Agent' : 'Create Agent'}
-
+                title={'Create Agent'}
                 tooltip = {AGENT_CREATED ? {
                     label: 'Already created',
                     size: 'sm'
