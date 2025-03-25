@@ -43,6 +43,7 @@ export const Nav = () => {
     const { signMessageAsync } = useSignMessage();
     const createChallenge = useMutation(api.wallet.createAuthChallenge);
     const verifySignature = useMutation(api.wallet.verifySignature);
+    const walletLogin = useMutation(api.wallet.walletLogin);
     const createdPlayers = useQuery(api.player.getPlayersByWallet, { walletAddress: address as string ?? ''})
 
     const AGENT_CREATED = createdPlayers && !!createdPlayers.players.length
@@ -51,6 +52,20 @@ export const Nav = () => {
     useEffect(() => {   
         setCanCheckIn(checkStatus?.canCheckIn || false)
     }, [checkStatus?.canCheckIn])
+
+    useEffect(() => {
+        if(address && isConnected) {
+            const loginAddress = localStorage.getItem('loginAddress')
+            if(loginAddress && loginAddress === address) {
+                // Already logged in
+            }else {
+                onLogin()
+            }
+           
+        }else {
+            localStorage.removeItem('loginAddress')
+        }
+    },[address, isConnected])
 
     useEffect(() => {
         function handleClickOutside(event:MouseEvent) {
@@ -67,7 +82,12 @@ export const Nav = () => {
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [visible]);
+    }, [visible])
+
+    const onLogin = async() => {
+        const w = await walletLogin({ walletAddress: address as string })
+        localStorage.setItem('loginAddress', `${address}`)        
+    }
 
     const signInWithWallet = async() => { 
         try {
