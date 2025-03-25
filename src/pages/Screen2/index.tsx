@@ -19,7 +19,7 @@ export const Screen2:FC<{ feAgentsInfo:any, currentIndex: number }> = ({  feAgen
   useEffect(() => {    
     const timer = setTimeout(() => {
       setDelayRender(true);
-    }, 1200)
+    }, 3000)
   
     return () => {
       clearTimeout(timer)

@@ -77,7 +77,7 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
     document.addEventListener("mousedown", handleClickOutside)
     const timer = setTimeout(() => {
       setDelayRender(true);
-    }, 1000)
+    }, 2800)
   
     return () => {
       clearTimeout(timer)
@@ -157,8 +157,8 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
       w='100%'
       maxW={`${mapContainerWidth}px`} 
       // h={worldHeight}
-      py="30px"
-      px={['4px','4px','12px','24px','24px']}
+      py={['8px','8px','16px','16px','18px','30px']}
+      px={['4px','4px','12px','12px','12px','24px']}
       pos='relative'
       // borderWidth="2px"
       // borderStyle='solid'
@@ -287,7 +287,7 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
 export const BorderBox:React.FC<{ children:React.ReactNode }> = ({ children }) => {
   return (
     <Box className='map2_border w100 h100'>
-      <Box  className='map2_border_content w100 h100' p="10px">
+      <Box  className='map2_border_content w100 h100' p={['4px','4px','4px','6px','6px','10px']}>
         <Box className='map2_border w100 h100'>
           <Box className='map2_border_content w100 h100' overflowY="scroll"> 
             {children}
