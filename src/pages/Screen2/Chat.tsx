@@ -1,6 +1,6 @@
 
 import React, {  useState, useEffect } from 'react'
-import { Text, Box, Image } from '@chakra-ui/react'
+import { Text, Box, Tooltip } from '@chakra-ui/react'
 import { BorderButton, BasePopup } from '@/components'
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
@@ -120,17 +120,22 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
     }
     return (
         <Box>
-            <BorderButton
-                isFixedWidth={true}
-                loading={btnLoading} 
-                w={180}
-                h={46}
-                onClick={() => {
-                    
-                    handleRandomEncounter()
-                }}
-                title='Engage NPC'
-            /> 
+            
+                <BorderButton
+                    isFixedWidth={true}
+                    loading={btnLoading} 
+                    w={180}
+                    h={46}
+                    onClick={() => {
+                        
+                        handleRandomEncounter()
+                    }}
+                    title='Engage NPC'
+                    tooltip = {{
+                        label: agentCreated ? 'Send your agent to engage NPC' : 'Create agent first',
+                        size: agentCreated ? 'md' : 'sm'
+                    }}
+                /> 
             <BasePopup
                 visible={randomOpen}
                 onClose={onClose}

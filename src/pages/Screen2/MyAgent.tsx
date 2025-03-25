@@ -270,6 +270,12 @@ export const MyAgent:React.FC<iMyAgent> = ({
                 h={46}
                 onClick={handleAgent}
                 title={AGENT_CREATED ? 'My Agent' : 'Create Agent'}
+
+                tooltip = {AGENT_CREATED ? {
+                    label: 'Already created',
+                    size: 'sm'
+                }: undefined}
+
             /> 
             <BasePopup
                 visible={myAgentPopupVisible.createOpen} 

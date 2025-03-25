@@ -59,3 +59,6 @@ export { default as NavM32 } from "./nav_m3_2.png";
 export { default as Mouse1 } from "./mouse1.png";
 export { default as Mouse2 } from "./mouse2.png";
 export { default as Mouse3 } from "./mouse3.png";
+
+export { default as Tooltip1 } from "./tooltip1.png";
+export { default as Tooltip2 } from "./tooltip2.png";
