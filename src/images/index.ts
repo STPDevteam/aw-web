@@ -62,3 +62,4 @@ export { default as Mouse3 } from "./mouse3.png";
 
 export { default as Tooltip1 } from "./tooltip1.png";
 export { default as Tooltip2 } from "./tooltip2.png";
+export { default as Tooltip3 } from "./tooltip3.png";

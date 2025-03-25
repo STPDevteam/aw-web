@@ -126,13 +126,12 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                     w={180}
                     h={46}
                     onClick={() => {
-                        
                         handleRandomEncounter()
                     }}
-                    title='Engage NPC'
+                    title='Engage Agents'
                     tooltip = {{
-                        label: agentCreated ? 'Send your agent to engage NPC' : 'Create agent first',
-                        size: agentCreated ? 'md' : 'sm'
+                        label: agentCreated ? 'Send your agent to engage other agents' : 'Create agent first',
+                        size: agentCreated ? 'lg' : 'sm'
                     }}
                 /> 
             <BasePopup

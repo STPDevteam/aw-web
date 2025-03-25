@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import {  Box, Button, Spinner, Text, Tooltip} from '@chakra-ui/react'
-import { Tooltip1, Tooltip2 } from '@/images'
+import { Tooltip1, Tooltip2, Tooltip3 } from '@/images'
 
 interface iBorderButton {
   loading?: boolean;
@@ -16,7 +16,7 @@ interface iBorderButton {
   disableStillHasHoverEvent?: boolean
   tooltip?: {
     label: string
-    size: 'md' | 'sm'
+    size: 'md' | 'sm' | 'lg'
   }
 }
 
@@ -44,6 +44,12 @@ export const BorderButton:React.FC<iBorderButton> = ({
   }
   // const _w = w.map(item => item / 0.822222)
   // console.log(_w)
+
+  const tooltipArr = {
+    sm: { img: Tooltip1, w: '182px'},
+    md: { img: Tooltip2, w: '262px'},
+    lg: { img: Tooltip3, w: '321px'},
+  }
   return (      
     <Box className='btn1_border w100 h100' h={`${h}px`}>
       <Box  className='btn1_border_content w100 h100' p="2px">
@@ -55,12 +61,12 @@ export const BorderButton:React.FC<iBorderButton> = ({
                 className='center'
                 mt="-8px"
                 pt="4px"
-                bgImage={tooltip?.size === 'md' ? Tooltip2 : Tooltip1}
+                bgImage={tooltipArr[tooltip.size].img}
                 bgSize="cover"
                 bgPosition="center"
                 bgRepeat="no-repeat"
                 h="45px"
-                w={tooltip?.size === 'md' ? '262px' : '182px'}
+                w={tooltipArr[tooltip.size].w}
               >
                 <Text  className='fm2 ' color="#293033" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{tooltip?.label}</Text>
               </Box> : null

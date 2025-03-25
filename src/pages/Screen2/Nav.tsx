@@ -145,7 +145,10 @@ export const Nav = () => {
         checkWalletConnected(async() => {
             signInWithWallet().then(async(res: any) => {
                 if(res) {
+                    // transfer free, then dailyCheckIn
+
                     const a = await dailyCheckIn({ walletAddress: address as `0x${string}` })
+
                     if(a && a.success) {
                         dispatch(alertInfoAction({
                             open: true, 
@@ -205,7 +208,7 @@ export const Nav = () => {
                         title='Join World'
                         onClick={() => null}
                         tooltip = {{
-                            label: 'Coming Soon',
+                            label: 'Coming soon',
                             size: 'sm'
                         }}
 
@@ -220,9 +223,9 @@ export const Nav = () => {
                         w={180}
                         h={46}
                         title={
-                            // isClaimed ? countdown : 'Daily Clock-in'
-                            checkStatus === null ? 'Daily Clock-in' :
-                            (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')
+                            isClaimed ? countdown : 'Daily Clock-in'
+                            // checkStatus === null ? 'Daily Clock-in' :
+                            // (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')
                         }
                         onClick={onClaim}
                     />  
