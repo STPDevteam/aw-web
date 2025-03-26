@@ -252,32 +252,34 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
               }          
           </BorderBox>
         </Box>
-        
-        <Box
-          w={___rightWidth}
-          h={`${h}px`}
-          className='fx jc-ct'
-          overflowY="scroll"
-          onWheel={(e) => e.stopPropagation()} 
-        >      
-        <BorderBox>
-          <Box p={['15px 6px','15px 6px','15px 6px','15px 6px','15px 6px','15px 20px',]} >
-            {
-              currentFEAgent ? 
-              <>{memoizedFeDetail}</>: 
-              <PlayerDetails
-                worldId={worldId} 
-                engineId={engineId}
-                game={game}
-                playerId={selectedElement?.id}
-                setSelectedElement={setSelectedElement}
-                scrollViewRef={scrollViewRef}
-                onClearFEAgent={() => setCurrentFEAgent(null)}
-              />
-            }
-          </Box>
-        </BorderBox>        
-        </Box>
+            <BorderBox>
+              <Box
+                w={___rightWidth}
+                h={`${h}px`}
+                className='fx jc-ct ai-ct '
+              >      
+                <Box className='' 
+                  h={`${h - 40}px`}
+                  overflowY="scroll"
+                  onWheel={(e) => e.stopPropagation()} 
+                  p={['0px 6px','0px 6px','0px 6px','0px 6px','0px 6px','0px 20px',]}  
+                >
+                  {
+                    currentFEAgent ? 
+                    <>{memoizedFeDetail}</>: 
+                    <PlayerDetails
+                      worldId={worldId} 
+                      engineId={engineId}
+                      game={game}
+                      playerId={selectedElement?.id}
+                      setSelectedElement={setSelectedElement}
+                      scrollViewRef={scrollViewRef}
+                      onClearFEAgent={() => setCurrentFEAgent(null)}
+                    />
+                  }
+                </Box>
+              </Box>
+            </BorderBox>
       </Box>
     </Box>
   );
