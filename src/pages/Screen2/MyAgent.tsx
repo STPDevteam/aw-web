@@ -89,8 +89,11 @@ export const MyAgent:React.FC<iMyAgent> = ({
         ensAddress: chain.contracts?.ensRegistry?.address,
         }
         const provider = new providers.Web3Provider(transport, network)
-        const signer = provider.getSigner(account.address)
-        return signer
+        if(account && account.address) {
+            const signer = provider.getSigner(account.address)
+            return signer
+        }
+        return null
     }
     
 
