@@ -73,31 +73,34 @@ interface iERC20Approve {
   tokenABI: any
   approveAddress: string
   approveAmount: string | BigNumber
+  signer: any
 }
 
-export const ERC20Approve = async ({ tokenContractAddress, tokenABI, approveAddress, approveAmount,  }: iERC20Approve) => {
-  const provider =  new ethers.providers.Web3Provider(window?.ethereum, 'any')
-  if (provider) {
-      const signer = provider.getSigner();
-      const signerAddress = await signer.getAddress();
-      
-      const tokenContract = new ethers.Contract(tokenContractAddress, tokenABI, signer);
+export const ERC20Approve = async ({ tokenContractAddress, tokenABI, approveAddress, approveAmount, signer }: iERC20Approve) => {
 
-      const balance = await tokenContract.balanceOf(signerAddress);
+  if ( signer) {    
+    const signerAddress = await signer.getAddress();
+    
+    const tokenContract = new ethers.Contract(tokenContractAddress, tokenABI, signer);
 
-      if (balance.lt(approveAmount)) {
-        return { hash: '', message: 'Insufficient balance' };
-      }
+    const balance = await tokenContract.balanceOf(signerAddress);
 
-      const currentAllowance = await tokenContract.allowance(signerAddress, approveAddress);
+    if (balance.lt(approveAmount)) {
+      return { hash: '', message: 'Insufficient balance' };
+    }
 
-      if (currentAllowance.gte(approveAmount)) {
-        return { hash: 'no need to approve', message: '' };
-      }
-      return await executeContractMethod(tokenContract, 'approve', true, approveAddress, approveAmount);
+    const currentAllowance = await tokenContract.allowance(signerAddress, approveAddress);
+
+    if (currentAllowance.gte(approveAmount)) {
+      return { hash: 'no need to approve', message: '' };
+    }
+    return await executeContractMethod(tokenContract, 'approve', true, approveAddress, approveAmount);
+    
   }
 };
 
 export const parseUnits = (amount: number | string, p: number):BigNumber => {
   return ethers.utils.parseUnits(Number(amount).toFixed(p), p)
 }
+
+

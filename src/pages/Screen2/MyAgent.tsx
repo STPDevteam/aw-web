@@ -1,5 +1,5 @@
 
-import React, {  useState, useEffect } from 'react'
+import React, {  useState, useEffect, useMemo } from 'react'
 import { Text, Box, Image } from '@chakra-ui/react'
 import { GeneralButton, BasePopup, CreateInput, Font16, BorderButton } from '@/components'
 import { useMutation, useQuery } from 'convex/react';
@@ -7,11 +7,13 @@ import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
 import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, openCreateAction, selectMyAgentPopupVisible, selectOpenCreate } from '@/redux/reducer/agentReducer.js';
 import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CREATE_ADDRESS_ADDRESS, STPT_ADDRESS, AGENT_ADDRESS} from '@/config'
-import {  useWaitForTransactionReceipt, useAccount, useWriteContract, type BaseError, useChainId } from 'wagmi'
+import {  useWaitForTransactionReceipt, useAccount, useWriteContract, Config, useConnectorClient } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
 import AGENT_ABI from '@/contract/AGENT_ABI.json'
 import { Logo } from '@/images'
 import { ERC20Approve, parseUnits } from '@/utils/tool'
+import { providers } from 'ethers'
+import type { Account, Chain, Client, Transport } from 'viem'
 
 interface iInput {
     value: string
@@ -79,7 +81,25 @@ export const MyAgent:React.FC<iMyAgent> = ({
     const myAgentPopupVisible = useAppSelector(selectMyAgentPopupVisible)  
     const dispatch = useAppDispatch()
 
+      function clientToSigner(client: Client<Transport, Chain, Account>) {
+        const { account, chain, transport } = client
+        const network = {
+        chainId: chain.id,
+        name: chain.name,
+        ensAddress: chain.contracts?.ensRegistry?.address,
+        }
+        const provider = new providers.Web3Provider(transport, network)
+        const signer = provider.getSigner(account.address)
+        return signer
+    }
+    
 
+    function useEthersSigner({ chainId }: { chainId?: number } = {}) {
+        const { data: client } = useConnectorClient<Config>({ chainId })
+        return useMemo(() => (client ? clientToSigner(client) : undefined), [client])
+    }
+
+    const signer = useEthersSigner()
 
     useEffect(() => {
         openCreate && dispatch(myAgentPopupVisibleAction({...myAgentPopupVisible, createOpen: true}))
@@ -175,6 +195,7 @@ export const MyAgent:React.FC<iMyAgent> = ({
                     tokenABI: STPT_ABI,
                     approveAddress: AGENT_ADDRESS,
                     approveAmount: parseUnits(CREATE_AGENT_FEE, 18),
+                    signer
                 })
                 // console.log('ERC20Approve hash', hash)
                 // console.log('ERC20Approve message', message)

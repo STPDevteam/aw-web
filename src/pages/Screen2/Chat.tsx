@@ -1,5 +1,5 @@
 
-import React, {  useState, useEffect } from 'react'
+import React, {  useState, useEffect, useMemo } from 'react'
 import { Text, Box, Tooltip } from '@chakra-ui/react'
 import { BorderButton, BasePopup } from '@/components'
 import { useMutation, useQuery, useAction } from 'convex/react';
@@ -7,10 +7,12 @@ import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch } from '@/redux/hooks.js';
 import { alertInfoAction, openConnectWalletAction, openCreateAction } from '@/redux/reducer/agentReducer.js';
 import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CHAT_ADDRESS, STPT_ADDRESS, AGENT_ADDRESS} from '@/config'
-import {  useWaitForTransactionReceipt, useAccount, useWriteContract, } from 'wagmi'
+import {  useWaitForTransactionReceipt, useAccount, useWriteContract,  Config, useConnectorClient } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
 import AGENT_ABI from '@/contract/AGENT_ABI.json'
 import { ERC20Approve, parseUnits } from "@/utils/tool"
+import { providers } from 'ethers'
+import type { Account, Chain, Client, Transport } from 'viem'
 
 interface iChat {
     worldId: any
@@ -31,9 +33,29 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
     const dispatch = useAppDispatch()        
     const simulateConversationWithAgent = useAction(api.player.simulateConversationWithAgent)
 
-    // console.log('hash111111111111', hash)
-    // console.log('error 1111', error)
-    // console.log('isConfirmed 1111', isConfirmed)
+
+
+  
+    
+   function clientToSigner(client: Client<Transport, Chain, Account>) {
+      const { account, chain, transport } = client
+      const network = {
+        chainId: chain.id,
+        name: chain.name,
+        ensAddress: chain.contracts?.ensRegistry?.address,
+      }
+      const provider = new providers.Web3Provider(transport, network)
+      const signer = provider.getSigner(account.address)
+      return signer
+    }
+    
+
+   function useEthersSigner({ chainId }: { chainId?: number } = {}) {
+      const { data: client } = useConnectorClient<Config>({ chainId })
+      return useMemo(() => (client ? clientToSigner(client) : undefined), [client])
+    }
+
+    const signer = useEthersSigner()
 
 
     useEffect(() => {
@@ -107,6 +129,7 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                         tokenABI: STPT_ABI,
                         approveAddress: AGENT_ADDRESS,
                         approveAmount: parseUnits(RANDOM_ENCOUNTER_FEE, 18),
+                        signer
                     })
 
                     // console.log('hash', hash)
@@ -143,8 +166,7 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
     }
     return (
         <Box>
-            
-                <BorderButton
+            <BorderButton
                     loading={btnLoading} 
                     w={180}
                     h={46}
@@ -160,7 +182,13 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                 onClose={onClose}
                 title={title}
                 content={
-                    <Box p="40px" overflowY="scroll" maxH="514px" onWheel={(e) => e.stopPropagation()} >
+                    <Box 
+                        p="40px" 
+                        className=''  
+                        overflowY="scroll" 
+                        maxH="514px" 
+                        mt="20px"
+                        onWheel={(e) => e.stopPropagation()} >
                         {
                             conversationList.map((item:any) => (
                                 <Box key={item.text} mt="10px">

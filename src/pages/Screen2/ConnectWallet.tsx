@@ -34,7 +34,6 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
 
 
     return (
-      <Box>
         <ConnectButton.Custom>
           {({
             account,
@@ -142,9 +141,6 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
             );
           }}
         </ConnectButton.Custom>
-          
-       
-
-      </Box>
+        
     );
 };
