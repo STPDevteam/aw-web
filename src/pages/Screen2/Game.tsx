@@ -252,34 +252,40 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
               }          
           </BorderBox>
         </Box>
-            <BorderBox>
-              <Box
-                w={___rightWidth}
-                h={`${h}px`}
-                className='fx jc-ct ai-ct '
-              >      
-                <Box className='' 
-                  h={`${h - 40}px`}
-                  overflowY="scroll"
-                  onWheel={(e) => e.stopPropagation()} 
-                  p={['0px 6px','0px 6px','0px 6px','0px 6px','0px 6px','0px 20px',]}  
-                >
-                  {
-                    currentFEAgent ? 
-                    <>{memoizedFeDetail}</>: 
-                    <PlayerDetails
-                      worldId={worldId} 
-                      engineId={engineId}
-                      game={game}
-                      playerId={selectedElement?.id}
-                      setSelectedElement={setSelectedElement}
-                      scrollViewRef={scrollViewRef}
-                      onClearFEAgent={() => setCurrentFEAgent(null)}
-                    />
-                  }
-                </Box>
+              
+        {/* right */}
+        <Box
+           w={___rightWidth}
+           h={`${h}px`}
+           className='fx jc-ct ai-ct'
+        >
+          <BorderBox>      
+            <Box className='h100 center'>
+              <Box 
+                className='' 
+                h={`${h - 56}px`}
+                overflowY="scroll"
+                onWheel={(e) => e.stopPropagation()} 
+                px={[' 6px',' 6px',' 6px',' 6px',' 6px',' 20px',]}  
+              >
+                {
+                  currentFEAgent ? 
+                  <>{memoizedFeDetail}</>: 
+                  <PlayerDetails
+                    worldId={worldId} 
+                    engineId={engineId}
+                    game={game}
+                    playerId={selectedElement?.id}
+                    setSelectedElement={setSelectedElement}
+                    scrollViewRef={scrollViewRef}
+                    onClearFEAgent={() => setCurrentFEAgent(null)}
+                  />
+                }
               </Box>
-            </BorderBox>
+            </Box>          
+          </BorderBox>
+        </Box>
+            
       </Box>
     </Box>
   );
