@@ -879,26 +879,13 @@ function generateAgentStatus(name: string, description: string): AgentStatus {
     { title: 'Current Work', possibleIcons: ["💻", "📱", "📊", "🔍", "🎨", "📝", "📚", "🎬", "🔧", "🏗️", "🧪", "🔬", "📡", "🎼"] },
     { title: 'Emotion', possibleIcons: ["😄", "😎", "🤔", "😌", "🙂", "😊", "🧐", "🤓", "😴", "🥱", "😯", "🤠", "🤩", "😇"] },
     { title: 'Status', possibleIcons: ["🚶", "🏃", "🧘", "💼", "🚴", "🏋️", "📚", "🎮", "🎧", "💻", "🍽️", "🛌", "🧗", "🏊"] },
-    { title: 'Energy Level', possibleIcons: ["🔋", "🔋🔋", "🔋🔋🔋", "🔋🔋🔋🔋", "🔋🔋🔋🔋🔋"] },
+    { title: 'Energy Level', possibleIcons: ["🔋", "🔋🔋", "🔋🔋🔋"] },
     { title: 'Location', possibleIcons: ["🏠", "🏢", "🏙️", "🌃", "🏫", "🏕️", "🏝️", "🏟️", "🏪", "🏨", "🌲", "🌊", "🏞️", "🗻"] },
     { title: 'Mood Trend', possibleIcons: ["📈", "📉", "➖", "〰️", "🔄"] }
   ];
   
-  // Randomly select which status items to include (at least 2)
-  const selectedIndices = new Set<number>();
-  // Always include Current Work and Emotion as examples
-  selectedIndices.add(0); // Current Work
-  selectedIndices.add(1); // Emotion
-  
-  // Randomly add more items if we want (optional)
-  while (selectedIndices.size < Math.min(4, statusItems.length) && Math.random() > 0.3) {
-    const randomIndex = Math.floor(Math.random() * statusItems.length);
-    selectedIndices.add(randomIndex);
-  }
-  
-  // Create the status array with random icons for selected items
-  const status: AgentStatus = Array.from(selectedIndices).map(index => {
-    const item = statusItems[index];
+  // Create the status array with random icons for all status items
+  const status: AgentStatus = statusItems.map(item => {
     const randomIcon = item.possibleIcons[Math.floor(Math.random() * item.possibleIcons.length)];
     
     return {
