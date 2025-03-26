@@ -6,11 +6,12 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
 import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, openCreateAction, selectMyAgentPopupVisible, selectOpenCreate } from '@/redux/reducer/agentReducer.js';
-import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CREATE_ADDRESS_ADDRESS, STPT_ADDRESS } from '@/config'
+import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CREATE_ADDRESS_ADDRESS, STPT_ADDRESS, AGENT_ADDRESS} from '@/config'
 import {  useWaitForTransactionReceipt, useAccount, useWriteContract, type BaseError, useChainId } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
+import AGENT_ABI from '@/contract/AGENT_ABI.json'
 import { Logo } from '@/images'
-import { parseUnits } from 'viem'
+import { ERC20Approve, parseUnits } from '@/utils/tool'
 
 interface iInput {
     value: string
@@ -21,30 +22,11 @@ interface iInput {
 
 interface iMyAgent {
     worldId: any
-    // createAgentOpen: boolean
-    // closeCreate: () => void
-    // myAgentOpen: boolean
-    // closeMy: () => void
-    // confirmDeleteOpen: boolean
-    // closeConfirmDelete: (v: boolean) => void
     createdPlayers: any 
-    // createAutoOpen:() => void
-
-
-
 }
 export const MyAgent:React.FC<iMyAgent> = ({ 
     worldId, 
-    // createAgentOpen, 
-    // closeCreate, 
-    // myAgentOpen,
-    // closeMy,
-    // confirmDeleteOpen,
-    // closeConfirmDelete
-    // createAutoOpen,
     createdPlayers,
-  
-
 }) => {
 
     const { address, isConnected } = useAccount()
@@ -76,7 +58,9 @@ export const MyAgent:React.FC<iMyAgent> = ({
 
 
 
-
+    // console.log('useWriteContract hash', hash)
+    // console.log('useWriteContract isConfirmed', isConfirmed)
+    // console.log('useWriteContract error', error)
 
     
     const [myAgentInfo, setMyAgentInfo] = useState<any>({
@@ -150,8 +134,6 @@ export const MyAgent:React.FC<iMyAgent> = ({
         }
     }
 
-   
-
 
     
     const onChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -187,13 +169,31 @@ export const MyAgent:React.FC<iMyAgent> = ({
                 params: [{ chainId: '0x2105' }],
             })
             setTimeout(async() => {
-                await writeContract({
-                    address: STPT_ADDRESS,
-                    abi:STPT_ABI,
-                    functionName: 'transfer',
-                    // args: [CREATE_ADDRESS_ADDRESS, parseUnits(`0.2`, 18)],
-                    args: [CREATE_ADDRESS_ADDRESS, parseUnits(`${CREATE_AGENT_FEE}`, 18)],
+
+                const { hash, message }: any = await ERC20Approve({                    
+                    tokenContractAddress: STPT_ADDRESS,
+                    tokenABI: STPT_ABI,
+                    approveAddress: AGENT_ADDRESS,
+                    approveAmount: parseUnits(CREATE_AGENT_FEE, 18),
                 })
+                // console.log('ERC20Approve hash', hash)
+                // console.log('ERC20Approve message', message)
+                if(hash) {
+                    await writeContract({
+                        address: AGENT_ADDRESS,
+                        abi: AGENT_ABI,
+                        functionName: 'payTen',
+                        args: [],
+                    })               
+                }
+                if(message) {
+                    setBtnLoading(false)
+                    dispatch(alertInfoAction({
+                        open: true,
+                        title: 'Warning',
+                        content: message
+                    }))  
+                }               
             },500)
            
         }

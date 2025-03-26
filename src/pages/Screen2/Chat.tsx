@@ -6,11 +6,11 @@ import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch } from '@/redux/hooks.js';
 import { alertInfoAction, openConnectWalletAction, openCreateAction } from '@/redux/reducer/agentReducer.js';
-import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CHAT_ADDRESS, STPT_ADDRESS } from '@/config'
-import {  useWaitForTransactionReceipt, useAccount, useWriteContract, type BaseError, } from 'wagmi'
+import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CHAT_ADDRESS, STPT_ADDRESS, AGENT_ADDRESS} from '@/config'
+import {  useWaitForTransactionReceipt, useAccount, useWriteContract, } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
-import { parseUnits } from 'viem';
-
+import AGENT_ABI from '@/contract/AGENT_ABI.json'
+import { ERC20Approve, parseUnits } from "@/utils/tool"
 
 interface iChat {
     worldId: any
@@ -30,7 +30,10 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
 
     const dispatch = useAppDispatch()        
     const simulateConversationWithAgent = useAction(api.player.simulateConversationWithAgent)
-    
+
+    // console.log('hash111111111111', hash)
+    // console.log('error 1111', error)
+    // console.log('isConfirmed 1111', isConfirmed)
 
 
     useEffect(() => {
@@ -80,7 +83,7 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
 
     const handleRandomEncounter = async() => {
         if(isConnected && address) {          
-            if(!agentCreated) {
+            if(!agentCreated) { 
                 dispatch(alertInfoAction({
                     open: true,
                     title: 'Warning',
@@ -91,21 +94,41 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                 }))               
             }else {
 
-                setBtnLoading(true)
                 const a = await window.ethereum.request({
                     method: "wallet_switchEthereumChain",
                     params: [{ chainId: '0x2105' }],
                 })
 
+                setBtnLoading(true)
                 setTimeout(async() => {
-                    await writeContract({
-                        address: STPT_ADDRESS,
-                        abi: STPT_ABI,
-                        functionName: 'transfer',
-                        // args: [CHAT_ADDRESS, parseUnits(`${0.1}`, 18)],
-                        args: [CHAT_ADDRESS, parseUnits(`${RANDOM_ENCOUNTER_FEE}`, 18)],
-                    })               
-                },500)
+                    
+                    const { hash, message }: any = await ERC20Approve({                    
+                        tokenContractAddress: STPT_ADDRESS,
+                        tokenABI: STPT_ABI,
+                        approveAddress: AGENT_ADDRESS,
+                        approveAmount: parseUnits(RANDOM_ENCOUNTER_FEE, 18),
+                    })
+
+                    // console.log('hash', hash)
+                    // console.log('message', message)
+
+                    if(hash) {
+                        await writeContract({
+                            address: AGENT_ADDRESS,
+                            abi: AGENT_ABI,
+                            functionName: 'payOne',
+                            args: [],
+                        })               
+                    }
+                    if(message) {
+                        setBtnLoading(false)
+                        dispatch(alertInfoAction({
+                            open: true,
+                            title: 'Warning',
+                            content: message
+                        }))  
+                    }
+                },500)    
             }
         }else {
             dispatch(openConnectWalletAction(true))
@@ -125,9 +148,7 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                     loading={btnLoading} 
                     w={180}
                     h={46}
-                    onClick={() => {
-                        handleRandomEncounter()
-                    }}
+                    onClick={handleRandomEncounter}
                     title='Engage Agents'
                     tooltip = {{
                         label: agentCreated ? 'Send your agent to engage other agents' : 'Create agent first',

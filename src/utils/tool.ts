@@ -1,4 +1,5 @@
 
+import { BigNumber, ethers } from 'ethers'
 
 export const sleep = (ms: number): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -40,3 +41,63 @@ export const formatYYYYMMDDHHMMSS = (timestamp: number): string => {
 
   return `${year}/${month}${day} ${hours}:${minutes}:${seconds}`;
 };
+
+
+const executeContractMethod = async (contract: any, method: string, waitForConfirmation: boolean, ...args: any[]) => {
+  // const tx = await contract[method](...args);
+  // if (waitForConfirmation) {
+  //     await tx.wait(); 
+  // }
+  // return tx.hash;
+
+  try {
+      const tx = await contract[method](...args);
+      if (waitForConfirmation) {
+          await tx.wait(); 
+      }
+      return { hash: tx.hash, message: '' };
+  } catch (error: any) {
+      let errorMessage = '';
+      if (error.code === 'ACTION_REJECTED') {
+          errorMessage = "User rejected the transaction";
+      } else {
+          errorMessage = `An error occurred: ${error.message || error}`;
+      }
+      // throw new Error(errorMessage);
+      return { hash: '', message: errorMessage }
+  }
+}
+
+interface iERC20Approve {
+  tokenContractAddress: string
+  tokenABI: any
+  approveAddress: string
+  approveAmount: string | BigNumber
+}
+
+export const ERC20Approve = async ({ tokenContractAddress, tokenABI, approveAddress, approveAmount,  }: iERC20Approve) => {
+  const provider =  new ethers.providers.Web3Provider(window?.ethereum, 'any')
+  if (provider) {
+      const signer = provider.getSigner();
+      const signerAddress = await signer.getAddress();
+      
+      const tokenContract = new ethers.Contract(tokenContractAddress, tokenABI, signer);
+
+      const balance = await tokenContract.balanceOf(signerAddress);
+
+      if (balance.lt(approveAmount)) {
+        return { hash: '', message: 'Insufficient balance' };
+      }
+
+      const currentAllowance = await tokenContract.allowance(signerAddress, approveAddress);
+
+      if (currentAllowance.gte(approveAmount)) {
+        return { hash: 'no need to approve', message: '' };
+      }
+      return await executeContractMethod(tokenContract, 'approve', true, approveAddress, approveAmount);
+  }
+};
+
+export const parseUnits = (amount: number | string, p: number):BigNumber => {
+  return ethers.utils.parseUnits(Number(amount).toFixed(p), p)
+}

@@ -12,9 +12,8 @@ import { Chat } from './Chat'
 import { PointsImg } from '@/images'
 import { motion } from "framer-motion"
 import { openLink } from '@/utils/tool'
-import { SIGN_IN_ADDRESS, STPT_ADDRESS } from '@/config'
-import STPT_ABI from '@/contract/STPT_ABI.json'
-import { parseUnits } from 'viem'
+import { AGENT_ADDRESS } from '@/config'
+import AGENT_ABI from '@/contract/AGENT_ABI.json'
 
 
 const MotionBox = motion(Box)
@@ -22,6 +21,7 @@ const MotionBox = motion(Box)
 export const Nav = () => {
     const [countdown, setCountdown] = useState<string>('--')
     const [canCheckIn, setCanCheckIn] = useState<any>(false)
+    const [claimLoding, setClaimLoding] = useState<any>(false)
     const [visible, setVisible] = useState<boolean>(false)
     const [walletOpen, setWalletOpen] = useState<boolean>(false)
     const { address, isConnected } = useAccount()
@@ -50,14 +50,9 @@ export const Nav = () => {
 
     const isClaimed = isConnected && checkStatus && checkStatus?.canCheckIn === false
 
-    const { data: hash, writeContract, isPending, error } = useWriteContract()
-    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({hash})
+    const { data: checkInHash, writeContract, isPending, error: checkInError } = useWriteContract()
+    const { isLoading: isConfirming, isSuccess: checkInConfirmed } = useWaitForTransactionReceipt({hash: checkInHash})
         
- 
-
- 
-      
-    
     useEffect(() => {
         if (isClaimed && checkStatus) {
           const { nextResetTime } = checkStatus;
@@ -112,15 +107,16 @@ export const Nav = () => {
 
 
     useEffect(() => {
-        if(hash && isConfirmed) {
+        if(checkInHash && checkInConfirmed) {
             onDailyCheckIn()            
         }
-    },[hash, isConfirmed])
+    },[checkInHash, checkInConfirmed])
 
 
     useEffect(() => {
-        if (error) {
-            if ((error as any).code === 4001 || error?.message?.includes('User rejected')) {
+        if (checkInError) {
+            setClaimLoding(false)
+            if ((checkInError as any).code === 4001 || checkInError?.message?.includes('User rejected')) {
                 dispatch(alertInfoAction({
                     open: true,
                     title: 'Warning',
@@ -128,7 +124,7 @@ export const Nav = () => {
                 }))
             }
         }
-    }, [error])
+    }, [checkInError])
 
 
     const onLogin = async() => {
@@ -136,33 +132,6 @@ export const Nav = () => {
         localStorage.setItem('loginAddress', `${address}`)        
     }
 
-    const signInWithWallet = async() => { 
-        try {
-            if (!isConnected || !address) {
-                return
-            }
-            const { challenge } = await createChallenge({ walletAddress: address })
-            const signature = await signMessageAsync({ message: challenge })
-            const result = await verifySignature({
-                walletAddress: address,
-                signature,
-            });
-            return result
-        } catch (error:any) {
-            // console.log('errorerror', error)
-            if ((error as any).code === 4001 || error?.message?.includes('User rejected')) {
-                dispatch(alertInfoAction({
-                    open: true,
-                    title: 'Warning',
-                    content: 'User rejected the request.',
-                }))
-            }            
-            return false
-            
-        }
-    }
-      
-  
 
     const checkWalletConnected = (cb:() => void) => {
         if(isConnected && address) {
@@ -173,9 +142,8 @@ export const Nav = () => {
     }
 
     const onDailyCheckIn = async() => {
-        
         const a = await dailyCheckIn({ walletAddress: address as `0x${string}` })
-
+        setClaimLoding(false)
         if(a && a.success) {
             dispatch(alertInfoAction({
                 open: true, 
@@ -185,31 +153,23 @@ export const Nav = () => {
             setCanCheckIn(false)
         }
     }
-    const onClaim = () => {
-        // 
-     
+    const onClaim = () => {     
         checkWalletConnected(async() => {
-
+            setClaimLoding(true)
             const a = await window.ethereum.request({
                 method: "wallet_switchEthereumChain",
                 params: [{ chainId: '0x2105' }],
             })
+            
             setTimeout(async() => {
-                await writeContract({
-                    address: STPT_ADDRESS,
-                    abi:STPT_ABI,
-                    functionName: 'transfer',
-                    args: [SIGN_IN_ADDRESS, parseUnits(`${0}`, 18)],
-                })
+               
+                await writeContract({ 
+                    abi: AGENT_ABI,
+                    address: AGENT_ADDRESS,
+                    functionName: 'checkIn',
+                    args: [],
+                 })               
             },500)
-
-            // signInWithWallet().then(async(res: any) => {
-            //     if(res) {
-            //         // transfer free, then dailyCheckIn
-
-                    
-            //     }
-            // })
 
         })
     }    
@@ -278,6 +238,7 @@ export const Nav = () => {
                             // checkStatus === null ? 'Daily Clock-in' :
                             // (isConnected ? ((checkStatus && canCheckIn) ? 'Daily Clock-in' : 'Claimed') : 'Daily Clock-in')
                         }
+                        loading={claimLoding}
                         onClick={onClaim}
                     />  
                      <BorderButton
