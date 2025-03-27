@@ -116,12 +116,9 @@ export const PixiGame:React.FC<{
   useEffect(() => {
     if(agentInfo && viewportRef.current) {      
 
-      const list = [...players, ...agentsWeb]
-
-      // console.log('dddddddddd list', list)
-
+      const list = [...players, ...agentsWeb]  
       const focusPlayer = players.filter(p => p.id === agentInfo.playerId)
-      if(focusPlayer) {
+      if(focusPlayer && !!focusPlayer.length) {
         const { x, y } = focusPlayer[0].position
         viewportRef.current.animate({
           position: new PIXI.Point(x * tileDim,y * tileDim),
