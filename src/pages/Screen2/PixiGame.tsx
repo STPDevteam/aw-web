@@ -27,6 +27,7 @@ export const PixiGame:React.FC<{
   agentInfo: any,
   selectedAgentId: (id: number) => void
   onClearFEAgent:() => void
+  clearSelectedAgentInfo:() => void
 }> = ({
   worldId,
   engineId,
@@ -36,8 +37,8 @@ export const PixiGame:React.FC<{
   agentInfo,
   pixiWidth,
   selectedAgentId,
-  onClearFEAgent
-
+  onClearFEAgent,
+  clearSelectedAgentInfo,
 }) => {
   // PIXI setup.
   const pixiApp = useApp();
@@ -114,17 +115,25 @@ export const PixiGame:React.FC<{
  
 
   useEffect(() => {
-    if(agentInfo && viewportRef.current) {      
+    if(agentInfo && agentInfo.position && viewportRef.current) {      
+      const targetPosition = agentInfo.position
+      const { x, y } = targetPosition
+      viewportRef.current.animate({
+        position: new PIXI.Point(x * tileDim,y * tileDim),
+        scale: 1,
+      })
 
-      const list = [...players, ...agentsWeb]  
-      const focusPlayer = players.filter(p => p.id === agentInfo.playerId)
-      if(focusPlayer && !!focusPlayer.length) {
-        const { x, y } = focusPlayer[0].position
-        viewportRef.current.animate({
-          position: new PIXI.Point(x * tileDim,y * tileDim),
-          scale: 1,
-        })
-      }
+      clearSelectedAgentInfo()
+      
+      // const list = [...players, ...agentsWeb]  
+      // const focusPlayer = players.filter(p => p.id === agentInfo.playerId)
+      // if(focusPlayer && !!focusPlayer.length) {
+      //   const { x, y } = focusPlayer[0].position
+      //   viewportRef.current.animate({
+      //     position: new PIXI.Point(x * tileDim,y * tileDim),
+      //     scale: 1,
+      //   })
+      // }
     }
   },[agentInfo])
 

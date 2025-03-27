@@ -11,8 +11,8 @@ import { useServerGame } from '../../hooks/serverGame.ts';
 import {  Box,  Text, Image } from '@chakra-ui/react'
 import { AgentList } from '@/pages/Screen2/AgentList'
 import { PixiGame } from './PixiGame'
-import { selectedAgentInfo } from '@/redux/reducer'
-import { useAppSelector } from '@/redux/hooks.ts'
+import { selectedAgentInfo, selectedAgentInfoAction } from '@/redux/reducer'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks.ts'
 import { PageLoading, BorderButton } from '@/components'
 import { FEPlayerDetails } from './FEPlayerDetails'
 import ReactDOM from 'react-dom';
@@ -29,9 +29,10 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
   const [guideOpen, setGuideOpen] = useState(false)
   
   const [currentFEAgent, setCurrentFEAgent] = useState<any>()
-  const [mapLoadingStatus, setMapLoadingStatus] = useState<'notStarted' | 'loading' | 'end'>('notStarted')
+  const [mapLoadingStatus, setMapLoadingStatus] = useState<'notStarted' | 'loading' | 'end'>('loading')
 
   const agentInfo = useAppSelector(selectedAgentInfo)
+  const dispatch = useAppDispatch()
   const convex = useConvex();
   const [selectedElement, setSelectedElement] = useState<{
     kind: 'player';
@@ -46,6 +47,7 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
   const worldStatus = useQuery(api.world.defaultWorldStatus);
   const worldId = worldStatus?.worldId;
   const engineId = worldStatus?.engineId;
+
 
   const game = useServerGame(worldId)
 
@@ -181,7 +183,8 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
                  mapLoadingStatus !== 'end' && 
                 <Box className='center h100 w100 fx-col ai-ct'>
                   { welcomeText() }
-                  { mapLoadingStatus === 'notStarted' &&                       
+                  { 
+                    mapLoadingStatus === 'notStarted' &&                       
                       <Box w="369px">
                         <BorderButton
                           isFixedWidth={true}
@@ -245,6 +248,7 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
                         historicalTime={historicalTime}
                         setSelectedElement={setSelectedElement}
                         onClearFEAgent={() => setCurrentFEAgent(null)}
+                        clearSelectedAgentInfo={() => dispatch(selectedAgentInfoAction(null))}
                       />
                     </ConvexProvider>
                   </Stage>  

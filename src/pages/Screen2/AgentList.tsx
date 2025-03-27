@@ -36,7 +36,7 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
             return (
                 // list.map((item, idx) => (
                 agentsServer.page.map((item, idx) => (
-                <ListItem item={item} key={item.name} idx={idx} focusAgent={() => {
+                <ListItem item={item} key={item._id} idx={idx} focusAgent={() => {
                     dispatch(selectedAgentInfoAction(item))
                 }}/>
               ))
@@ -90,7 +90,8 @@ const ListItem:FC<{ item:any, idx: number, focusAgent:() => void }>= ({ item,idx
                 px="20px"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                onClick={isSpecialAgent ? () => focusAgent() : () => null }
+                onClick={focusAgent }
+                // onClick={isSpecialAgent ? () => focusAgent() : () => null }
                 h="44px"
                 w="214px"
                 _hover={{
