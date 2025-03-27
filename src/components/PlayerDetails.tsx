@@ -118,7 +118,7 @@ export default function PlayerDetails({
           <div>
             <p>Be the first to engage with World.Fun and earn World Points for future airdrops! </p>
             <p>⏰ Daily clock-in (free) to earn 10 World Points</p>
-            <p>🤖Create agent (10 $STPT) to earn 500 World Points</p>
+            <p>🤖 Create agent (10 $STPT) to earn 500 World Points</p>
             <p>💬 Engage agents (1 $STPT) to earn 40 World Points</p>
             <p>🌍 Join world (coming soon)</p>
           </div>)}
