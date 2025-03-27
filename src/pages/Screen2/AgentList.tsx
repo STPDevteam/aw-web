@@ -102,8 +102,8 @@ const ListItem:FC<{ item:any, idx: number, focusAgent:() => void }>= ({ item,idx
                     <Text color="#E0E0E0" className='fm3' fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{item.name}</Text>
 
                 {
-                    isSpecialAgent && 
-                    <Image src={isHovered ? XHover : X} w="18px" h="15px" />
+                    // isSpecialAgent && 
+                    // <Image src={isHovered ? XHover : X} w="18px" h="15px" />
                 }
             </Box>
         </Box>
