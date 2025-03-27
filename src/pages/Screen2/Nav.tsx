@@ -12,8 +12,9 @@ import { Chat } from './Chat'
 import { PointsImg } from '@/images'
 import { motion } from "framer-motion"
 import { openLink } from '@/utils/tool'
-import { AGENT_ADDRESS } from '@/config'
+import { AGENT_ADDRESS, CHECK_IN_ADDRESS } from '@/config'
 import AGENT_ABI from '@/contract/AGENT_ABI.json'
+import { containsNodeError } from 'viem/utils';
 
 
 const MotionBox = motion(Box)
@@ -167,7 +168,7 @@ export const Nav = () => {
                     abi: AGENT_ABI,
                     address: AGENT_ADDRESS,
                     functionName: 'checkIn',
-                    args: [],
+                    args: [CHECK_IN_ADDRESS],
                  })               
             },500)
 

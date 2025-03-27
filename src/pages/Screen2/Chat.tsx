@@ -6,7 +6,7 @@ import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch } from '@/redux/hooks.js';
 import { alertInfoAction, openConnectWalletAction, openCreateAction } from '@/redux/reducer/agentReducer.js';
-import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CHAT_ADDRESS, STPT_ADDRESS, AGENT_ADDRESS} from '@/config'
+import { AGENTS_CHAT_FEE, CHAT_AGENT_ADDRESS, STPT_ADDRESS, AGENT_ADDRESS} from '@/config'
 import {  useWaitForTransactionReceipt, useAccount, useWriteContract,  Config, useConnectorClient } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
 import AGENT_ABI from '@/contract/AGENT_ABI.json'
@@ -126,12 +126,12 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
 
                 setBtnLoading(true)
                 setTimeout(async() => {
-                    
+                    const amount = parseUnits(AGENTS_CHAT_FEE, 18)
                     const { hash, message }: any = await ERC20Approve({                    
                         tokenContractAddress: STPT_ADDRESS,
                         tokenABI: STPT_ABI,
                         approveAddress: AGENT_ADDRESS,
-                        approveAmount: parseUnits(RANDOM_ENCOUNTER_FEE, 18),
+                        approveAmount: amount,
                         signer
                     })
 
@@ -142,8 +142,8 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                         await writeContract({
                             address: AGENT_ADDRESS,
                             abi: AGENT_ABI,
-                            functionName: 'payOne',
-                            args: [],
+                            functionName: 'agentInterfacing',
+                            args: [CHAT_AGENT_ADDRESS,amount],
                         })               
                     }
                     if(message) {

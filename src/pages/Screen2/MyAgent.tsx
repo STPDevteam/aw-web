@@ -6,7 +6,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api.js'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.js';
 import { alertInfoAction, myAgentPopupVisibleAction, openConnectWalletAction, openCreateAction, selectMyAgentPopupVisible, selectOpenCreate } from '@/redux/reducer/agentReducer.js';
-import { RANDOM_ENCOUNTER_FEE, CREATE_AGENT_FEE, CREATE_ADDRESS_ADDRESS, STPT_ADDRESS, AGENT_ADDRESS} from '@/config'
+import { CREATE_AGENT_FEE, CREATE_AGENT_ADDRESS, STPT_ADDRESS, AGENT_ADDRESS} from '@/config'
 import {  useWaitForTransactionReceipt, useAccount, useWriteContract, Config, useConnectorClient } from 'wagmi'
 import STPT_ABI from '@/contract/STPT_ABI.json'
 import AGENT_ABI from '@/contract/AGENT_ABI.json'
@@ -192,12 +192,12 @@ export const MyAgent:React.FC<iMyAgent> = ({
                 params: [{ chainId: '0x2105' }],
             })
             setTimeout(async() => {
-
+                const amount = parseUnits(CREATE_AGENT_FEE, 18)
                 const { hash, message }: any = await ERC20Approve({                    
                     tokenContractAddress: STPT_ADDRESS,
                     tokenABI: STPT_ABI,
                     approveAddress: AGENT_ADDRESS,
-                    approveAmount: parseUnits(CREATE_AGENT_FEE, 18),
+                    approveAmount: amount,
                     signer
                 })
                 // console.log('ERC20Approve hash', hash)
@@ -206,8 +206,8 @@ export const MyAgent:React.FC<iMyAgent> = ({
                     await writeContract({
                         address: AGENT_ADDRESS,
                         abi: AGENT_ABI,
-                        functionName: 'payTen',
-                        args: [],
+                        functionName: 'createAgent',
+                        args: [CREATE_AGENT_ADDRESS, amount],
                     })               
                 }
                 if(message) {
