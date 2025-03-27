@@ -14,7 +14,7 @@ import { motion } from "framer-motion"
 import { openLink } from '@/utils/tool'
 import { AGENT_ADDRESS, CHECK_IN_ADDRESS } from '@/config'
 import AGENT_ABI from '@/contract/AGENT_ABI.json'
-import { containsNodeError } from 'viem/utils';
+import { autoSwitchChain, isBaseChain } from '@/utils/wagmiConfig';
 
 
 const MotionBox = motion(Box)
@@ -25,7 +25,7 @@ export const Nav = () => {
     const [claimLoding, setClaimLoding] = useState<any>(false)
     const [visible, setVisible] = useState<boolean>(false)
     const [walletOpen, setWalletOpen] = useState<boolean>(false)
-    const { address, isConnected } = useAccount()
+    const { address, isConnected, chainId} = useAccount()
     const dispatch = useAppDispatch()
     const myAgentPopupVisible = useAppSelector(selectMyAgentPopupVisible)  
     const dailyCheckIn = useMutation(api.wallet.dailyCheckIn)       
@@ -154,13 +154,14 @@ export const Nav = () => {
             setCanCheckIn(false)
         }
     }
+
+
     const onClaim = () => {     
         checkWalletConnected(async() => {
+            if(!!!isBaseChain(chainId)) {
+               await autoSwitchChain()
+            }
             setClaimLoding(true)
-            const a = await window.ethereum.request({
-                method: "wallet_switchEthereumChain",
-                params: [{ chainId: '0x2105' }],
-            })
             
             setTimeout(async() => {
                

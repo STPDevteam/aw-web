@@ -1,6 +1,7 @@
 import { http, createConfig } from 'wagmi'
 import { base } from 'wagmi/chains'
 import { injected, metaMask, safe, walletConnect } from 'wagmi/connectors'
+import { switchChain } from '@wagmi/core'
 
 export const config = createConfig({
   chains: [base],
@@ -14,3 +15,16 @@ export const config = createConfig({
     [base.id]: http(),
   },
 })
+
+
+export const autoSwitchChain = async() => {
+  await switchChain(config, { chainId: base.id })
+  // if(a && a.id) {
+  //   return a.id
+  // }
+  // return 1
+}
+
+export const isBaseChain = (cId: number | undefined) => {
+    return cId  === base.id
+}

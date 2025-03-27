@@ -14,6 +14,7 @@ import { Logo } from '@/images'
 import { ERC20Approve, parseUnits } from '@/utils/tool'
 import { providers } from 'ethers'
 import type { Account, Chain, Client, Transport } from 'viem'
+import { autoSwitchChain, isBaseChain } from '@/utils/wagmiConfig.js';
 
 interface iInput {
     value: string
@@ -31,7 +32,7 @@ export const MyAgent:React.FC<iMyAgent> = ({
     createdPlayers,
 }) => {
 
-    const { address, isConnected } = useAccount()
+    const { address, isConnected, chainId } = useAccount()
     
     const [deleteLoading, setDeleteLoading] = useState<boolean>(false)
     const [btnLoading, setBtnLoading] = useState(false)
@@ -186,11 +187,11 @@ export const MyAgent:React.FC<iMyAgent> = ({
         if(!!name.value.length && !!prompt.value.length && !name.disable && !prompt.disable) {
             dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: false }))
             setBtnLoading(true)      
-            
-            const a = await window.ethereum.request({
-                method: "wallet_switchEthereumChain",
-                params: [{ chainId: '0x2105' }],
-            })
+            if(!!!isBaseChain(chainId)) {
+                await autoSwitchChain()
+            }
+
+         
             setTimeout(async() => {
                 const amount = parseUnits(CREATE_AGENT_FEE, 18)
                 const { hash, message }: any = await ERC20Approve({                    

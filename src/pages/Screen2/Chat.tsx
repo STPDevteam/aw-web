@@ -13,6 +13,7 @@ import AGENT_ABI from '@/contract/AGENT_ABI.json'
 import { ERC20Approve, parseUnits } from "@/utils/tool"
 import { providers } from 'ethers'
 import type { Account, Chain, Client, Transport } from 'viem'
+import { autoSwitchChain, isBaseChain } from '@/utils/wagmiConfig.js';
 
 interface iChat {
     worldId: any
@@ -26,7 +27,7 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
     const [conversationList, setConversationList] = useState<{speaker: string, text: string}[]>([])
     const [title, setTitle] = useState('')
 
-    const { address, isConnected } = useAccount()
+    const { address, isConnected, chainId } = useAccount()
     const { data: hash, writeContract, isPending, error } = useWriteContract()
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({hash})
 
@@ -119,12 +120,12 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
                 }))               
             }else {
 
-                const a = await window.ethereum.request({
-                    method: "wallet_switchEthereumChain",
-                    params: [{ chainId: '0x2105' }],
-                })
-
                 setBtnLoading(true)
+
+                if(!!!isBaseChain(chainId)) {
+                    await autoSwitchChain()
+                }
+               
                 setTimeout(async() => {
                     const amount = parseUnits(AGENTS_CHAT_FEE, 18)
                     const { hash, message }: any = await ERC20Approve({                    
