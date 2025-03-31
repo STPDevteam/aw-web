@@ -224,7 +224,18 @@ export const gameDescriptions = query({
     if (!worldMap) {
       throw new Error(`No map for world: ${args.worldId}`);
     }
-    return { worldMap, playerDescriptions, agentDescriptions };
+    
+    // Deduplicate player descriptions by playerId
+    const uniquePlayerDescriptions = [];
+    const seenPlayerIds = new Set();
+    for (const playerDesc of playerDescriptions) {
+      if (!seenPlayerIds.has(playerDesc.playerId)) {
+        seenPlayerIds.add(playerDesc.playerId);
+        uniquePlayerDescriptions.push(playerDesc);
+      }
+    }
+    
+    return { worldMap, playerDescriptions: uniquePlayerDescriptions, agentDescriptions };
   },
 });
 
@@ -266,13 +277,38 @@ export const paginatedPlayerDescriptions = query({
     // Ensure at least 10 items per page
     const numItems = Math.max(args.paginationOpts.numItems ?? 10, 10);
     
-    // Build the query
-    const paginationResult = await ctx.db
+    // 获取所有的玩家描述
+    const allPlayerDescriptions = await ctx.db
       .query('playerDescriptions')
       .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
-      // Use default sorting
-      .order('asc')
-      .paginate({ ...args.paginationOpts, numItems });
+      .collect();
+    
+    // 手动过滤出ID为p:1到p:50的玩家
+    const filteredPlayerDescriptions = allPlayerDescriptions.filter(desc => {
+      // 解析playerId，格式应为"p:数字"
+      const match = desc.playerId.match(/^p:(\d+)$/);
+      if (!match) return false;
+      
+      const idNumber = parseInt(match[1], 10);
+      // 只保留1到50之间的ID
+      return idNumber >= 1 && idNumber <= 50;
+    });
+    
+    // 手动排序
+    filteredPlayerDescriptions.sort((a, b) => {
+      const aNum = parseInt(a.playerId.substring(2), 10);
+      const bNum = parseInt(b.playerId.substring(2), 10);
+      return aNum - bNum;
+    });
+    
+    // 手动分页
+    const cursor = args.paginationOpts.cursor;
+    const cursorIndex = cursor 
+      ? filteredPlayerDescriptions.findIndex(desc => desc._id.toString() === cursor) 
+      : -1;
+    
+    const startIndex = cursorIndex !== -1 ? cursorIndex + 1 : 0;
+    const pageItems = filteredPlayerDescriptions.slice(startIndex, startIndex + numItems);
     
     // Get world data containing player information (including positions)
     const world = await ctx.db.get(args.worldId);
@@ -282,7 +318,7 @@ export const paginatedPlayerDescriptions = query({
     }
     
     // Add position information to each player description
-    const enhancedPage = paginationResult.page.map(playerDesc => {
+    const enhancedPage = pageItems.map(playerDesc => {
       // Find the corresponding player from world data
       const player = world.players.find(p => p.id === playerDesc.playerId);
       
@@ -299,10 +335,15 @@ export const paginatedPlayerDescriptions = query({
       return playerDesc;
     });
     
-    // Return paginated result with position information
+    // 确定是否有更多数据
+    const hasMore = startIndex + numItems < filteredPlayerDescriptions.length;
+    const lastId = pageItems.length > 0 ? pageItems[pageItems.length - 1]._id.toString() : null;
+    
+    // 返回手动分页的结果
     return {
-      ...paginationResult,
-      page: enhancedPage
+      page: enhancedPage,
+      isDone: !hasMore,
+      continueCursor: hasMore ? lastId : null
     };
   },
 });
