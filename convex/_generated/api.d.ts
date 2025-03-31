@@ -39,7 +39,6 @@ import type * as crons from "../crons.js";
 import type * as data_agentNames from "../data/agentNames.js";
 import type * as engine_abstractGame from "../engine/abstractGame.js";
 import type * as engine_historicalObject from "../engine/historicalObject.js";
-import type * as frontendAgent from "../frontendAgent.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
 import type * as messages from "../messages.js";
@@ -96,7 +95,6 @@ declare const fullApi: ApiFromModules<{
   "data/agentNames": typeof data_agentNames;
   "engine/abstractGame": typeof engine_abstractGame;
   "engine/historicalObject": typeof engine_historicalObject;
-  frontendAgent: typeof frontendAgent;
   http: typeof http;
   init: typeof init;
   messages: typeof messages;
