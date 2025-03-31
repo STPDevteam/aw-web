@@ -13,7 +13,6 @@ import { toastOnError } from '../../toasts.ts';
 import { PositionIndicator } from '../../components/PositionIndicator.tsx';
 import { ServerGame } from '../../hooks/serverGame.ts';
 import SimulatedAgents from '../../components/SimulatedAgents.tsx'; 
-import { mockAgents } from '../../../data/characters.js'
 import { SimulatedAgent} from '@/components/createSimulatedAgentSprite'
 import * as map from '../../../data/gentle.js';
 
@@ -69,8 +68,6 @@ export const PixiGame:React.FC<{
     y: number;
     t: number;
   } | null>(null);
-
-  const agentsWeb: SimulatedAgent[] = mockAgents();
 
 
 
@@ -196,13 +193,13 @@ export const PixiGame:React.FC<{
       />
   
       {memoizedPositionIndicator}
-        {viewportRef.current && (
+        {/* {viewportRef.current && (
         <SimulatedAgents 
           container={viewportRef.current} 
           tileDim={tileDim} mapWidth={width}
           selectedAgentId={selectedAgentId}
         />
-      )} 
+      )}  */}
       
       {
         players.map((p) => (

@@ -10,7 +10,6 @@ import {  Id } from '../../../convex/_generated/dataModel'
 import { useMutation, useQuery } from 'convex/react'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { selectedAgentInfoAction } from '@/redux/reducer/agentReducer'
-import { mockAgents } from '../../../data/characters.js'
 import { SimulatedAgent} from '@/components/createSimulatedAgentSprite'
 import { BorderBox } from './Game'
 
@@ -19,7 +18,6 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
 
     const dispatch = useAppDispatch()
 
-    const agentsWeb: SimulatedAgent[] = mockAgents();
 
     const agentsServer = useQuery(api.world.paginatedPlayerDescriptions, { 
         worldId,
@@ -31,8 +29,6 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
     
     const renderedAgents = useMemo(() => {
         if(!!agentsServer?.page && agentsServer.page.length > 0) {
-            const list = [...agentsServer.page, ...agentsWeb].filter(item => item.name !== undefined)
-
             return (
                 // list.map((item, idx) => (
                 agentsServer.page.map((item, idx) => (
