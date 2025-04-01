@@ -4,7 +4,70 @@ import { Id } from './_generated/dataModel';
 import { internal } from './_generated/api';
 import { Doc } from './_generated/dataModel';
 
-// Mutation to tip an agent
+// Function to generate frontend token - used for request verification
+export const generateFrontendToken = mutation({
+  args: {
+    userId: v.id('walletUsers'),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = args;
+    
+    // Verify user exists
+    const user = await ctx.db.get(userId);
+    if (!user) {
+      throw new Error('User does not exist');
+    }
+    
+    // Generate token
+    const timestamp = Date.now();
+    const secretKey = process.env.FRONTEND_TOKEN_SECRET || 'frontend_token_secret_for_testing_only';
+    
+    // Create token components using timestamp, random values and user data
+    const random1 = Math.floor(Math.random() * 10000000000);
+    const random2 = Math.floor(Math.random() * 10000000000);
+    
+    // Create a simple hash by combining various elements
+    const dataToSign = `${userId.toString()}_${timestamp}_${user.walletAddress}_${random1}_${random2}`;
+    const token = simpleHash(dataToSign, secretKey);
+      
+    // Store token in database, overwrite previous token (if any)
+    await ctx.db.patch(userId, {
+      frontendToken: token,
+      tokenTimestamp: timestamp
+    });
+    
+    // Return token and timestamp
+    return {
+      token,
+      timestamp,
+      expiresIn: 30 * 60 * 1000, // 30 minute validity
+    };
+  }
+});
+
+// A simple hash function that doesn't require crypto
+function simpleHash(str: string, salt: string): string {
+  let hash = 0;
+  const combinedStr = salt + str + salt;
+  
+  for (let i = 0; i < combinedStr.length; i++) {
+    const char = combinedStr.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // Convert to hex-like string and add more entropy
+  let hexHash = Math.abs(hash).toString(16);
+  while (hexHash.length < 32) {
+    // Add more pseudo-randomness based on timestamp and string content
+    const extraRandom = Math.floor(Math.random() * 16777215).toString(16);
+    hexHash += extraRandom;
+  }
+  
+  return hexHash.slice(0, 64); // Return a 64-character string
+}
+
+// Tip agent endpoint - using frontend token verification
 export const tipAgent = mutation({
   args: {
     // World ID
@@ -17,9 +80,13 @@ export const tipAgent = mutation({
     amount: v.optional(v.number()),
     // Transaction ID (optional)
     transactionId: v.optional(v.string()),
+    // Frontend token
+    frontendToken: v.string(),
+    // Token timestamp
+    tokenTimestamp: v.number(),
   },
   handler: async (ctx, args) => {
-    const { worldId, agentId, userId, transactionId } = args;
+    const { worldId, agentId, userId, transactionId, frontendToken, tokenTimestamp } = args;
     const amount = args.amount || 10; // Default tip amount is 10
     
     // Get user information
@@ -28,7 +95,20 @@ export const tipAgent = mutation({
       throw new Error(`User does not exist: ${userId}`);
     }
     
-    // Verify if the agent exists
+    // 1. Verify frontend token
+    // Check if token has expired
+    const currentTime = Date.now();
+    const TOKEN_EXPIRY = 30 * 60 * 1000; // 30 minutes
+    if (currentTime - tokenTimestamp > TOKEN_EXPIRY) {
+      throw new Error('Token has expired, please refresh the page and try again');
+    }
+    
+    // Check if token matches
+    if (!user.frontendToken || user.frontendToken !== frontendToken || user.tokenTimestamp !== tokenTimestamp) {
+      throw new Error('Invalid frontend token, please use the official frontend for tipping');
+    }
+    
+    // Verify agent exists
     const agentDesc = await ctx.db
       .query("agentDescriptions")
       .withIndex("worldId", q => q.eq("worldId", worldId).eq("agentId", agentId))
@@ -38,15 +118,30 @@ export const tipAgent = mutation({
       throw new Error(`Agent does not exist: ${agentId}`);
     }
     
-    // Update the total tips for the agent
+    // Prevent duplicate tips - if transaction ID is provided, check it
+    if (transactionId) {
+      const existingTip = await ctx.db
+        .query("agentTips")
+        .filter(q => q.eq(q.field("transactionId"), transactionId))
+        .first();
+        
+      if (existingTip) {
+        throw new Error(`This tip has already been processed`);
+      }
+    }
+    
+    // Update agent's total tips
     const newTips = (agentDesc.tips || 0) + amount;
-    const newEnergy = Math.min(100, (agentDesc.energy || 0) + 10); // Increase energy by 10, but max value is 100
+    const newEnergy = Math.min(100, (agentDesc.energy || 0) + 10); // Add 10 energy points, but max is 100
     
     // Update agentDescription - using type assertion
     await ctx.db.patch(agentDesc._id as Id<"agentDescriptions">, {
       tips: newTips,
       energy: newEnergy
     });
+    
+    // Generate unique transaction ID (if not provided)
+    const finalTransactionId = transactionId || `tip_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
     
     // Record the tip
     const tipId = await ctx.db.insert('agentTips', {
@@ -56,7 +151,14 @@ export const tipAgent = mutation({
       walletAddress: user.walletAddress,
       amount,
       tippedAt: Date.now(),
-      transactionId
+      transactionId: finalTransactionId,
+      verified: true
+    });
+    
+    // Invalidate token, ensure one-time use only
+    await ctx.db.patch(userId, {
+      frontendToken: undefined,
+      tokenTimestamp: undefined
     });
     
     return {

@@ -51,7 +51,11 @@ export default defineSchema({
     // Tip time
     tippedAt: v.number(),
     // Tip transaction ID (optional)
-    transactionId: v.optional(v.string()),
+    transactionId: v.string(),
+    // Whether the transaction is verified
+    verified: v.optional(v.boolean()),
+    // Blockchain network
+    network: v.optional(v.string()),
   })
     .index('byAgent', ['worldId', 'agentId'])
     .index('byUser', ['userId'])
@@ -70,6 +74,10 @@ export default defineSchema({
     lastLogin: v.number(),
     // Account creation timestamp
     createdAt: v.number(),
+    // Frontend token for API request verification
+    frontendToken: v.optional(v.string()),
+    // Token timestamp for expiry checking
+    tokenTimestamp: v.optional(v.number()),
   })
     .index('walletAddress', ['walletAddress'])
     .index('points', ['points']),

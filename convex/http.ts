@@ -392,57 +392,6 @@ http.route({
   }),
 });
 
-// Add tips to agent endpoint
-http.route({
-  path: '/api/tips/add',
-  method: 'POST',
-  handler: httpAction(async (ctx, request) => {
-    let args = {};
-    try {
-      if (request.headers.get('Content-Type')?.includes('application/json')) {
-        args = await request.json();
-      }
-    } catch (error) {
-      return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    
-    // Validate required fields
-    const { userId, worldId, agentId, amount, transactionId } = args as any;
-    if (!userId || !worldId || !agentId) {
-      return new Response(JSON.stringify({ 
-        error: 'Missing required fields: userId, worldId, and agentId are required' 
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    
-    try {
-      // Use runtime access to bypass type checking
-      const tipsModule = api as any;
-      const result = await ctx.runMutation(tipsModule.tips.tipAgent, {
-        userId: userId as Id<"walletUsers">,
-        worldId: worldId as Id<"worlds">,
-        agentId,
-        amount: amount ? Number(amount) : undefined,
-        transactionId
-      });
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return new Response(JSON.stringify({ error: errorMessage }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-  }),
-});
-
 // Get agent details endpoint
 http.route({
   path: '/api/agent/details',
@@ -522,6 +471,106 @@ http.route({
       }
       
       const result = await ctx.runQuery(tipsModule.tips.getAgentTippers, requestParams);
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
+// Generate frontend token API
+http.route({
+  path: '/api/frontend-token',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    let args = {};
+    try {
+      if (request.headers.get('Content-Type')?.includes('application/json')) {
+        args = await request.json();
+      }
+    } catch (error) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Validate required fields
+    const { userId } = args as any;
+    if (!userId) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing required field: userId is required' 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    try {
+      // Use runtime access to bypass type checking
+      const tipsModule = api as any;
+      const result = await ctx.runMutation(tipsModule.tips.generateFrontendToken, {
+        userId: userId
+      });
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
+// Tip agent API (using frontend token verification)
+http.route({
+  path: '/api/tips/add',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    let args = {};
+    try {
+      if (request.headers.get('Content-Type')?.includes('application/json')) {
+        args = await request.json();
+      }
+    } catch (error) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Validate required fields
+    const { userId, worldId, agentId, amount, transactionId, frontendToken, tokenTimestamp } = args as any;
+    if (!userId || !worldId || !agentId || !frontendToken || !tokenTimestamp) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing required fields: userId, worldId, agentId, frontendToken and tokenTimestamp are required' 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    try {
+      // Use runtime access to bypass type checking
+      const tipsModule = api as any;
+      const result = await ctx.runMutation(tipsModule.tips.tipAgent, {
+        userId,
+        worldId,
+        agentId,
+        amount,
+        transactionId,
+        frontendToken,
+        tokenTimestamp
+      });
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json' },
       });
