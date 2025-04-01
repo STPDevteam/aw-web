@@ -39,6 +39,10 @@
     "dotenv": "^16.1.4",
     "eslint": "8.42.0",
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    "ethers": "^5.8.0",
+>>>>>>> d5e2268 (chore: update environment variable for Convex URL and upgrade ethers dependency version)
     "framer-motion": "^12.4.11",
 =======
     "ethers": "5",
