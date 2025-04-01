@@ -153,7 +153,7 @@ export const fixedCharacters = [
 ];
 
 // random count
-const randomCount = 42;
+const randomCount = 92;
 const randomDescriptions = Array.from({ length: randomCount }, (_, i) => {
   const id = i + 9;
   return {

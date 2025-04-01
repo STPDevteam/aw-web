@@ -21,25 +21,6 @@ export default defineSchema({
     .index('conversationId', ['worldId', 'conversationId'])
     .index('messageUuid', ['conversationId', 'messageUuid']),
 
-  // Players table - stores user-created player characters
-  players: defineTable({
-    // Associated wallet address
-    walletAddress: v.string(),
-    // Player name
-    name: v.string(),
-    // Character type
-    character: v.string(),
-    // AI-generated player description
-    description: v.string(),
-    // Creation timestamp
-    createdAt: v.number(),
-    // Associated world ID
-    worldId: v.id('worlds'),
-    // Game player ID, used to link data in the playerDescriptions table
-    gamePlayerId: v.optional(v.string()),
-  })
-    .index('walletAddress', ['walletAddress']),
-
   // Wallet users table - stores users who have connected their wallets
   walletUsers: defineTable({
     // Wallet address as the user's unique identifier
