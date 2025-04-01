@@ -132,11 +132,12 @@ export const agentDoSomething = internalAction({
       agent.lastInviteAttempt && now < agent.lastInviteAttempt + CONVERSATION_COOLDOWN;
     const recentActivity = player.activity && now < player.activity.until + ACTIVITY_COOLDOWN;
     
-    // 只有25%的几率优先考虑对话（从75%降低到25%）
-    const preferConversation = Math.random() < 0.25;
+    // Decide whether to do a conversation - no longer using random probability, based on time instead
+    // If there is enough time passed (cool down is over), prioritize conversation
+    const preferConversation = !justLeftConversation && !recentlyAttemptedInvite;
     
-    // 如果优先考虑对话且没有冷却限制，尝试寻找对话伙伴
-    if (preferConversation && !justLeftConversation && !recentlyAttemptedInvite) {
+    // If we prioritize conversation and there is no cool down limit, try to find a conversation partner
+    if (preferConversation) {
       const invitee = await ctx.runQuery(internal.aiTown.agent.findConversationCandidate, {
         now,
         worldId: args.worldId,
@@ -145,7 +146,7 @@ export const agentDoSomething = internalAction({
       });
       
       if (invitee) {
-        await sleep(Math.random() * 1000); // 增加延迟从500ms到1000ms
+        await sleep(500); // Use fixed delay
         await ctx.runMutation(api.aiTown.main.sendInput, {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -159,14 +160,14 @@ export const agentDoSomething = internalAction({
       }
     }
     
-    // 如果没找到对话伙伴或不优先对话，继续原有逻辑
+    // If we don't find a conversation partner or don't prioritize conversation, continue with the original logic
     // Decide whether to do an activity or wander somewhere.
     if (!player.pathfinding) {
-      // 增加活动的概率，减少随机漫步的可能性（优先选择活动）
-      const shouldWander = (recentActivity || justLeftConversation) || Math.random() < 0.3; // 从0.6降低到0.3
+      // When we can't do a conversation, alternate between activity and wandering
+      const shouldWander = player.activity && player.activity.until < now;
       
       if (shouldWander) {
-        await sleep(Math.random() * 1000); // 增加延迟
+        await sleep(500); // Use fixed delay
         await ctx.runMutation(api.aiTown.main.sendInput, {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -178,9 +179,10 @@ export const agentDoSomething = internalAction({
         });
         return;
       } else {
-        // TODO: have LLM choose the activity & emoji
-        const activity = ACTIVITIES[Math.floor(Math.random() * ACTIVITIES.length)];
-        await sleep(Math.random() * 1000); // 增加延迟
+        // Select activity, not using random number
+        const activityIndex = Math.floor((now / 1000) % ACTIVITIES.length);
+        const activity = ACTIVITIES[activityIndex];
+        await sleep(500); // Use fixed delay
         await ctx.runMutation(api.aiTown.main.sendInput, {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -198,8 +200,8 @@ export const agentDoSomething = internalAction({
       }
     }
     
-    // 如果执行到这里，说明玩家正在移动中且没有选择对话
-    // 检查是否可以邀请对话
+    // If we get here, the player is moving and there is no conversation choice
+    // Check if we can invite a conversation
     const invitee = 
       justLeftConversation || recentlyAttemptedInvite
         ? undefined
@@ -212,13 +214,13 @@ export const agentDoSomething = internalAction({
     
     // TODO: We hit a lot of OCC errors on sending inputs in this file. It's
     // easy for them to get scheduled at the same time and line up in time.
-    await sleep(Math.random() * 1000);
+    await sleep(500);
     await ctx.runMutation(api.aiTown.main.sendInput, {
       worldId: args.worldId,
       name: 'finishDoSomething',
       args: {
         operationId: args.operationId,
-        agentId: args.agent.id,
+        agentId: agent.id,
         invitee,
       },
     });

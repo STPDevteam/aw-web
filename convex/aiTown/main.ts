@@ -152,3 +152,27 @@ export const inputStatus = query({
     return input.returnValue ?? null;
   },
 });
+
+/**
+ * Retrieve information for all agents, including energy and statistics such as tips.
+ * Can be sorted by name, number of inferences, or amount of tips.
+ */
+export const listAllAgents = query({
+  args: {
+    worldId: v.id('worlds'),
+    sortBy: v.optional(v.union(
+      v.literal('name'),
+      v.literal('inferences'),
+      v.literal('tips'),
+    )),
+  },
+  handler: async (ctx, args): Promise<Array<{
+    agentId: string;
+    name: string;
+    energy: number;
+    inferences: number;
+    tips: number;
+  }>> => {
+    return await ctx.runQuery(internal.aiTown.game.getAllAgents, args);
+  },
+});

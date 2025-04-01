@@ -62,71 +62,111 @@ export class Agent {
       console.log(`Timing out ${JSON.stringify(this.inProgressOperation)}`);
       delete this.inProgressOperation;
     }
-    const conversation = game.world.playerConversation(player);
-    const member = conversation?.participants.get(player.id);
-
-    const recentlyAttemptedInvite =
-      this.lastInviteAttempt && now < this.lastInviteAttempt + CONVERSATION_COOLDOWN;
-    let doingActivity = player.activity && player.activity.until > now;
     
-    // Reduce the probability of interrupting activities
-    // When there's a conversation or movement opportunity, there's a 10% chance to interrupt the current activity (reduced from 40% to 10%)
-    if (doingActivity && (conversation || player.pathfinding)) {
-      if (Math.random() < 0.1) {
+      // Check if agent energy is 0
+      const agentDescription = game.agentDescriptions.get(this.id);
+      const energyDepleted = agentDescription && agentDescription.energy <= 0;
+      
+      const conversation = game.world.playerConversation(player);
+      const member = conversation?.participants.get(player.id);
+
+      const recentlyAttemptedInvite =
+        this.lastInviteAttempt && now < this.lastInviteAttempt + CONVERSATION_COOLDOWN;
+      let doingActivity = player.activity && player.activity.until > now;
+      
+      // Reduce the probability of interrupting activities
+      // When there's a conversation or movement opportunity, there's a 10% chance to interrupt the current activity (reduced from 40% to 10%)
+      if (doingActivity && (conversation || player.pathfinding)) {
+        if (Math.random() < 0.1) {
+          player.activity!.until = now;
+          doingActivity = false;
+        }
+      }
+      
+      // Reduce the probability of actively seeking conversations
+      // Reduce to a 5% chance of interrupting activities to find something else to do (reduced from 25% to 5%)
+      if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.05) {
         player.activity!.until = now;
         doingActivity = false;
       }
-    }
-    
-    // Reduce the probability of actively seeking conversations
-    // Reduce to a 5% chance of interrupting activities to find something else to do (reduced from 25% to 5%)
-    if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.05) {
-      player.activity!.until = now;
-      doingActivity = false;
-    }
 
-    // If we're not in a conversation, do something.
-    // If we aren't doing an activity or moving, do something.
-    // If we have been wandering but haven't thought about something to do for
-    // a while, do something.
-    if (!conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite)) {
-      this.startOperation(game, now, 'agentDoSomething', {
-        worldId: game.worldId,
-        player: player.serialize(),
-        otherFreePlayers: [...game.world.players.values()]
-          .filter((p) => p.id !== player.id)
-          .filter(
-            (p) => ![...game.world.conversations.values()].find((c) => c.participants.has(p.id)),
-          )
-          .map((p) => p.serialize()),
-        agent: this.serialize(),
-        mapId: game.worldMap.id!,
-      });
-      return;
-    }
-    // Check to see if we have a conversation we need to remember.
-    if (this.toRemember) {
-      // Fire off the action to remember the conversation.
-      console.log(`Agent ${this.id} remembering conversation ${this.toRemember}`);
-      this.startOperation(game, now, 'agentRememberConversation', {
-        worldId: game.worldId,
-        playerId: this.playerId,
-        agentId: this.id,
-        conversationId: this.toRemember,
-      });
-      delete this.toRemember;
-      return;
-    }
-    if (conversation && member) {
-      const [otherPlayerId, otherMember] = [...conversation.participants.entries()].find(
-        ([id]) => id !== player.id,
-      )!;
-      const otherPlayer = game.world.players.get(otherPlayerId)!;
-      if (member.status.kind === 'invited') {
-        // Accept a conversation with another agent with some probability and with
-        // a human unconditionally.
-        if (otherPlayer.human || Math.random() < INVITE_ACCEPT_PROBABILITY) {
-          console.log(`Agent ${player.id} accepting invite from ${otherPlayer.id}`);
+      // If we're not in a conversation, do something.
+      // If we aren't doing an activity or moving, do something.
+      // If we have been wandering but haven't thought about something to do for
+      // a while, do something.
+      // if energy is not 0, do something
+      if (!conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite) && !energyDepleted) {
+        this.startOperation(game, now, 'agentDoSomething', {
+          worldId: game.worldId,
+          player: player.serialize(),
+          otherFreePlayers: [...game.world.players.values()]
+            .filter((p) => p.id !== player.id)
+            .filter(
+              (p) => ![...game.world.conversations.values()].find((c) => c.participants.has(p.id)),
+            )
+            .map((p) => p.serialize()),
+          agent: this.serialize(),
+          mapId: game.worldMap.id!,
+        });
+        return;
+      }
+      // Check to see if we have a conversation we need to remember.
+      if (this.toRemember) {
+        // Fire off the action to remember the conversation.
+        console.log(`Agent ${this.id} remembering conversation ${this.toRemember}`);
+        this.startOperation(game, now, 'agentRememberConversation', {
+          worldId: game.worldId,
+          playerId: this.playerId,
+          agentId: this.id,
+          conversationId: this.toRemember,
+        });
+        delete this.toRemember;
+        return;
+      }
+      if (conversation && member) {
+        const [otherPlayerId, otherMember] = [...conversation.participants.entries()].find(
+          ([id]) => id !== player.id,
+        )!;
+        const otherPlayer = game.world.players.get(otherPlayerId)!;
+        if (member.status.kind === 'invited') {
+          // get agent energy
+          const agentDescription = game.agentDescriptions.get(this.id);
+          const energyDepleted = agentDescription && agentDescription.energy <= 0;
+          
+          // if energy is 0, reject conversation invitation
+          if (energyDepleted) {
+            console.log(`Agent ${player.id} rejecting invite from ${otherPlayer.id} due to depleted energy`);
+            conversation.rejectInvite(game, now, player);
+            return;
+          }
+          
+          // Accept a conversation with another agent with some probability and with
+          // a human unconditionally.
+          if (otherPlayer.human || Math.random() < INVITE_ACCEPT_PROBABILITY) {
+            console.log(`Agent ${player.id} accepting invite from ${otherPlayer.id}`);
+            
+            // reduce agent energy (energy is consumed when accepting a conversation invitation)
+            const agentDescription = game.agentDescriptions.get(this.id);
+            if (agentDescription) {
+              // reduce 5 energy points for each conversation
+              agentDescription.energy = Math.max(0, agentDescription.energy - 5);
+              console.log(`Agent ${this.id} energy reduced to ${agentDescription.energy} after accepting conversation invitation`);
+              
+              // increase inferences count
+              agentDescription.inferences = (agentDescription.inferences || 0) + 1;
+              console.log(`Agent ${this.id} inferences increased to ${agentDescription.inferences} after accepting conversation`);
+            }
+            
+              // increase other agent inferences count
+            const otherAgent = [...game.world.agents.values()].find(a => a.playerId === otherPlayerId);
+            if (otherAgent) {
+              const otherAgentDescription = game.agentDescriptions.get(otherAgent.id);
+              if (otherAgentDescription) {
+                otherAgentDescription.inferences = (otherAgentDescription.inferences || 0) + 1;
+                console.log(`Agent ${otherAgent.id} inferences increased to ${otherAgentDescription.inferences} after partner accepted conversation`);
+              }
+            }
+          
           conversation.acceptInvite(game, player);
           // Stop moving so we can start walking towards the other player.
           if (player.pathfinding) {
@@ -397,16 +437,16 @@ export const findConversationCandidate = internalQuery({
         .order('desc')
         .first();
       if (lastMember) {
-        // There's a 2% chance to skip the cooldown time limit (reduced from 20% to 2%)
-        if (now < lastMember.ended + PLAYER_CONVERSATION_COOLDOWN && Math.random() > 0.02) {
+        // no longer use random probability to skip cooldown, strictly follow cooldown
+        if (now < lastMember.ended + PLAYER_CONVERSATION_COOLDOWN) {
           continue;
         }
       }
       candidates.push({ 
         id: otherPlayer.id, 
         position: otherPlayer.position,
-        // Reduce the random factor to make the selection more distance-based (reduced from 30% to 5%)
-        randomFactor: Math.random() * 0.05
+        // remove random factor, only keep distance factor
+        distance: distance(otherPlayer.position, position)
       });
     }
 
@@ -414,22 +454,10 @@ export const findConversationCandidate = internalQuery({
       return undefined;
     }
 
-    // Sort by distance and random factor
-    candidates.sort((a, b) => {
-      const distanceA = distance(a.position, position);
-      const distanceB = distance(b.position, position);
-      return (distanceA - a.randomFactor) - (distanceB - b.randomFactor);
-    });
+    // sort by distance, no random factor
+    candidates.sort((a, b) => a.distance - b.distance);
     
-    // Reduce the probability of random selection (reduced from 30% to 5%)
-    if (candidates.length > 1) {
-      const selectFromTop = Math.min(3, candidates.length);
-      if (Math.random() < 0.05) {
-        const randomIndex = Math.floor(Math.random() * selectFromTop);
-        return candidates[randomIndex].id;
-      }
-    }
-    
+    // always select the closest candidate, no random selection
     return candidates[0]?.id;
   },
 });

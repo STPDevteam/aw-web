@@ -21,6 +21,43 @@ export default defineSchema({
     .index('conversationId', ['worldId', 'conversationId'])
     .index('messageUuid', ['conversationId', 'messageUuid']),
 
+  // Favorite agents table - stores the agents that users have favorited
+  favoriteAgents: defineTable({
+    // User ID (can be a wallet user or other users)
+    userId: v.id('walletUsers'),
+    // World ID
+    worldId: v.id('worlds'),
+    // Agent ID (using agentId)
+    agentId: v.string(),
+    // Favorite time
+    createdAt: v.number(),
+  })
+    .index('byUser', ['userId'])
+    .index('byUserAndAgent', ['userId', 'agentId'])
+    .index('byWorldAndUser', ['worldId', 'userId']),
+
+  // Tips for agents table - stores the tipping records users give to agents
+  agentTips: defineTable({
+    // World ID
+    worldId: v.id('worlds'),
+    // Agent ID
+    agentId: v.string(),
+    // User ID (wallet user)
+    userId: v.id('walletUsers'),
+    // User wallet address
+    walletAddress: v.string(),
+    // Tip amount
+    amount: v.number(),
+    // Tip time
+    tippedAt: v.number(),
+    // Tip transaction ID (optional)
+    transactionId: v.optional(v.string()),
+  })
+    .index('byAgent', ['worldId', 'agentId'])
+    .index('byUser', ['userId'])
+    .index('byAgentAndTime', ['agentId', 'tippedAt'])
+    .index('byWalletAddress', ['walletAddress']),
+
   // Wallet users table - stores users who have connected their wallets
   walletUsers: defineTable({
     // Wallet address as the user's unique identifier

@@ -40,9 +40,13 @@
     "eslint": "8.42.0",
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     "ethers": "^5.8.0",
 >>>>>>> d5e2268 (chore: update environment variable for Convex URL and upgrade ethers dependency version)
+=======
+    "ethers": "^5.7.2",
+>>>>>>> 85e8377 (feat: implement wallet management and agent enhancements, including energy tracking and conversation cooldown adjustments)
     "framer-motion": "^12.4.11",
 =======
     "ethers": "5",

@@ -18,17 +18,17 @@ export const COLLISION_THRESHOLD = 1.75;
 // How many human players can be in a world at once.
 export const MAX_HUMAN_PLAYERS = 100;
 
-// Don't talk to anyone for 150s after having a conversation.
-export const CONVERSATION_COOLDOWN = 180000;
+// Set conversation cooldown to 1 hour
+export const CONVERSATION_COOLDOWN = 60 * 60 * 1000; // 1 hour = 3,600,000 milliseconds
 
 // Don't do another activity for 10s after doing one.
 export const ACTIVITY_COOLDOWN = 10_000;
 
-// Don't talk to a player within 60s of talking to them.
-export const PLAYER_CONVERSATION_COOLDOWN = 300000;
+// Set conversation cooldown to 1 hour
+export const PLAYER_CONVERSATION_COOLDOWN = 60 * 60 * 1000; // 1 hour = 3,600,000 milliseconds
 
-// Invite 80% of invites that come from other agents.
-export const INVITE_ACCEPT_PROBABILITY = 0.4;
+// Set invite acceptance probability to 1, ensuring 100% acceptance of invite
+export const INVITE_ACCEPT_PROBABILITY = 1.0;
 
 // Wait for 1m for invites to be accepted.
 export const INVITE_TIMEOUT = 60000;
@@ -42,7 +42,7 @@ export const MAX_CONVERSATION_DURATION = 10 * 60_000; // more time locally
 // export const MAX_CONVERSATION_DURATION = 2 * 60_000;
 
 // Leave a conversation if it has more than 8 messages;
-export const MAX_CONVERSATION_MESSAGES = 2;
+export const MAX_CONVERSATION_MESSAGES = 8;
 
 // Wait for 1s after sending an input to the engine. We can remove this
 // once we can await on an input being processed.

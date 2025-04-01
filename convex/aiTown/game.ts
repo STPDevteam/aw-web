@@ -25,6 +25,7 @@ import { internal } from '../_generated/api';
 import { HistoricalObject } from '../engine/historicalObject';
 import { AgentDescription, serializedAgentDescription } from './agentDescription';
 import { parseMap, serializeMap } from '../util/object';
+import { query } from '../_generated/server';
 
 const gameState = v.object({
   world: v.object(serializedWorld),
@@ -425,5 +426,160 @@ export const getAgentDescriptions = internalQuery({
       .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
       .collect();
   },
+});
+
+// Query to get agent descriptions with sorting options
+export const getAllAgents = internalQuery({
+  args: {
+    worldId: v.id('worlds'),
+    sortBy: v.optional(v.union(
+      v.literal('name'),
+      v.literal('inferences'),
+      v.literal('tips'),
+    )),
+  },
+  handler: async (ctx, args) => {
+    // Get all agent descriptions
+    const agentDescriptions = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+    
+    // Get world data
+    const world = await ctx.db.get(args.worldId);
+    if (!world) {
+      return [];
+    }
+    
+    // Retrieve all agent and player information from world data
+    const agents = world.agents || [];
+    const players = world.players || [];
+    
+    // Create a mapping from agentId to playerId
+    const agentPlayerMap = new Map();
+    for (const agent of agents) {
+      agentPlayerMap.set(agent.id, agent.playerId);
+    }
+    
+    // Create a mapping from playerId to player name
+    const playerNameMap = new Map();
+    for (const player of players) {
+      // Get the corresponding playerDescription
+      const playerDesc = await ctx.db
+        .query('playerDescriptions')
+        .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('playerId', player.id))
+        .unique();
+      
+      if (playerDesc) {
+        playerNameMap.set(player.id, playerDesc.name);
+      }
+    }
+    
+    // Merge data
+    const agentsWithInfo = agentDescriptions.map(agent => {
+      const playerId = agentPlayerMap.get(agent.agentId);
+      const name = playerNameMap.get(playerId) || 'Unknown';
+      
+      // Get player object and handle the case where energy is 0
+      const energy = agent.energy || 100;
+      
+      // Use world data time or current time
+      const currentTime = Date.now();
+      
+      // If energy is 0, handle the player's activity status
+      if (energy <= 0) {
+        // Find the player object
+        const playerObj = players.find(p => p.id === playerId);
+        if (playerObj) {
+          // If there is no activity or the activity has ended, log that this player needs to display low battery emoji
+          // Note: This only logs the status; actual modification needs to be handled in mutation
+          console.log(`Agent ${agent.agentId} has no energy, should display low battery emoji`);
+        }
+      }
+      
+      return {
+        agentId: agent.agentId,
+        name: name,
+        energy: energy,
+        inferences: agent.inferences || 0,
+        tips: agent.tips || 0
+      };
+    });
+    
+    // Sort based on the sorting parameter
+    if (args.sortBy) {
+      switch (args.sortBy) {
+        case 'name':
+          agentsWithInfo.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 'inferences':
+          agentsWithInfo.sort((a, b) => b.inferences - a.inferences);
+          break;
+        case 'tips':
+          agentsWithInfo.sort((a, b) => b.tips - a.tips);
+          break;
+      }
+    }
+    
+    return agentsWithInfo;
+  },
+});
+
+// Public query function for HTTP access
+export const getAllAgentsPublic = query({
+  args: {
+    worldId: v.id('worlds'),
+    sortBy: v.optional(v.union(
+      v.literal('name'),
+      v.literal('inferences'),
+      v.literal('tips'),
+    )),
+  },
+  handler: async (ctx, args): Promise<Array<{
+    agentId: string;
+    name: string;
+    energy: number;
+    inferences: number;
+    tips: number;
+  }>> => {
+    // Simply call the internal query
+    const agents = await ctx.runQuery(internal.aiTown.game.getAllAgents, args);
+    return agents;
+  },
+});
+
+// Mutation to set low energy activity
+export const setLowEnergyActivity = internalMutation({
+  args: {
+    worldId: v.id('worlds'),
+    playerId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Directly update player information from the database
+    const world = await ctx.db.get(args.worldId);
+    if (!world) {
+      return { success: false, error: "World not found" };
+    }
+    
+    // Find the player
+    const players = world.players || [];
+    const playerIndex = players.findIndex(p => p.id === args.playerId);
+    
+    if (playerIndex === -1) {
+      return { success: false, error: "Player not found" };
+    }
+    
+    // Update player activity
+    players[playerIndex].activity = {
+      description: 'out of energy',
+      emoji: '🪫', // Low battery emoji
+      until: Number.MAX_SAFE_INTEGER // Permanently displayed until energy is restored
+    };
+    
+    // Update world data
+    await ctx.db.patch(args.worldId, { players });
+    
+    return { success: true };
+  }
 });
 

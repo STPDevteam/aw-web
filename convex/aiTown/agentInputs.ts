@@ -8,6 +8,9 @@ import { point } from '../util/types';
 import { Descriptions } from '../../data/characters';
 import { AgentDescription } from './agentDescription';
 import { Agent } from './agent';
+import { generateEncryptedEthWallet } from '../util/ethWallet';
+import process from 'process';
+import { Value } from 'convex/values';
 
 export const agentInputs = {
   finishRememberConversation: inputHandler({
@@ -134,6 +137,7 @@ export const agentInputs = {
         console.debug(`Agent ${agentId} wasn't sending a message ${args.operationId}`);
         return null;
       }
+      
       delete agent.inProgressOperation;
       conversationInputs.finishSendingMessage.handler(game, now, {
         playerId: agent.playerId,
@@ -144,6 +148,70 @@ export const agentInputs = {
         conversation.leave(game, now, player);
       }
       return null;
+    },
+  }),
+  inviteToConversation: inputHandler({
+    args: {
+      agentId: v.string(),
+      invitee: v.optional(v.string()),
+    },
+    handler: (game, now, args): string | number | null => {
+      const agent = game.world.agents.get(parseGameId('agents', args.agentId));
+      if (!agent) {
+        throw new Error(`Invalid agent ID ${args.agentId}`);
+      }
+      const player = game.world.players.get(agent.playerId)!;
+      if (args.invitee) {
+        const inviteeId = parseGameId('players', args.invitee);
+        const invitee = game.world.players.get(inviteeId);
+        if (!invitee) {
+          throw new Error(`Invalid player ID ${args.invitee}`);
+        }
+        
+        // Check if agent's energy is 0
+        const agentId = parseGameId('agents', args.agentId);
+        const agentDescription = game.agentDescriptions.get(agentId);
+        if (agentDescription && agentDescription.energy <= 0) {
+          console.log(`Agent ${agentId} cannot start conversation due to depleted energy`);
+          return null;
+        }
+        
+        // Reduce agent's energy (starting a conversation also consumes energy)
+        if (agentDescription) {
+          // Reduce 5 energy points for each conversation
+          agentDescription.energy = Math.max(0, agentDescription.energy - 5);
+          console.log(`Agent ${agentId} energy reduced to ${agentDescription.energy} after starting a conversation`);
+        }
+        
+        const result = Conversation.start(game, now, player, invitee);
+        agent.lastInviteAttempt = now;
+        
+        if (!result.conversationId) {
+          return null;
+        }
+        
+        // Find the other agent
+        const otherAgent = [...game.world.agents.values()].find(a => a.playerId === invitee.id);
+        if (otherAgent) {
+          // Increase the inferences count for both agents
+          // 1. Current agent
+          if (agentDescription) {
+            agentDescription.inferences = (agentDescription.inferences || 0) + 1;
+            console.log(`Agent ${agentId} inferences increased to ${agentDescription.inferences}`);
+          }
+          
+          // 2. Other agent
+          const otherAgentDescription = game.agentDescriptions.get(otherAgent.id);
+          if (otherAgentDescription) {
+            otherAgentDescription.inferences = (otherAgentDescription.inferences || 0) + 1;
+            console.log(`Agent ${otherAgent.id} inferences increased to ${otherAgentDescription.inferences}`);
+          }
+        }
+        
+        return result.conversationId;
+      } else {
+        return typeof agent.lastInviteAttempt === 'number' ? agent.lastInviteAttempt : null;
+      }
     },
   }),
   createAgent: inputHandler({
@@ -159,6 +227,11 @@ export const agentInputs = {
         description.character,
         description.identity,
       );
+      
+      // Generate wallet for agent
+      const encryptionKey = process.env.WALLET_ENCRYPTION_KEY || '';
+      const wallet = generateEncryptedEthWallet(encryptionKey);
+      
       const agentId = game.allocId('agents');
       game.world.agents.set(
         agentId,
@@ -171,14 +244,27 @@ export const agentInputs = {
           toRemember: undefined,
         }),
       );
+      
+      // Store wallet information in agentDescriptions
       game.agentDescriptions.set(
         agentId,
         new AgentDescription({
           agentId: agentId,
           identity: description.identity,
           plan: description.plan,
+          // Add wallet information
+          walletAddress: wallet.address,
+          walletPublicKey: wallet.publicKey,
+          encryptedPrivateKey: wallet.encryptedPrivateKey,
+          // Add new fields
+          energy: 100, // Initial value 100
+          inferences: 0, // Initial value 0 
+          tips: 0 // Initial value 0
         }),
       );
+      
+      console.log(`Created agent ${agentId} with wallet address ${wallet.address}`);
+      
       return { agentId };
     },
   }),
