@@ -345,24 +345,18 @@ export const addPointsToUser = mutation({
  * Test generating wallets for all agents - by running the wallet:batchGenerateAgentWallets function
  */
 export const generateAllAgentWallets = mutation({
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<Record<string, any>> => {
     // Use the runAction function to call the wallet generation function
     try {
       // Use the api object to call the function
-      type WalletResult = {
-        success: boolean;
-        totalUpdated: number;
-        errors?: Array<{agentId: string, error: string}>;
-        message: string;
-      };
+      const result = await ctx.runMutation(api.wallet.batchGenerateAgentWallets, {});
       
-      const result: WalletResult = await ctx.runMutation(api.wallet.batchGenerateAgentWallets);
+      // return the result
       return result;
     } catch (error) {
       console.error("Error generating wallets:", error);
       return {
         success: false,
-        totalUpdated: 0,
         message: `Wallet generation failed: ${error instanceof Error ? error.message : String(error)}`
       };
     }
