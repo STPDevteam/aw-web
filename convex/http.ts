@@ -584,6 +584,114 @@ http.route({
   }),
 });
 
+// Get user by wallet address API
+http.route({
+  path: '/api/user/wallet',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Get wallet address from query parameter
+      const url = new URL(request.url);
+      const walletAddress = url.searchParams.get('address');
+      
+      if (!walletAddress) {
+        return new Response(JSON.stringify({ error: 'address query parameter is required' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Use runtime access to bypass type checking
+      const walletModule = api as any;
+      const result = await ctx.runQuery(walletModule.wallet.getUserByWalletAddress, {
+        walletAddress
+      });
+      
+      if (!result) {
+        return new Response(JSON.stringify({ error: 'User not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
+// Wallet login API endpoint
+http.route({
+  path: '/api/wallet/login',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    let args = {};
+    try {
+      if (request.headers.get('Content-Type')?.includes('application/json')) {
+        args = await request.json();
+      }
+    } catch (error) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Validate required fields
+    const { walletAddress, username } = args as any;
+    if (!walletAddress) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing required field: walletAddress is required' 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    try {
+      // Use runtime access to bypass type checking
+      const walletModule = api as any;
+      const result = await ctx.runMutation(walletModule.wallet.walletLogin, {
+        walletAddress,
+        username
+      });
+      
+      // Ensure user data is included in the response
+      if (result && !result.user && result.isNewUser !== undefined) {
+        // If user data is missing but we have isNewUser, fetch the user data
+        const userResult = await ctx.runQuery(walletModule.wallet.getUserByWalletAddress, {
+          walletAddress
+        });
+        
+        // Combine results
+        return new Response(JSON.stringify({
+          user: userResult,
+          isNewUser: result.isNewUser
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
 // Helper function to validate API paths
 function isValidApiPath(module: string, func: string): boolean {
   return (

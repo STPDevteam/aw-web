@@ -475,6 +475,17 @@ export const getAllAgents = internalQuery({
       }
     }
     
+    // Get all favorited agents
+    const favoriteAgents = await ctx.db
+      .query("favoriteAgents")
+      .collect();
+    
+    // Create a map of agent IDs that have been favorited
+    const favoritedAgentIds = new Set();
+    favoriteAgents.forEach(favorite => {
+      favoritedAgentIds.add(favorite.agentId);
+    });
+    
     // Merge data
     const agentsWithInfo = agentDescriptions.map(agent => {
       const playerId = agentPlayerMap.get(agent.agentId);
@@ -502,7 +513,8 @@ export const getAllAgents = internalQuery({
         name: name,
         energy: energy,
         inferences: agent.inferences || 0,
-        tips: agent.tips || 0
+        tips: agent.tips || 0,
+        isFavorited: favoritedAgentIds.has(agent.agentId)
       };
     });
     

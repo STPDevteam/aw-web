@@ -140,11 +140,23 @@ export const getAllAgentWallets = query({
       .filter(q => q.neq(q.field("walletAddress"), undefined))
       .collect();
     
+    // Get all favorited agents
+    const favoriteAgents = await ctx.db
+      .query("favoriteAgents")
+      .collect();
+    
+    // Create a map of agent IDs that have been favorited
+    const favoritedAgentIds = new Set();
+    favoriteAgents.forEach(favorite => {
+      favoritedAgentIds.add(favorite.agentId);
+    });
+    
     return agentDescriptions.map(agent => ({
       agentId: agent.agentId,
       walletAddress: agent.walletAddress,
       hasPublicKey: !!agent.walletPublicKey,
-      hasPrivateKey: !!agent.encryptedPrivateKey
+      hasPrivateKey: !!agent.encryptedPrivateKey,
+      isFavorited: favoritedAgentIds.has(agent.agentId)
     }));
   }
 });
