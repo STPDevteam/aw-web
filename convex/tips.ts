@@ -152,7 +152,6 @@ export const tipAgent = mutation({
       amount,
       tippedAt: Date.now(),
       transactionId: finalTransactionId,
-      verified: true
     });
     
     // Invalidate token, ensure one-time use only
@@ -229,6 +228,23 @@ export const getAgentDetails = query({
       }
     }
     
+    // Process recent tips to match the format in getAgentTippers
+    const recentTips = await Promise.all(
+      tips.slice(0, 5).map(async (tip) => {
+        // Get user information
+        const user = await ctx.db.get(tip.userId);
+        return {
+          tipId: tip._id,
+          userId: tip.userId,
+          walletAddress: tip.walletAddress,
+          username: user?.username || "Anonymous",
+          amount: tip.amount,
+          tippedAt: tip.tippedAt,
+          transactionId: tip.transactionId
+        };
+      })
+    );
+    
     return {
       agentId,
       playerId: playerInfo?.player?.id,
@@ -244,7 +260,8 @@ export const getAgentDetails = query({
       walletAddress: agentDesc.walletAddress,
       identity: agentDesc.identity,
       plan: agentDesc.plan,
-      recentTips: tips.slice(0, 5) // Only return the most recent 5 tip records
+      avatarUrl: agentDesc.avatarUrl || `https://worlf-fun.s3.ap-northeast-1.amazonaws.com/world.fun/${Math.floor(Math.random() * 30) + 1}.png`,
+      recentTips: recentTips
     };
   },
 });
@@ -310,6 +327,39 @@ export const getAgentTippers = query({
       tippers: tippersWithInfo,
       hasMore,
       cursor: hasMore && results.length > 0 ? results[results.length - 1]._id : null
+    };
+  },
+});
+
+// Migration to add avatarUrl to all agents
+export const addAgentAvatars = mutation({
+  handler: async (ctx) => {
+    // Get all agent descriptions
+    const agentDescriptions = await ctx.db
+      .query("agentDescriptions")
+      .collect();
+    
+    let updatedCount = 0;
+    
+    // Update each agent description
+    for (const agentDesc of agentDescriptions) {
+      // Generate random number between 1 and 30
+      const randomNum = Math.floor(Math.random() * 30) + 1;
+      const avatarUrl = `https://worlf-fun.s3.ap-northeast-1.amazonaws.com/world.fun/${randomNum}.png`;
+      
+      // Only update if avatar is not set
+      if (!agentDesc.avatarUrl) {
+        await ctx.db.patch(agentDesc._id, {
+          avatarUrl: avatarUrl
+        });
+        updatedCount++;
+      }
+    }
+    
+    return {
+      success: true,
+      updatedCount,
+      message: `Added avatars to ${updatedCount} agent descriptions`
     };
   },
 });

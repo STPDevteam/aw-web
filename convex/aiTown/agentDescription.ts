@@ -11,9 +11,10 @@ export class AgentDescription {
   energy: number; // Initial value 100, maximum value 100
   inferences: number; // Initial value 0
   tips: number; // Initial value 0, maximum value 10000
+  avatarUrl?: string; // Agent avatar URL
 
   constructor(serialized: SerializedAgentDescription) {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips } = serialized;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl } = serialized;
     this.agentId = parseGameId('agents', agentId);
     this.identity = identity;
     this.plan = plan;
@@ -23,10 +24,11 @@ export class AgentDescription {
     this.energy = energy ?? 100; // Default value is 100
     this.inferences = inferences ?? 0; // Default value is 0
     this.tips = tips ?? 0; // Default value is 0
+    this.avatarUrl = avatarUrl;
   }
 
   serialize(): SerializedAgentDescription {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips } = this;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl } = this;
     return { 
       agentId, 
       identity, 
@@ -36,7 +38,8 @@ export class AgentDescription {
       encryptedPrivateKey,
       energy,
       inferences,
-      tips
+      tips,
+      avatarUrl
     };
   }
 }
@@ -51,5 +54,6 @@ export const serializedAgentDescription = {
   energy: v.optional(v.number()), // Initial value 100, maximum value 100
   inferences: v.optional(v.number()), // Initial value 0
   tips: v.optional(v.number()), // Initial value 0, maximum value 10000
+  avatarUrl: v.optional(v.string()), // Agent avatar URL
 };
 export type SerializedAgentDescription = ObjectType<typeof serializedAgentDescription>;

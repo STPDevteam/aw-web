@@ -514,6 +514,7 @@ export const getAllAgents = internalQuery({
         energy: energy,
         inferences: agent.inferences || 0,
         tips: agent.tips || 0,
+        avatarUrl: agent.avatarUrl || `https://worlf-fun.s3.ap-northeast-1.amazonaws.com/world.fun/${Math.floor(Math.random() * 30) + 1}.png`,
         isFavorited: favoritedAgentIds.has(agent.agentId)
       };
     });
