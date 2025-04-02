@@ -2,61 +2,97 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { Id } from './_generated/dataModel';
 
-// Favorite Agent
+// Batch Favorite Agents
 export const favoriteAgent = mutation({
   args: {
     userId: v.id('walletUsers'),
     worldId: v.id('worlds'),
-    agentId: v.string(),
+    agentIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const { userId, worldId, agentId } = args;
+    const { userId, worldId, agentIds } = args;
     
-    // Check if already favorited
-    const existing = await ctx.db
-      .query('favoriteAgents')
-      .withIndex('byUserAndAgent', (q) => q.eq('userId', userId).eq('agentId', agentId))
-      .first();
+    const results = [];
     
-    if (existing) {
-      return { status: 'already_exists', favoriteId: existing._id };
+    for (const agentId of agentIds) {
+      // Check if already favorited
+      const existing = await ctx.db
+        .query('favoriteAgents')
+        .withIndex('byUserAndAgent', (q) => q.eq('userId', userId).eq('agentId', agentId))
+        .first();
+      
+      if (existing) {
+        results.push({ 
+          agentId, 
+          status: 'already_exists', 
+          favoriteId: existing._id 
+        });
+        continue;
+      }
+      
+      // Create new favorite
+      const favoriteId = await ctx.db.insert('favoriteAgents', {
+        userId,
+        worldId,
+        agentId,
+        createdAt: Date.now(),
+      });
+      
+      results.push({ 
+        agentId, 
+        status: 'created', 
+        favoriteId 
+      });
     }
     
-    // Create new favorite
-    const favoriteId = await ctx.db.insert('favoriteAgents', {
-      userId,
-      worldId,
-      agentId,
-      createdAt: Date.now(),
-    });
-    
-    return { status: 'created', favoriteId };
+    return {
+      success: true,
+      count: agentIds.length,
+      results
+    };
   },
 });
 
-// Unfavorite Agent
+// Batch Unfavorite Agents
 export const unfavoriteAgent = mutation({
   args: {
     userId: v.id('walletUsers'),
-    agentId: v.string(),
+    agentIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const { userId, agentId } = args;
+    const { userId, agentIds } = args;
     
-    // Find favorite record
-    const favorite = await ctx.db
-      .query('favoriteAgents')
-      .withIndex('byUserAndAgent', (q) => q.eq('userId', userId).eq('agentId', agentId))
-      .first();
+    const results = [];
     
-    if (!favorite) {
-      return { status: 'not_found' };
+    for (const agentId of agentIds) {
+      // Find favorite record
+      const favorite = await ctx.db
+        .query('favoriteAgents')
+        .withIndex('byUserAndAgent', (q) => q.eq('userId', userId).eq('agentId', agentId))
+        .first();
+      
+      if (!favorite) {
+        results.push({ 
+          agentId, 
+          status: 'not_found' 
+        });
+        continue;
+      }
+      
+      // Delete favorite
+      await ctx.db.delete(favorite._id);
+      
+      results.push({ 
+        agentId, 
+        status: 'deleted' 
+      });
     }
     
-    // Delete favorite
-    await ctx.db.delete(favorite._id);
-    
-    return { status: 'deleted' };
+    return {
+      success: true, 
+      count: agentIds.length,
+      results
+    };
   },
 });
 

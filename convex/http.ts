@@ -229,7 +229,7 @@ http.route({
   }),
 });
 
-// Add favorite agent endpoint
+// Add favorite agents endpoint (batch operation)
 http.route({
   path: '/api/favorites/add',
   method: 'POST',
@@ -247,10 +247,10 @@ http.route({
     }
     
     // Validate required fields
-    const { userId, worldId, agentId } = args as any;
-    if (!userId || !worldId || !agentId) {
+    const { userId, worldId, agentIds } = args as any;
+    if (!userId || !worldId || !agentIds || !Array.isArray(agentIds) || agentIds.length === 0) {
       return new Response(JSON.stringify({ 
-        error: 'Missing required fields: userId, worldId, and agentId are required' 
+        error: 'Missing required fields: userId, worldId, and agentIds (array) are required' 
       }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -261,7 +261,7 @@ http.route({
       const result = await ctx.runMutation(api.favorites.favoriteAgent, {
         userId,
         worldId,
-        agentId
+        agentIds
       });
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json' },
@@ -276,7 +276,7 @@ http.route({
   }),
 });
 
-// Remove favorite agent endpoint
+// Remove favorite agents endpoint (batch operation)
 http.route({
   path: '/api/favorites/remove',
   method: 'POST',
@@ -294,10 +294,10 @@ http.route({
     }
     
     // Validate required fields
-    const { userId, agentId } = args as any;
-    if (!userId || !agentId) {
+    const { userId, agentIds } = args as any;
+    if (!userId || !agentIds || !Array.isArray(agentIds) || agentIds.length === 0) {
       return new Response(JSON.stringify({ 
-        error: 'Missing required fields: userId and agentId are required' 
+        error: 'Missing required fields: userId and agentIds (array) are required' 
       }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -307,7 +307,7 @@ http.route({
     try {
       const result = await ctx.runMutation(api.favorites.unfavoriteAgent, {
         userId,
-        agentId
+        agentIds
       });
       return new Response(JSON.stringify(result), {
         headers: { 'Content-Type': 'application/json' },
