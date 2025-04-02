@@ -692,6 +692,29 @@ http.route({
   }),
 });
 
+// Migration endpoint to fill initial values for agents
+http.route({
+  path: '/api/migration/fill-agent-values',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Use runtime access to bypass type checking
+      const tipsModule = api as any;
+      const result = await ctx.runMutation(tipsModule.tips.fillAgentInitialValues);
+      
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
 // Helper function to validate API paths
 function isValidApiPath(module: string, func: string): boolean {
   return (

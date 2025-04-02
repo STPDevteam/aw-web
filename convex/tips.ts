@@ -216,6 +216,7 @@ export const getAgentDetails = query({
     
     // Get player description
     let playerName = "Unknown";
+    let playerDescription = null;
     if (playerInfo?.player) {
       const playerDesc = await ctx.db
         .query("playerDescriptions")
@@ -224,6 +225,7 @@ export const getAgentDetails = query({
       
       if (playerDesc) {
         playerName = playerDesc.name;
+        playerDescription = playerDesc.description;
       }
     }
     
@@ -231,6 +233,7 @@ export const getAgentDetails = query({
       agentId,
       playerId: playerInfo?.player?.id,
       name: playerName,
+      description: playerDescription,
       energy: agentDesc.energy || 0,
       maxEnergy: 100,
       inferences: agentDesc.inferences || 0,
@@ -309,4 +312,46 @@ export const getAgentTippers = query({
       cursor: hasMore && results.length > 0 ? results[results.length - 1]._id : null
     };
   },
-}); 
+});
+
+// Migration to fill initial values for all existing agent descriptions
+// export const fillAgentInitialValues = mutation({
+//   handler: async (ctx) => {
+//     // Get all agent descriptions that have empty fields
+//     const agentDescriptions = await ctx.db
+//       .query("agentDescriptions")
+//       .collect();
+    
+//     let updatedCount = 0;
+    
+//     // Update each agent description
+//     for (const agentDesc of agentDescriptions) {
+//       const updates: Record<string, any> = {};
+      
+//       // Check if each field is missing and add it to updates if needed
+//       if (agentDesc.energy === undefined || agentDesc.energy === null) {
+//         updates.energy = 100; // Initial energy value
+//       }
+      
+//       if (agentDesc.inferences === undefined || agentDesc.inferences === null) {
+//         updates.inferences = 0; // Initial inferences value
+//       }
+      
+//       if (agentDesc.tips === undefined || agentDesc.tips === null) {
+//         updates.tips = 0; // Initial tips value
+//       }
+      
+//       // Only update if we have changes to make
+//       if (Object.keys(updates).length > 0) {
+//         await ctx.db.patch(agentDesc._id, updates);
+//         updatedCount++;
+//       }
+//     }
+    
+//     return {
+//       success: true,
+//       updatedCount,
+//       message: `Updated ${updatedCount} agent descriptions with initial values`
+//     };
+//   },
+// }); 
