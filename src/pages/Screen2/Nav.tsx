@@ -177,13 +177,13 @@ export const Nav = () => {
     }    
 
 
-    const memu = AGENT_CREATED ? [ // 
+    const memu = false ? [ // AGENT_CREATED
         { name: 'Wallet', event: () => setWalletOpen(true) },
         { name: 'Agent Profile', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, myOpen: true })) },
         { name: 'Delete Agent', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, confirmOpen: true }))  }
     ]: [
         { name: 'Wallet', event: () => setWalletOpen(true) },
-        { name: 'Create Agent', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: true })) },
+        // { name: 'Create Agent', event: () => dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, createOpen: true })) },
     ]
 
    
@@ -205,7 +205,7 @@ export const Nav = () => {
             <Box className='fx-row ai-ct jc-sb w100'>
                 {/*  left */}
                 <Box className='fx-row ai-ct jc-sb' gap={['8px','8px','8px','12px','12px','24px']}>
-                    <MyAgent 
+                    {/* <MyAgent 
                         worldId={worldId} 
                         createdPlayers={createdPlayers}
                     />
@@ -224,8 +224,7 @@ export const Nav = () => {
                             label: 'Coming soon',
                             size: 'sm'
                         }}
-
-                    />                   
+                    />                    */}
                 </Box>      
 
                 {/*  right */}

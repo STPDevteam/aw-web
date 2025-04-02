@@ -70,24 +70,6 @@ export const ConnectWallet:FC<iConnectWallet> = ({ points, menuOpen, walletOpen,
                     )
                   }
                   return (               
-                    // <BorderButton
-                    //   w={180}
-                    //   h={46}
-                    //   title=""
-                    //   onClick={openConnectModal}
-                    //   titleDiv={
-                    //     <Box className='fm2 fx-row ai-ct jc-sb w100 bd1' h="46px" bgColor='white'>
-                    //         <Font16 t={`@${account?.displayName}`}/>
-                    //         <Image 
-                    //           src={ArrowBottom} 
-                    //           h="8px"
-                    //           w="15.2px" 
-                    //           transform={ menuIsOpen ? 'rotate(-180deg)' : 'rotate(0deg)'} 
-                    //           transition="transform 0.3s"
-                    //       />  
-                    //     </Box>
-                    //   }
-                    // />   
                     <ClickButtonWrapper onClick={menuOpen}>
                       <Box 
                         w={[180]}
