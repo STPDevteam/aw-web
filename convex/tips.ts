@@ -342,13 +342,12 @@ export const addAgentAvatars = mutation({
     let updatedCount = 0;
     
     // Update each agent description
-    for (const agentDesc of agentDescriptions) {
-      // Generate random number between 1 and 30
-      const randomNum = Math.floor(Math.random() * 30) + 1;
-      const avatarUrl = `https://worlf-fun.s3.ap-northeast-1.amazonaws.com/world.fun/${randomNum}.png`;
+    for (let i = 1; i <= 100; i++) {
+      const avatarUrl = `https://worlf-fun.s3.ap-northeast-1.amazonaws.com/world.fun/${i}.png`;
+      const agentDesc = agentDescriptions[i - 1]; // Access the agent description by index
       
       // Only update if avatar is not set
-      if (!agentDesc.avatarUrl) {
+      if (agentDesc) {
         await ctx.db.patch(agentDesc._id, {
           avatarUrl: avatarUrl
         });
