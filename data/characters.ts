@@ -104,49 +104,49 @@ const fixedDescriptions = [
 export const fixedCharacters = [
   {
     name: 'f1',
-    textureUrl: '/ai-town/assets/avatar/1.png',
+    textureUrl: '/assets/avatar/1.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f2',
-    textureUrl: '/ai-town/assets/avatar/2.png',
+    textureUrl: '/assets/avatar/2.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f3',
-    textureUrl: '/ai-town/assets/avatar/3.png',
+    textureUrl: '/assets/avatar/3.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f4',
-    textureUrl: '/ai-town/assets/avatar/4.png',
+    textureUrl: '/assets/avatar/4.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f5',
-    textureUrl: '/ai-town/assets/avatar/5.png',
+    textureUrl: '/assets/avatar/5.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f6',
-    textureUrl: '/ai-town/assets/avatar/6.png',
+    textureUrl: '/assets/avatar/6.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f7',
-    textureUrl: '/ai-town/assets/avatar/7.png',
+    textureUrl: '/assets/avatar/7.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
   {
     name: 'f8',
-    textureUrl: '/ai-town/assets/avatar/8.png',
+    textureUrl: '/assets/avatar/8.png',
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   },
@@ -171,7 +171,7 @@ export const randomCharacters = Array.from({ length: randomCount }, (_, i) => {
   const id = i + 9;
   return {
     name: `f${id}`,                                                                                                                                                                               
-    textureUrl: `/ai-town/assets/avatar/${id}.png`,
+    textureUrl: `/assets/avatar/${id}.png`,
     spritesheetData: f0SpritesheetData,
     speed: 0.1,
   };
@@ -255,7 +255,7 @@ export const mockAgents = (tileDim: number = 32): SimulatedAgent[] => {
       pathfinding: undefined,
       position: position,
       speed: 0.1,
-      textureUrl: `/ai-town/assets/avatar/${((i + 50) % 400) + 1}.png`,
+      textureUrl: `/assets/avatar/${((i + 50) % 400) + 1}.png`,
       spritesheetData: f0SpritesheetData,
       emoji: getRandomEmoji()
     } as SimulatedAgent;
