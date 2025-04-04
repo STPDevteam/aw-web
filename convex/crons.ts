@@ -145,36 +145,23 @@ export const cleanExpiredAuthChallenges = internalMutation({
  */
 export const reduceAgentEnergy = internalMutation({
   handler: async (ctx) => {
-    const batchSize = 100; // Process in batches
-    let processedCount = 0;
-    let updatedCount = 0;
-    let cursor = null;
-    
-    do {
-      const results = await ctx.db
-        .query('agentDescriptions')
-        .paginate({ cursor, numItems: batchSize });
-      
-      for (const agentDesc of results.page) {
-        processedCount++;
-        // Only update agents with energy > 0
-        const currentEnergy = agentDesc.energy ?? 100; // Default is 100 if undefined
-        if (currentEnergy > 0) {
-          const newEnergy = Math.max(0, currentEnergy - AGENT_ENERGY_HOURLY_REDUCTION);
-          await ctx.db.patch(agentDesc._id, { energy: newEnergy });
-          updatedCount++;
-          
-          // Log energy reduction
-          if (newEnergy === 0) {
-            console.log(`Agent ${agentDesc.agentId} energy reduced to 0. Agent needs to recharge.`);
-          }
+    const agents = await ctx.db.query('agentDescriptions').collect(); // Collect all agents at once
+    const updatedCount = agents.reduce((count, agentDesc) => {
+      const currentEnergy = agentDesc.energy ?? 100; // Default is 100 if undefined
+      if (currentEnergy > 0) {
+        const newEnergy = Math.max(0, currentEnergy - AGENT_ENERGY_HOURLY_REDUCTION);
+        ctx.db.patch(agentDesc._id, { energy: newEnergy });
+        
+        // Log energy reduction
+        if (newEnergy === 0) {
+          console.log(`Agent ${agentDesc.agentId} energy reduced to 0. Agent needs to recharge.`);
         }
+        return count + 1; // Increment count for updated agents
       }
-      
-      cursor = results.continueCursor;
-    } while (cursor !== null);
+      return count; // No update, return current count
+    }, 0);
     
-    console.log(`Reduced energy for ${updatedCount} agents out of ${processedCount} processed`);
-    return { processedCount, updatedCount };
+    console.log(`Reduced energy for ${updatedCount} agents out of ${agents.length} processed`);
+    return { processedCount: agents.length, updatedCount };
   },
 });
