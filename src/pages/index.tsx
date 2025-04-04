@@ -97,7 +97,8 @@ export const Pages = () => {
   const [isScreen2Alive, setScreen2Alive] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  const feAgentsInfo = useQuery(api.frontendAgent.getAllAgents)
+  // const feAgentsInfo = useQuery(api.frontendAgent.getAllAgents)
+  const feAgentsInfo:any[] = []
 
   useEffect(() => {
     if(currentIndex === 1) {
