@@ -51,8 +51,8 @@ export const MyAgent:React.FC<iMyAgent> = ({
     })
     
 
-    const createPlayer = useMutation(api.player.createPlayer)
-    const deletePlayer = useMutation(api.player.deletePlayer)
+    // const createPlayer = useMutation(api.player.createPlayer)
+    // const deletePlayer = useMutation(api.player.deletePlayer)
 
     const AGENT_CREATED = createdPlayers && !!createdPlayers.players.length
 
@@ -137,23 +137,23 @@ export const MyAgent:React.FC<iMyAgent> = ({
 
     const startCreate = async() => {
         if(worldId) {
-            setBtnLoading(true)
-            const a = await createPlayer({
-                walletAddress: address as  `0x${string}`,
-                name: name.value,
-                prompt: prompt.value,
-                worldId,
-                showInGame: false
-            })
-            setBtnLoading(false)
-            if(a && a.success) {
-                closeCreateModal() 
-                dispatch(alertInfoAction({
-                    open: true,
-                    title: 'Successful',
-                    content: 'Agent created! World Points +500.'
-                }))              
-            }
+            // setBtnLoading(true)
+            // const a = await createPlayer({
+            //     walletAddress: address as  `0x${string}`,
+            //     name: name.value,
+            //     prompt: prompt.value,
+            //     worldId,
+            //     showInGame: false
+            // })
+            // setBtnLoading(false)
+            // if(a && a.success) {
+            //     closeCreateModal() 
+            //     dispatch(alertInfoAction({
+            //         open: true,
+            //         title: 'Successful',
+            //         content: 'Agent created! World Points +500.'
+            //     }))              
+            // }
            
         }
     }
@@ -243,19 +243,19 @@ export const MyAgent:React.FC<iMyAgent> = ({
 
     const deleteAgent = async() => {
         if(address) {
-            setDeleteLoading(true)
-            const a = await deletePlayer({walletAddress: address})
-            setDeleteLoading(false)
-            if(a && a.success) {
-                dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, myOpen: false, confirmOpen: false }))
+            // setDeleteLoading(true)
+            // const a = await deletePlayer({walletAddress: address})
+            // setDeleteLoading(false)
+            // if(a && a.success) {
+            //     dispatch(myAgentPopupVisibleAction({ ...myAgentPopupVisible, myOpen: false, confirmOpen: false }))
 
 
-                dispatch(alertInfoAction({
-                    open: true,
-                    title: 'Successful',
-                    content: 'Agent has been deleted.'
-                }))
-            }
+            //     dispatch(alertInfoAction({
+            //         open: true,
+            //         title: 'Successful',
+            //         content: 'Agent has been deleted.'
+            //     }))
+            // }
         }
     }
 

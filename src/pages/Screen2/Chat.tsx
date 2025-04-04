@@ -32,7 +32,7 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
     const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({hash})
 
     const dispatch = useAppDispatch()        
-    const simulateConversationWithAgent = useAction(api.player.simulateConversationWithAgent)
+    // const simulateConversationWithAgent = useAction(api.player.simulateConversationWithAgent)
 
 
 
@@ -93,17 +93,17 @@ export const Chat:React.FC<iChat> = ({ worldId, agentCreated}) => {
     const startEncounter = async() => {            
 
         if(worldId) {
-            setBtnLoading(true)
-            const a = await simulateConversationWithAgent({
-                walletAddress: address as `0x${string}`,
-                worldId
-            })
-            setBtnLoading(false)
-            if(a && a.success) {
-                setRandomOpen(true)
-                setTitle(a.agent.name)
-                setConversationList(a.conversation)
-            }
+            // setBtnLoading(true)
+            // const a = await simulateConversationWithAgent({
+            //     walletAddress: address as `0x${string}`,
+            //     worldId
+            // })
+            // setBtnLoading(false)
+            // if(a && a.success) {
+            //     setRandomOpen(true)
+            //     setTitle(a.agent.name)
+            //     setConversationList(a.conversation)
+            // }
         }
     }
 

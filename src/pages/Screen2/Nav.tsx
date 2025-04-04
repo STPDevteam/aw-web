@@ -40,7 +40,8 @@ export const Nav = () => {
     const createChallenge = useMutation(api.wallet.createAuthChallenge);
     const verifySignature = useMutation(api.wallet.verifySignature);
     const walletLogin = useMutation(api.wallet.walletLogin);
-    const createdPlayers = useQuery(api.player.getPlayersByWallet, { walletAddress: address as string ?? ''})
+    // const createdPlayers = useQuery(api.player.getPlayersByWallet, { walletAddress: address as string ?? ''})
+    const createdPlayers = { players: [] }
 
     const AGENT_CREATED = createdPlayers && !!createdPlayers.players.length
     const menuRef = useRef<HTMLDivElement | null>(null)
