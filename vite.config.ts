@@ -21,7 +21,6 @@ export default defineConfig(({ mode }) => {
     // define: {
     //   __HMR_CONFIG_NAME__: JSON.stringify(mode === 'development' ? "dev-hmr-config" : ""),
     // },
-    base: '/ai-town',
     plugins: [react()],
 
     optimizeDeps: {
