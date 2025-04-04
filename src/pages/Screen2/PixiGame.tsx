@@ -193,13 +193,13 @@ export const PixiGame:React.FC<{
       />
   
       {memoizedPositionIndicator}
-        {viewportRef.current && (
+        {/* {viewportRef.current && (
         <SimulatedAgents 
           container={viewportRef.current} 
           tileDim={tileDim} mapWidth={width}
           selectedAgentId={selectedAgentId}
         />
-      )} 
+      )}  */}
       
       {
         players.map((p) => (
