@@ -168,36 +168,15 @@ export const agentInputs = {
           throw new Error(`Invalid player ID ${args.invitee}`);
         }
         
-        // Check if agent's energy is 0
-        const agentId = parseGameId('agents', args.agentId);
-        const agentDescription = game.agentDescriptions.get(agentId);
-        if (agentDescription && agentDescription.energy <= 0) {
-          console.log(`Agent ${agentId} cannot start conversation due to depleted energy`);
-          return null;
-        }
-        
-        // Reduce agent's energy (starting a conversation also consumes energy)
-        if (agentDescription) {
-          // Reduce 5 energy points for each conversation
-          agentDescription.energy = Math.max(0, agentDescription.energy - 5);
-          console.log(`Agent ${agentId} energy reduced to ${agentDescription.energy} after starting a conversation`);
-        }
-        
-        const result = Conversation.start(game, now, player, invitee);
-        agent.lastInviteAttempt = now;
-        
-        if (!result.conversationId) {
-          return null;
-        }
-        
         // Find the other agent
         const otherAgent = [...game.world.agents.values()].find(a => a.playerId === invitee.id);
         if (otherAgent) {
           // Increase the inferences count for both agents
           // 1. Current agent
+          const agentDescription = game.agentDescriptions.get(agent.id);
           if (agentDescription) {
             agentDescription.inferences = (agentDescription.inferences || 0) + 1;
-            console.log(`Agent ${agentId} inferences increased to ${agentDescription.inferences}`);
+            console.log(`Agent ${agent.id} inferences increased to ${agentDescription.inferences}`);
           }
           
           // 2. Other agent
@@ -206,6 +185,13 @@ export const agentInputs = {
             otherAgentDescription.inferences = (otherAgentDescription.inferences || 0) + 1;
             console.log(`Agent ${otherAgent.id} inferences increased to ${otherAgentDescription.inferences}`);
           }
+        }
+        
+        const result = Conversation.start(game, now, player, invitee);
+        agent.lastInviteAttempt = now;
+        
+        if (!result.conversationId) {
+          return null;
         }
         
         return result.conversationId;

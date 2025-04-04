@@ -1,5 +1,5 @@
 import { cronJobs } from 'convex/server';
-import { DELETE_BATCH_SIZE, IDLE_WORLD_TIMEOUT, VACUUM_MAX_AGE } from './constants';
+import { DELETE_BATCH_SIZE, IDLE_WORLD_TIMEOUT, VACUUM_MAX_AGE, AGENT_ENERGY_HOURLY_REDUCTION } from './constants';
 import { internal } from './_generated/api';
 import { internalMutation } from './_generated/server';
 import { TableNames } from './_generated/dataModel';
@@ -19,6 +19,9 @@ crons.daily('vacuum old entries', { hourUTC: 4, minuteUTC: 20 }, internal.crons.
 
 // Clean up expired authentication challenges every 10 minutes
 crons.interval('clean expired auth challenges', { minutes: 10 }, internal.crons.cleanExpiredAuthChallenges);
+
+// Reduce agent energy by 5 points every hour
+crons.interval('reduce agent energy', { hours: 1 }, internal.crons.reduceAgentEnergy);
 
 // TODO: Uncomment this after the frontend agent API is properly set up
 // // Update frontend agent conversations daily at 01:00 UTC
@@ -133,5 +136,45 @@ export const cleanExpiredAuthChallenges = internalMutation({
       deletedCount,
       scheduledAnotherRun: expiredChallenges.length === batchSize
     };
+  },
+});
+
+/**
+ * Reduce agent energy by a fixed amount every hour
+ * This replaces the previous mechanism of reducing energy per conversation
+ */
+export const reduceAgentEnergy = internalMutation({
+  handler: async (ctx) => {
+    const batchSize = 100; // Process in batches
+    let processedCount = 0;
+    let updatedCount = 0;
+    let cursor = null;
+    
+    do {
+      const results = await ctx.db
+        .query('agentDescriptions')
+        .paginate({ cursor, numItems: batchSize });
+      
+      for (const agentDesc of results.page) {
+        processedCount++;
+        // Only update agents with energy > 0
+        const currentEnergy = agentDesc.energy ?? 100; // Default is 100 if undefined
+        if (currentEnergy > 0) {
+          const newEnergy = Math.max(0, currentEnergy - AGENT_ENERGY_HOURLY_REDUCTION);
+          await ctx.db.patch(agentDesc._id, { energy: newEnergy });
+          updatedCount++;
+          
+          // Log energy reduction
+          if (newEnergy === 0) {
+            console.log(`Agent ${agentDesc.agentId} energy reduced to 0. Agent needs to recharge.`);
+          }
+        }
+      }
+      
+      cursor = results.continueCursor;
+    } while (cursor !== null);
+    
+    console.log(`Reduced energy for ${updatedCount} agents out of ${processedCount} processed`);
+    return { processedCount, updatedCount };
   },
 });

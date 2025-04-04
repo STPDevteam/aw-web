@@ -145,13 +145,9 @@ export class Agent {
           if (otherPlayer.human || Math.random() < INVITE_ACCEPT_PROBABILITY) {
             console.log(`Agent ${player.id} accepting invite from ${otherPlayer.id}`);
             
-            // reduce agent energy (energy is consumed when accepting a conversation invitation)
+            // increase inferences count
             const agentDescription = game.agentDescriptions.get(this.id);
             if (agentDescription) {
-              // reduce 5 energy points for each conversation
-              agentDescription.energy = Math.max(0, agentDescription.energy - 5);
-              console.log(`Agent ${this.id} energy reduced to ${agentDescription.energy} after accepting conversation invitation`);
-              
               // increase inferences count
               agentDescription.inferences = (agentDescription.inferences || 0) + 1;
               console.log(`Agent ${this.id} inferences increased to ${agentDescription.inferences} after accepting conversation`);

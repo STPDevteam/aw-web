@@ -76,3 +76,7 @@ export const ENGINE_ACTION_DURATION = 30000;
 export const MAX_PATHFINDS_PER_STEP = 64;
 
 export const DEFAULT_NAME = 'Me';
+
+// Agent energy constants
+export const AGENT_ENERGY_HOURLY_REDUCTION = 5; // Energy reduced every hour
+export const AGENT_MAX_ENERGY = 100; // Maximum energy an agent can have
