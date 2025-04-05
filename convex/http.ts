@@ -852,6 +852,80 @@ http.route({
   }),
 });
 
+// Upload image to S3
+http.route({
+  path: '/api/upload-image',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Check request format
+      if (!request.headers.get('Content-Type')?.includes('multipart/form-data')) {
+        return new Response(JSON.stringify({ error: 'Content-Type must be multipart/form-data' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Parse form data
+      const formData = await request.formData();
+      const file = formData.get('image');
+      
+      if (!file || !(file instanceof Blob)) {
+        return new Response(JSON.stringify({ error: 'No image file found in request' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Check file type
+      const fileType = file.type;
+      if (!fileType.startsWith('image/')) {
+        return new Response(JSON.stringify({ error: 'Uploaded file must be an image' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Check file size (limit to 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        return new Response(JSON.stringify({ error: 'Image size exceeds the 5MB limit' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // First store the file in Convex Storage
+      const storageId = await ctx.storage.store(file);
+      
+      // Get file URL
+      const url = await ctx.storage.getUrl(storageId);
+      
+      if (!url) {
+        throw new Error('Failed to generate URL for uploaded image');
+      }
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        storageId,
+        url,
+        message: 'Image uploaded successfully'
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ 
+        error: 'Failed to upload image',
+        details: errorMessage 
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
 // Helper function to validate API paths
 function isValidApiPath(module: string, func: string): boolean {
   return (
