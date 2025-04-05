@@ -350,3 +350,21 @@ function stopWords(otherPlayer: string, player: string) {
   const variants = [`${otherPlayer} to ${player}`];
   return variants.flatMap((stop) => [stop + ':', stop.toLowerCase() + ':']);
 }
+
+// Helper function to generate text using LLM
+export async function generateTextWithAI(
+  ctx: ActionCtx,
+  args: { prompt: string; maxTokens?: number }
+): Promise<{ content: string }> {
+  const { content } = await chatCompletion({
+    messages: [
+      {
+        role: 'user',
+        content: args.prompt
+      }
+    ],
+    max_tokens: args.maxTokens || 500
+  });
+  
+  return { content };
+}

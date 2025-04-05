@@ -347,3 +347,13 @@ export const paginatedPlayerDescriptions = query({
     };
   },
 });
+
+// Get world by ID
+export const getWorldById = query({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.worldId);
+  },
+});

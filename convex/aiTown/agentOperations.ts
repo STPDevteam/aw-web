@@ -408,3 +408,69 @@ export const resetAllAgentEnergy = internalMutation({
     }
   },
 });
+
+// Update agent description for wallet binding
+export const updateAgentDescriptionForWallet = internalMutation({
+  args: {
+    worldId: v.id('worlds'),
+    agentId: v.string(),
+    walletAddress: v.string(),
+    identity: v.string(),
+    plan: v.string(),
+    avatarUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { worldId, agentId, walletAddress, identity, plan, avatarUrl } = args;
+    
+    // Find the agent description
+    const agentDesc = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', worldId).eq('agentId', agentId))
+      .unique();
+      
+    if (!agentDesc) {
+      throw new Error(`Agent description not found for agentId: ${agentId}`);
+    }
+    
+    // Update the agent description
+    await ctx.db.patch(agentDesc._id, {
+      walletAddress,
+      identity,
+      plan,
+      avatarUrl
+    });
+    
+    return { success: true };
+  },
+});
+
+// Update player description
+export const updatePlayerDescription = internalMutation({
+  args: {
+    worldId: v.id('worlds'),
+    playerId: v.string(),
+    name: v.string(),
+    description: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { worldId, playerId, name, description } = args;
+    
+    // Find the player description
+    const playerDesc = await ctx.db
+      .query('playerDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', worldId).eq('playerId', playerId))
+      .unique();
+      
+    if (!playerDesc) {
+      throw new Error(`Player description not found for playerId: ${playerId}`);
+    }
+    
+    // Update the player description
+    await ctx.db.patch(playerDesc._id, {
+      name,
+      description
+    });
+    
+    return { success: true };
+  },
+});

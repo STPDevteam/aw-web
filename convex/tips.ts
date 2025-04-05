@@ -403,4 +403,95 @@ export const addAgentAvatars = mutation({
 //       message: `Updated ${updatedCount} agent descriptions with initial values`
 //     };
 //   },
-// }); 
+// });
+
+// Update agent with wallet address and details
+export const updateAgentWithWallet = mutation({
+  args: {
+    worldId: v.id('worlds'),
+    agentId: v.string(),
+    walletAddress: v.string(), // User's wallet address
+    identity: v.string(),
+    plan: v.string(),
+    avatarUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { worldId, agentId, walletAddress, identity, plan, avatarUrl } = args;
+    
+    // Verify if the user's wallet address is registered
+    const user = await ctx.db
+      .query('walletUsers')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (!user) {
+      // If the user is not registered, create a user account first
+      await ctx.db.insert('walletUsers', {
+        walletAddress: walletAddress,
+        username: `User${walletAddress.slice(0, 6)}`,
+        points: 0,
+        lastLogin: Date.now(),
+        createdAt: Date.now(),
+      });
+    }
+    
+    // Find the agent description
+    const agentDesc = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', worldId).eq('agentId', agentId))
+      .unique();
+      
+    if (!agentDesc) {
+      throw new Error(`Agent description not found for agentId: ${agentId}`);
+    }
+    
+    // Check if the agent has already been bound to another user
+    if (agentDesc.userWalletAddress && agentDesc.userWalletAddress !== walletAddress) {
+      throw new Error('This agent has already been bound to another user');
+    }
+    
+    // Update the agent's identity, plan, avatar, and bound user wallet address
+    await ctx.db.patch(agentDesc._id, {
+      identity,
+      plan,
+      avatarUrl,
+      userWalletAddress: walletAddress
+    });
+    
+    return { 
+      success: true,
+      agentWalletAddress: agentDesc.walletAddress || ''
+    };
+  },
+});
+
+// Update player with new identity
+export const updatePlayerWithIdentity = mutation({
+  args: {
+    worldId: v.id('worlds'),
+    playerId: v.string(),
+    name: v.string(),
+    description: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { worldId, playerId, name, description } = args;
+    
+    // Find the player description
+    const playerDesc = await ctx.db
+      .query('playerDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', worldId).eq('playerId', playerId))
+      .unique();
+      
+    if (!playerDesc) {
+      throw new Error(`Player description not found for playerId: ${playerId}`);
+    }
+    
+    // Update the player description
+    await ctx.db.patch(playerDesc._id, {
+      name,
+      description
+    });
+    
+    return { success: true };
+  },
+}); 

@@ -5,16 +5,17 @@ export class AgentDescription {
   agentId: GameId<'agents'>;
   identity: string;
   plan: string;
-  walletAddress?: string;
+  walletAddress?: string;  // agent  wallet address
   walletPublicKey?: string;
   encryptedPrivateKey?: string;
   energy: number; // Initial value 100, maximum value 100
   inferences: number; // Initial value 0
   tips: number; // Initial value 0, maximum value 10000
   avatarUrl?: string; // Agent avatar URL
+  userWalletAddress?: string; // agent owner's wallet address
 
   constructor(serialized: SerializedAgentDescription) {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl } = serialized;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress } = serialized;
     this.agentId = parseGameId('agents', agentId);
     this.identity = identity;
     this.plan = plan;
@@ -25,10 +26,11 @@ export class AgentDescription {
     this.inferences = inferences ?? 0; // Default value is 0
     this.tips = tips ?? 0; // Default value is 0
     this.avatarUrl = avatarUrl;
+    this.userWalletAddress = userWalletAddress;
   }
 
   serialize(): SerializedAgentDescription {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl } = this;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress } = this;
     return { 
       agentId, 
       identity, 
@@ -39,7 +41,8 @@ export class AgentDescription {
       energy,
       inferences,
       tips,
-      avatarUrl
+      avatarUrl,
+      userWalletAddress
     };
   }
 }
@@ -55,5 +58,6 @@ export const serializedAgentDescription = {
   inferences: v.optional(v.number()), // Initial value 0
   tips: v.optional(v.number()), // Initial value 0, maximum value 10000
   avatarUrl: v.optional(v.string()), // Agent avatar URL
+  userWalletAddress: v.optional(v.string()), // agent owner's wallet address
 };
 export type SerializedAgentDescription = ObjectType<typeof serializedAgentDescription>;

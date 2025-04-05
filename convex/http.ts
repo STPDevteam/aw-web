@@ -4,6 +4,7 @@ import { httpAction } from './_generated/server';
 import { api } from './_generated/api';
 import { internal } from './_generated/api';
 import { Id } from './_generated/dataModel';
+import { chatCompletion } from './util/llm';
 
 const http = httpRouter();
 
@@ -917,6 +918,167 @@ http.route({
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return new Response(JSON.stringify({ 
         error: 'Failed to upload image',
+        details: errorMessage 
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
+// Bind wallet address to agent
+http.route({
+  path: '/api/bind-wallet-to-agent',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Parse request body
+      const body = await request.json();
+      
+      // Validate required fields
+      const { imageUrl, name, profession, interest, walletAddress, worldId } = body;
+      
+      if (!imageUrl || !name || !profession || !interest || !walletAddress || !worldId) {
+        return new Response(JSON.stringify({ 
+          error: 'Missing required fields: imageUrl, name, profession, interest, walletAddress, worldId' 
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      try {
+        // Since we don't have direct access to the database, we need to fetch all agent descriptions
+        // and filter for unbound agents on the client side
+        const descriptions = await ctx.runQuery(api.world.gameDescriptions, { worldId });
+        const unboundAgents = descriptions.agentDescriptions.filter(agent => !agent.userWalletAddress);
+        
+        if (unboundAgents.length === 0) {
+          return new Response(JSON.stringify({ 
+            error: 'The slots are full' 
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        
+        // Randomly select an agent
+        const randomIndex = Math.floor(Math.random() * unboundAgents.length);
+        const selectedAgent = unboundAgents[randomIndex];
+        
+        // Generate identity and plan using OpenAI
+        const prompt = `
+You are an AI assistant helping to create a detailed profile for a virtual agent in a social world simulation. 
+Please generate the following information for an agent with the given attributes:
+
+- Profession: ${profession}
+- Interest: ${interest}
+
+Generate TWO sections:
+1. "IDENTITY": A detailed first-person description of who this agent is (their background, personality, goals).
+   This should be 2-3 paragraphs and be coherent and consistent.
+
+2. "PLAN": A specific first-person description of how they approach conversations with others, what topics they like to discuss,
+   and what their behavioral patterns are in social interactions.
+   This should be 1-2 paragraphs.
+
+Format your response EXACTLY as follows - just provide the text without additional commentary:
+IDENTITY:
+[identity text]
+
+PLAN:
+[plan text]
+`;
+
+        // Use chatCompletion for text generation
+        const { content: generatedContent } = await chatCompletion({
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 1000
+        });
+        
+        // Parse the generated content
+        const identityMatch = /IDENTITY:\s*([\s\S]*?)(?=\s*PLAN:)/i.exec(generatedContent);
+        const planMatch = /PLAN:\s*([\s\S]*?)$/i.exec(generatedContent);
+        
+        if (!identityMatch || !planMatch) {
+          return new Response(JSON.stringify({ 
+            error: 'Failed to generate proper identity and plan format' 
+          }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        
+        const identity = identityMatch[1].trim();
+        const plan = planMatch[1].trim();
+        
+        // Update agent description
+        const result = await ctx.runMutation(api.tips.updateAgentWithWallet, {
+          worldId,
+          agentId: selectedAgent.agentId,
+          walletAddress,
+          identity,
+          plan,
+          avatarUrl: imageUrl
+        });
+        
+        // Update player description (find player associated with agent from world data)
+        const world = await ctx.runQuery(api.world.getWorldById, { worldId });
+        
+        if (!world) {
+          return new Response(JSON.stringify({ 
+            error: 'World not found' 
+          }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        
+        // Find the player associated with this agent
+        let playerId = null;
+        for (const agent of world.agents || []) {
+          if (agent.id === selectedAgent.agentId) {
+            playerId = agent.playerId;
+            break;
+          }
+        }
+        
+        if (playerId) {
+          // Update player description
+          await ctx.runMutation(api.tips.updatePlayerWithIdentity, {
+            worldId,
+            playerId,
+            name,
+            description: identity
+          });
+        }
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          agentId: selectedAgent.agentId,
+          identity: identity,
+          plan: plan,
+          userWalletAddress: walletAddress,
+          agentWalletAddress: result.agentWalletAddress,
+          message: `Successfully bound user wallet ${walletAddress} to agent ${selectedAgent.agentId}`
+        }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (innerError) {
+        console.error('Error processing request:', innerError);
+        const errorMsg = innerError instanceof Error ? innerError.message : String(innerError);
+        throw new Error(`Error processing wallet binding: ${errorMsg}`);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ 
+        error: 'Failed to bind wallet to agent',
         details: errorMessage 
       }), {
         status: 500,
