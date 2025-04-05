@@ -596,3 +596,237 @@ export const setLowEnergyActivity = internalMutation({
   }
 });
 
+// Get agent with highest inference count
+export const getTopInferenceAgent = internalQuery({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    // Get all agent descriptions
+    const agentDescriptions = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+    
+    if (agentDescriptions.length === 0) {
+      return null;
+    }
+    
+    // Get world data
+    const world = await ctx.db.get(args.worldId);
+    if (!world) {
+      return null;
+    }
+    
+    // Create a mapping from agentId to playerId
+    const agentPlayerMap = new Map();
+    for (const agent of world.agents || []) {
+      agentPlayerMap.set(agent.id, agent.playerId);
+    }
+    
+    // Create a mapping from playerId to player name
+    const playerNameMap = new Map();
+    for (const player of world.players || []) {
+      const playerDesc = await ctx.db
+        .query('playerDescriptions')
+        .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('playerId', player.id))
+        .unique();
+      
+      if (playerDesc) {
+        playerNameMap.set(player.id, playerDesc.name);
+      }
+    }
+    
+    // Find agent with highest inference count
+    let topAgent = null;
+    let maxInferences = -1;
+    
+    for (const agent of agentDescriptions) {
+      const inferences = agent.inferences || 0;
+      if (inferences > maxInferences) {
+        maxInferences = inferences;
+        
+        const playerId = agentPlayerMap.get(agent.agentId);
+        const name = playerNameMap.get(playerId) || 'Unknown';
+        
+        topAgent = {
+          agentId: agent.agentId,
+          name: name,
+          inferences: inferences,
+          energy: agent.energy || 0,
+          avatarUrl: agent.avatarUrl || null,
+          identity: agent.identity || null,
+          worldName: "AI Town"
+        };
+      }
+    }
+    
+    return topAgent;
+  },
+});
+
+// Get agent with most favorites
+export const getMostFavoritedAgent = internalQuery({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    // Get all favorited agents
+    const favoriteAgents = await ctx.db
+      .query("favoriteAgents")
+      .collect();
+      
+    if (favoriteAgents.length === 0) {
+      return null;
+    }
+    
+    // Count favorites for each agent
+    const favoriteCount = new Map();
+    for (const favorite of favoriteAgents) {
+      const count = favoriteCount.get(favorite.agentId) || 0;
+      favoriteCount.set(favorite.agentId, count + 1);
+    }
+    
+    // Find agent with most favorites
+    let mostFavoritedAgentId = null;
+    let maxFavorites = -1;
+    
+    for (const [agentId, count] of favoriteCount.entries()) {
+      if (count > maxFavorites) {
+        maxFavorites = count;
+        mostFavoritedAgentId = agentId;
+      }
+    }
+    
+    if (!mostFavoritedAgentId) {
+      return null;
+    }
+    
+    // Get agent details
+    const agentDesc = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => 
+        q.eq('worldId', args.worldId).eq('agentId', mostFavoritedAgentId)
+      )
+      .unique();
+      
+    if (!agentDesc) {
+      return null;
+    }
+    
+    // Get world data
+    const world = await ctx.db.get(args.worldId);
+    if (!world) {
+      return null;
+    }
+    
+    // Get player info
+    let playerId = null;
+    for (const agent of world.agents || []) {
+      if (agent.id === mostFavoritedAgentId) {
+        playerId = agent.playerId;
+        break;
+      }
+    }
+    
+    let name = 'Unknown';
+    if (playerId) {
+      const playerDesc = await ctx.db
+        .query('playerDescriptions')
+        .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('playerId', playerId))
+        .unique();
+        
+      if (playerDesc) {
+        name = playerDesc.name;
+      }
+    }
+    
+    return {
+      agentId: mostFavoritedAgentId,
+      name: name,
+      favoriteCount: maxFavorites,
+      inferences: agentDesc.inferences || 0,
+      energy: agentDesc.energy || 0,
+      avatarUrl: agentDesc.avatarUrl || null,
+      identity: agentDesc.identity || null,
+      worldName: "AI Town"
+    };
+  },
+});
+
+// Get total inferences count across all agents
+export const getTotalInferences = internalQuery({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    // Get all agent descriptions
+    const agentDescriptions = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+    
+    // Sum up all inferences
+    let totalInferences = 0;
+    let agentCount = 0;
+    
+    for (const agent of agentDescriptions) {
+      totalInferences += agent.inferences || 0;
+      agentCount++;
+    }
+    
+    return {
+      totalInferences,
+      agentCount
+    };
+  },
+});
+
+// Public query functions for HTTP access
+export const getTopInferenceAgentPublic = query({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args): Promise<{
+    agentId: string;
+    name: string;
+    inferences: number;
+    energy: number;
+    avatarUrl: string | null;
+    identity: string | null;
+    worldName: string;
+  } | null> => {
+    return await ctx.runQuery(internal.aiTown.game.getTopInferenceAgent, args);
+  },
+});
+
+export const getMostFavoritedAgentPublic = query({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args): Promise<{
+    agentId: string;
+    name: string;
+    favoriteCount: number;
+    inferences: number;
+    energy: number;
+    avatarUrl: string | null;
+    identity: string | null;
+    worldName: string;
+  } | null> => {
+    return await ctx.runQuery(internal.aiTown.game.getMostFavoritedAgent, args);
+  },
+});
+
+export const getTotalInferencesPublic = query({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args): Promise<{
+    totalInferences: number;
+    agentCount: number;
+  }> => {
+    return await ctx.runQuery(internal.aiTown.game.getTotalInferences, args);
+  },
+});
+

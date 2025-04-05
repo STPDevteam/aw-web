@@ -750,6 +750,108 @@ http.route({
   }),
 });
 
+// Get agent with highest inference count
+http.route({
+  path: '/api/agent-stats/top-inference',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    
+    // Get the worldId parameter from the query string
+    const worldId = url.searchParams.get('worldId');
+    if (!worldId) {
+      return new Response(JSON.stringify({ error: 'worldId query parameter is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    try {
+      const topAgent = await ctx.runQuery(api.aiTown.game.getTopInferenceAgentPublic, { 
+        worldId: worldId as Id<'worlds'>
+      });
+      
+      return new Response(JSON.stringify(topAgent), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
+// Get agent with most favorites
+http.route({
+  path: '/api/agent-stats/most-favorited',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    
+    // Get the worldId parameter from the query string
+    const worldId = url.searchParams.get('worldId');
+    if (!worldId) {
+      return new Response(JSON.stringify({ error: 'worldId query parameter is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    try {
+      const topAgent = await ctx.runQuery(api.aiTown.game.getMostFavoritedAgentPublic, { 
+        worldId: worldId as Id<'worlds'>
+      });
+      
+      return new Response(JSON.stringify(topAgent), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
+// Get total inferences count across all agents
+http.route({
+  path: '/api/agent-stats/total-inferences',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    
+    // Get the worldId parameter from the query string
+    const worldId = url.searchParams.get('worldId');
+    if (!worldId) {
+      return new Response(JSON.stringify({ error: 'worldId query parameter is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    try {
+      const stats = await ctx.runQuery(api.aiTown.game.getTotalInferencesPublic, { 
+        worldId: worldId as Id<'worlds'>
+      });
+      
+      return new Response(JSON.stringify(stats), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
 // Helper function to validate API paths
 function isValidApiPath(module: string, func: string): boolean {
   return (
