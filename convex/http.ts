@@ -715,6 +715,40 @@ http.route({
   }),
 });
 
+// Reset all agent energy to 100
+http.route({
+  path: '/api/reset-agent-energy',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    
+    // Get the worldId parameter from the query string
+    const worldId = url.searchParams.get('worldId');
+    if (!worldId) {
+      return new Response(JSON.stringify({ error: 'worldId query parameter is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    try {
+      // Call the resetAllAgentEnergy mutation
+      const result = await ctx.runMutation(internal.aiTown.agentOperations.resetAllAgentEnergy, { 
+        worldId: worldId as Id<'worlds'> 
+      });
+      
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
 
 // Helper function to validate API paths
 function isValidApiPath(module: string, func: string): boolean {

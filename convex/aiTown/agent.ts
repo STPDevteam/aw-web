@@ -23,6 +23,26 @@ import { internal } from '../_generated/api';
 import { movePlayer, blocked } from './movement';
 import { insertInput } from './insertInput';
 
+// Define serializedAgent schema first before using it
+export const serializedAgent = {
+  id: agentId,
+  playerId: playerId,
+  toRemember: v.optional(conversationId),
+  lastConversation: v.optional(v.number()),
+  lastInviteAttempt: v.optional(v.number()),
+  inProgressOperation: v.optional(
+    v.object({
+      name: v.string(),
+      operationId: v.string(),
+      started: v.number(),
+    }),
+  ),
+};
+export type SerializedAgent = ObjectType<typeof serializedAgent>;
+
+// Define AgentOperations type
+type AgentOperations = typeof internal.aiTown.agentOperations;
+
 export class Agent {
   id: GameId<'agents'>;
   playerId: GameId<'players'>;
@@ -49,7 +69,7 @@ export class Agent {
     this.inProgressOperation = inProgressOperation;
   }
 
-  tick(game: Game, now: number) {
+  tick(game: Game, now: number): void {
     const player = game.world.players.get(this.playerId);
     if (!player) {
       throw new Error(`Invalid player ID ${this.playerId}`);
@@ -63,105 +83,90 @@ export class Agent {
       delete this.inProgressOperation;
     }
     
-      // Check if agent energy is 0
-      const agentDescription = game.agentDescriptions.get(this.id);
-      const energyDepleted = agentDescription && agentDescription.energy <= 0;
-      
-      const conversation = game.world.playerConversation(player);
-      const member = conversation?.participants.get(player.id);
+    // Check if agent energy is 0
+    const agentDescription = game.agentDescriptions.get(this.id);
+    const energyDepleted = agentDescription && agentDescription.energy <= 0;
+    
+    const conversation = game.world.playerConversation(player);
+    const member = conversation?.participants.get(player.id);
 
-      const recentlyAttemptedInvite =
-        this.lastInviteAttempt && now < this.lastInviteAttempt + CONVERSATION_COOLDOWN;
-      let doingActivity = player.activity && player.activity.until > now;
-      
-      // Reduce the probability of interrupting activities
-      // When there's a conversation or movement opportunity, there's a 10% chance to interrupt the current activity (reduced from 40% to 10%)
-      if (doingActivity && (conversation || player.pathfinding)) {
-        if (Math.random() < 0.1) {
-          player.activity!.until = now;
-          doingActivity = false;
-        }
-      }
-      
-      // Reduce the probability of actively seeking conversations
-      // Reduce to a 5% chance of interrupting activities to find something else to do (reduced from 25% to 5%)
-      if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.05) {
+    const recentlyAttemptedInvite =
+      this.lastInviteAttempt && now < this.lastInviteAttempt + CONVERSATION_COOLDOWN;
+    let doingActivity = player.activity && player.activity.until > now;
+    
+    // Reduce the probability of interrupting activities
+    // When there's a conversation or movement opportunity, there's a 10% chance to interrupt the current activity (reduced from 40% to 10%)
+    if (doingActivity && (conversation || player.pathfinding)) {
+      if (Math.random() < 0.1) {
         player.activity!.until = now;
         doingActivity = false;
       }
+    }
+    
+    // Reduce the probability of actively seeking conversations
+    // Reduce to a 5% chance of interrupting activities to find something else to do (reduced from 25% to 5%)
+    if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.05) {
+      player.activity!.until = now;
+      doingActivity = false;
+    }
 
-      // If we're not in a conversation, do something.
-      // If we aren't doing an activity or moving, do something.
-      // If we have been wandering but haven't thought about something to do for
-      // a while, do something.
-      // if energy is not 0, do something
-      if (!conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite) && !energyDepleted) {
-        this.startOperation(game, now, 'agentDoSomething', {
-          worldId: game.worldId,
-          player: player.serialize(),
-          otherFreePlayers: [...game.world.players.values()]
-            .filter((p) => p.id !== player.id)
-            .filter(
-              (p) => ![...game.world.conversations.values()].find((c) => c.participants.has(p.id)),
-            )
-            .map((p) => p.serialize()),
-          agent: this.serialize(),
-          mapId: game.worldMap.id!,
-        });
-        return;
-      }
-      // Check to see if we have a conversation we need to remember.
-      if (this.toRemember) {
-        // Fire off the action to remember the conversation.
-        console.log(`Agent ${this.id} remembering conversation ${this.toRemember}`);
-        this.startOperation(game, now, 'agentRememberConversation', {
-          worldId: game.worldId,
-          playerId: this.playerId,
-          agentId: this.id,
-          conversationId: this.toRemember,
-        });
-        delete this.toRemember;
-        return;
-      }
-      if (conversation && member) {
-        const [otherPlayerId, otherMember] = [...conversation.participants.entries()].find(
-          ([id]) => id !== player.id,
-        )!;
-        const otherPlayer = game.world.players.get(otherPlayerId)!;
-        if (member.status.kind === 'invited') {
-          // get agent energy
-          const agentDescription = game.agentDescriptions.get(this.id);
-          const energyDepleted = agentDescription && agentDescription.energy <= 0;
-          
-          // if energy is 0, reject conversation invitation
-          if (energyDepleted) {
-            console.log(`Agent ${player.id} rejecting invite from ${otherPlayer.id} due to depleted energy`);
-            conversation.rejectInvite(game, now, player);
-            return;
-          }
-          
-          // Accept a conversation with another agent with some probability and with
-          // a human unconditionally.
-          if (otherPlayer.human || Math.random() < INVITE_ACCEPT_PROBABILITY) {
-            console.log(`Agent ${player.id} accepting invite from ${otherPlayer.id}`);
-            
-            // increase inferences count
-            const agentDescription = game.agentDescriptions.get(this.id);
-            if (agentDescription) {
-              // increase inferences count
-              agentDescription.inferences = (agentDescription.inferences || 0) + 1;
-              console.log(`Agent ${this.id} inferences increased to ${agentDescription.inferences} after accepting conversation`);
-            }
-            
-              // increase other agent inferences count
-            const otherAgent = [...game.world.agents.values()].find(a => a.playerId === otherPlayerId);
-            if (otherAgent) {
-              const otherAgentDescription = game.agentDescriptions.get(otherAgent.id);
-              if (otherAgentDescription) {
-                otherAgentDescription.inferences = (otherAgentDescription.inferences || 0) + 1;
-                console.log(`Agent ${otherAgent.id} inferences increased to ${otherAgentDescription.inferences} after partner accepted conversation`);
-              }
-            }
+    // If we're not in a conversation, do something.
+    // If we aren't doing an activity or moving, do something.
+    // If we have been wandering but haven't thought about something to do for
+    // a while, do something.
+    // if energy is not 0, do something
+    if (!conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite) && !energyDepleted) {
+      this.startOperation(game, now, 'agentDoSomething', {
+        worldId: game.worldId,
+        player: player.serialize(),
+        otherFreePlayers: [...game.world.players.values()]
+          .filter((p) => p.id !== player.id)
+          .filter(
+            (p) => ![...game.world.conversations.values()].find((c) => c.participants.has(p.id)),
+          )
+          .map((p) => p.serialize()),
+        agent: this.serialize(),
+        mapId: game.worldMap.id!,
+      });
+      return;
+    }
+    
+    // Check to see if we have a conversation we need to remember.
+    if (this.toRemember) {
+      // Fire off the action to remember the conversation.
+      console.log(`Agent ${this.id} remembering conversation ${this.toRemember}`);
+      this.startOperation(game, now, 'agentRememberConversation', {
+        worldId: game.worldId,
+        playerId: this.playerId,
+        agentId: this.id,
+        conversationId: this.toRemember,
+      });
+      delete this.toRemember;
+      return;
+    }
+    
+    if (conversation && member) {
+      const [otherPlayerId, otherMember] = [...conversation.participants.entries()].find(
+        ([id]) => id !== player.id,
+      )!;
+      const otherPlayer = game.world.players.get(otherPlayerId)!;
+      
+      if (member.status.kind === 'invited') {
+        // get agent energy
+        const agentDescription = game.agentDescriptions.get(this.id);
+        const energyDepleted = agentDescription && agentDescription.energy <= 0;
+        
+        // if energy is 0, reject conversation invitation
+        if (energyDepleted) {
+          console.log(`Agent ${player.id} rejecting invite from ${otherPlayer.id} due to depleted energy`);
+          conversation.rejectInvite(game, now, player);
+          return;
+        }
+        
+        // Accept a conversation with another agent with some probability and with
+        // a human unconditionally.
+        if (otherPlayer.human || Math.random() < INVITE_ACCEPT_PROBABILITY) {
+          console.log(`Agent ${player.id} accepting invite from ${otherPlayer.id}`);
           
           conversation.acceptInvite(game, player);
           // Stop moving so we can start walking towards the other player.
@@ -174,7 +179,19 @@ export class Agent {
         }
         return;
       }
+      
       if (member.status.kind === 'walkingOver') {
+        // Check if agent has run out of energy while walking to conversation
+        const agentDescription = game.agentDescriptions.get(this.id);
+        const energyDepleted = agentDescription && agentDescription.energy <= 0;
+        
+        // If energy is depleted, give up on the conversation
+        if (energyDepleted) {
+          console.log(`Agent ${player.id} giving up on invite to ${otherPlayer.id} due to depleted energy`);
+          conversation.leave(game, now, player);
+          return;
+        }
+        
         // Leave a conversation if we've been waiting for too long.
         if (member.invited + INVITE_TIMEOUT < now) {
           console.log(`Giving up on invite to ${otherPlayer.id}`);
@@ -237,8 +254,31 @@ export class Agent {
         }
         return;
       }
+      
       if (member.status.kind === 'participating') {
         const started = member.status.started;
+        
+        // Check if agent has run out of energy during conversation
+        const agentDescription = game.agentDescriptions.get(this.id);
+        const energyDepleted = agentDescription && agentDescription.energy <= 0;
+        
+        // If energy is depleted, leave the conversation
+        if (energyDepleted) {
+          console.log(`${player.id} leaving conversation with ${otherPlayer.id} due to depleted energy.`);
+          const messageUuid = crypto.randomUUID();
+          conversation.setIsTyping(now, player, messageUuid);
+          this.startOperation(game, now, 'agentGenerateMessage', {
+            worldId: game.worldId,
+            playerId: player.id,
+            agentId: this.id,
+            conversationId: conversation.id,
+            otherPlayerId: otherPlayer.id,
+            messageUuid,
+            type: 'leave',
+          });
+          return;
+        }
+        
         if (conversation.isTyping && conversation.isTyping.playerId !== player.id) {
           // Wait for the other player to finish typing.
           return;
@@ -319,7 +359,7 @@ export class Agent {
     now: number,
     name: Name,
     args: Omit<FunctionArgs<AgentOperations[Name]>, 'operationId'>,
-  ) {
+  ): void {
     if (this.inProgressOperation) {
       throw new Error(
         `Agent ${this.id} already has an operation: ${JSON.stringify(this.inProgressOperation)}`,
@@ -346,24 +386,6 @@ export class Agent {
     };
   }
 }
-
-export const serializedAgent = {
-  id: agentId,
-  playerId: playerId,
-  toRemember: v.optional(conversationId),
-  lastConversation: v.optional(v.number()),
-  lastInviteAttempt: v.optional(v.number()),
-  inProgressOperation: v.optional(
-    v.object({
-      name: v.string(),
-      operationId: v.string(),
-      started: v.number(),
-    }),
-  ),
-};
-export type SerializedAgent = ObjectType<typeof serializedAgent>;
-
-type AgentOperations = typeof internal.aiTown.agentOperations;
 
 export async function runAgentOperation(ctx: MutationCtx, operation: string, args: any) {
   let reference;

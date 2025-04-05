@@ -168,25 +168,6 @@ export const agentInputs = {
           throw new Error(`Invalid player ID ${args.invitee}`);
         }
         
-        // Find the other agent
-        const otherAgent = [...game.world.agents.values()].find(a => a.playerId === invitee.id);
-        if (otherAgent) {
-          // Increase the inferences count for both agents
-          // 1. Current agent
-          const agentDescription = game.agentDescriptions.get(agent.id);
-          if (agentDescription) {
-            agentDescription.inferences = (agentDescription.inferences || 0) + 1;
-            console.log(`Agent ${agent.id} inferences increased to ${agentDescription.inferences}`);
-          }
-          
-          // 2. Other agent
-          const otherAgentDescription = game.agentDescriptions.get(otherAgent.id);
-          if (otherAgentDescription) {
-            otherAgentDescription.inferences = (otherAgentDescription.inferences || 0) + 1;
-            console.log(`Agent ${otherAgent.id} inferences increased to ${otherAgentDescription.inferences}`);
-          }
-        }
-        
         const result = Conversation.start(game, now, player, invitee);
         agent.lastInviteAttempt = now;
         
@@ -252,6 +233,26 @@ export const agentInputs = {
       console.log(`Created agent ${agentId} with wallet address ${wallet.address}`);
       
       return { agentId };
+    },
+  }),
+  updateAgentInferences: inputHandler({
+    args: {
+      agentId: v.string(),
+      inferences: v.number(),
+    },
+    handler: (game, now, args) => {
+      const agentId = parseGameId('agents', args.agentId);
+      const agentDescription = game.agentDescriptions.get(agentId);
+      
+      if (agentDescription) {
+        // Update the agent's inferences count
+        agentDescription.inferences = args.inferences;
+        console.log(`Agent ${agentId} inferences updated to ${args.inferences}`);
+      } else {
+        console.warn(`Agent ${agentId} not found, unable to update inferences`);
+      }
+      
+      return null;
     },
   }),
 };

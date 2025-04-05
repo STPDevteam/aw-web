@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { internalAction } from '../_generated/server';
+import { internalAction, ActionCtx, internalMutation } from '../_generated/server';
 import { SerializedWorldMap, WorldMap, serializedWorldMap } from './worldMap';
 import { rememberConversation } from '../agent/memory';
 import { GameId, agentId, conversationId, playerId } from './ids';
@@ -14,6 +14,7 @@ import { ACTIVITIES, ACTIVITY_COOLDOWN, CONVERSATION_COOLDOWN } from '../constan
 import { api, internal } from '../_generated/api';
 import { sleep } from '../util/sleep';
 import { serializedPlayer } from './player';
+import { Id } from '../_generated/dataModel';
 
 export const agentRememberConversation = internalAction({
   args: {
@@ -57,6 +58,53 @@ export const agentRememberConversation = internalAction({
   },
 });
 
+// Add this new mutation to directly update the inferences count
+export const directIncrementInferences = internalMutation({
+  args: {
+    worldId: v.id('worlds'),
+    agentId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Get agent description directly from database
+      const agentDesc = await ctx.db
+        .query('agentDescriptions')
+        .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('agentId', args.agentId))
+        .unique();
+      
+      if (!agentDesc) {
+        console.warn(`Agent description not found for ${args.agentId}`);
+        return { success: false, error: 'Agent description not found' };
+      }
+      
+      // Increment inferences count
+      const currentInferences = agentDesc.inferences || 0;
+      const newInferences = currentInferences + 1;
+      
+      // Calculate new energy value (decrease by 1 for each message)
+      const currentEnergy = agentDesc.energy ?? 100; // Default to 100 if undefined
+      const newEnergy = Math.max(0, currentEnergy - 1); // Ensure energy doesn't go below 0
+      
+      // Update both inferences and energy directly in database
+      await ctx.db.patch(agentDesc._id, { 
+        inferences: newInferences,
+        energy: newEnergy
+      });
+      
+      console.log(`[DIRECT UPDATE] Agent ${args.agentId} inferences increased from ${currentInferences} to ${newInferences}, energy decreased from ${currentEnergy} to ${newEnergy}`);
+      
+      return { 
+        success: true, 
+        newInferences,
+        newEnergy 
+      };
+    } catch (error) {
+      console.error(`Error updating agent ${args.agentId}:`, error);
+      return { success: false, error: String(error) };
+    }
+  },
+});
+
 export const agentGenerateMessage = internalAction({
   args: {
     worldId: v.id('worlds'),
@@ -83,6 +131,18 @@ export const agentGenerateMessage = internalAction({
       default:
         assertNever(args.type);
     }
+    
+    // Use the new direct mutation instead of the old approach
+    try {
+      await ctx.runMutation(internal.aiTown.agentOperations.directIncrementInferences, {
+        worldId: args.worldId,
+        agentId: args.agentId
+      });
+      console.log(`Used direct mutation to increment inferences for agent ${args.agentId}`);
+    } catch (error) {
+      console.error(`Failed to increment inferences for agent ${args.agentId}:`, error);
+    }
+    
     const text = await completionFn(
       ctx,
       args.worldId,
@@ -103,6 +163,44 @@ export const agentGenerateMessage = internalAction({
     });
   },
 });
+
+/**
+ * Increments the inferences count for the agent sending a message
+ * This is called each time an agent generates a message
+ */
+async function incrementSenderInferences(
+  ctx: ActionCtx, 
+  worldId: Id<'worlds'>, 
+  agentId: string
+): Promise<void> {
+  try {
+    // Get all agent descriptions
+    const agentDescriptions = await ctx.runQuery(internal.aiTown.game.getAgentDescriptions, {
+      worldId
+    });
+    
+    // Find the agent description
+    const agentDesc = agentDescriptions.find(a => a.agentId === agentId);
+    
+    if (agentDesc) {
+      const newInferences = (agentDesc.inferences || 0) + 1;
+      
+      // Update the agent's inferences count
+      await ctx.runMutation(api.aiTown.main.sendInput, {
+        worldId,
+        name: 'updateAgentInferences',
+        args: {
+          agentId,
+          inferences: newInferences
+        }
+      });
+      
+      console.log(`Agent ${agentId} inferences increased to ${newInferences}`);
+    }
+  } catch (error) {
+    console.error("Error incrementing inferences:", error);
+  }
+}
 
 export const agentDoSomething = internalAction({
   args: {
@@ -272,3 +370,41 @@ function wanderDestination(worldMap: WorldMap) {
   
   return { x: finalX, y: finalY };
 }
+
+// Function to reset all agent energy levels to 100
+export const resetAllAgentEnergy = internalMutation({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Get all agent descriptions for the given world
+      const agentDescriptions = await ctx.db
+        .query('agentDescriptions')
+        .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+        .collect();
+      
+      // Count of updated agents
+      let updatedCount = 0;
+      
+      // Update each agent's energy to 100
+      for (const agentDesc of agentDescriptions) {
+        await ctx.db.patch(agentDesc._id, { energy: 100 });
+        updatedCount++;
+      }
+      
+      console.log(`[ENERGY RESET] Successfully reset energy to 100 for ${updatedCount} agents`);
+      return { 
+        success: true, 
+        message: `Energy reset to 100 for ${updatedCount} agents`,
+        updatedCount 
+      };
+    } catch (error) {
+      console.error('Error resetting agent energy:', error);
+      return { 
+        success: false, 
+        error: String(error) 
+      };
+    }
+  },
+});

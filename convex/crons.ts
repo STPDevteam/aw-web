@@ -21,7 +21,8 @@ crons.daily('vacuum old entries', { hourUTC: 4, minuteUTC: 20 }, internal.crons.
 crons.interval('clean expired auth challenges', { minutes: 10 }, internal.crons.cleanExpiredAuthChallenges);
 
 // Reduce agent energy by 5 points every hour
-crons.interval('reduce agent energy', { hours: 1 }, internal.crons.reduceAgentEnergy);
+// DISABLED: Energy is now reduced with each message (inference) instead of on a schedule
+// crons.interval('reduce agent energy', { hours: 1 }, internal.crons.reduceAgentEnergy);
 
 // TODO: Uncomment this after the frontend agent API is properly set up
 // // Update frontend agent conversations daily at 01:00 UTC
@@ -141,7 +142,9 @@ export const cleanExpiredAuthChallenges = internalMutation({
 
 /**
  * Reduce agent energy by a fixed amount every hour
- * This replaces the previous mechanism of reducing energy per conversation
+ * NOTE: This function is no longer used in the regular schedule.
+ * Energy is now reduced by 1 with each message sent (when inference count increases).
+ * This function is kept for potential future use or manual energy adjustments.
  */
 export const reduceAgentEnergy = internalMutation({
   handler: async (ctx) => {

@@ -24,6 +24,7 @@ import type * as aiTown_conversation from "../aiTown/conversation.js";
 import type * as aiTown_conversationMembership from "../aiTown/conversationMembership.js";
 import type * as aiTown_game from "../aiTown/game.js";
 import type * as aiTown_ids from "../aiTown/ids.js";
+import type * as aiTown_inferenceCount from "../aiTown/inferenceCount.js";
 import type * as aiTown_inputHandler from "../aiTown/inputHandler.js";
 import type * as aiTown_inputs from "../aiTown/inputs.js";
 import type * as aiTown_insertInput from "../aiTown/insertInput.js";
@@ -82,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   "aiTown/conversationMembership": typeof aiTown_conversationMembership;
   "aiTown/game": typeof aiTown_game;
   "aiTown/ids": typeof aiTown_ids;
+  "aiTown/inferenceCount": typeof aiTown_inferenceCount;
   "aiTown/inputHandler": typeof aiTown_inputHandler;
   "aiTown/inputs": typeof aiTown_inputs;
   "aiTown/insertInput": typeof aiTown_insertInput;
