@@ -956,3 +956,127 @@ async function batchGenerateAgentWalletsDirectly(
   };
 }
 
+// Add allowed tip address - adds a wallet address to the allowed tip addresses list
+export const addAllowedTipAddress = mutation({
+  args: {
+    walletAddress: v.string(),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress, note } = args;
+    
+    // Check if the address already exists
+    const existingAddress = await ctx.db
+      .query('allowedTipAddresses')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    if (existingAddress) {
+      // If it exists but is inactive, activate it
+      if (!existingAddress.isActive) {
+        await ctx.db.patch(existingAddress._id, {
+          isActive: true,
+          note: note || existingAddress.note,
+          addedAt: Date.now(),
+        });
+        return {
+          success: true,
+          message: `Wallet address ${walletAddress} has been reactivated`,
+        };
+      }
+      
+      // If it's already active, just return success
+      return {
+        success: true,
+        message: `Wallet address ${walletAddress} is already in the allowed list`,
+      };
+    }
+    
+    // Insert new address
+    await ctx.db.insert('allowedTipAddresses', {
+      walletAddress,
+      addedAt: Date.now(),
+      note,
+      isActive: true,
+    });
+    
+    return {
+      success: true,
+      message: `Wallet address ${walletAddress} has been added to the allowed list`,
+    };
+  },
+});
+
+// Get agent bound to a wallet address
+export const getAgentByUserWallet = query({
+  args: {
+    walletAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress } = args;
+    
+    // Search for agents that have this wallet address as userWalletAddress
+    const agentDescriptions = await ctx.db
+      .query('agentDescriptions')
+      .filter((q) => q.eq(q.field('userWalletAddress'), walletAddress))
+      .collect();
+    
+    if (agentDescriptions.length === 0) {
+      return {
+        bound: false,
+        message: "No agent is bound to this wallet address",
+      };
+    }
+    
+    // Return the first bound agent (there should only be one according to our constraints)
+    const boundAgent = agentDescriptions[0];
+    
+    // World name is typically stored elsewhere or retrieved differently
+    // Just use a default value since the world table doesn't have a name field
+    const worldName = "World";
+    
+    return {
+      bound: true,
+      agent: {
+        agentId: boundAgent.agentId,
+        identity: boundAgent.identity,
+        plan: boundAgent.plan,
+        worldId: boundAgent.worldId,
+        worldName,
+        avatarUrl: boundAgent.avatarUrl,
+        walletAddress: boundAgent.walletAddress,
+        userWalletAddress: boundAgent.userWalletAddress,
+        energy: boundAgent.energy,
+        inferences: boundAgent.inferences,
+        tips: boundAgent.tips,
+      },
+    };
+  },
+});
+
+// Check if a wallet address is allowed to tip
+export const isAllowedToTip = query({
+  args: {
+    walletAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { walletAddress } = args;
+    
+    // Check if the address exists in the allowed tip addresses table
+    const allowedAddress = await ctx.db
+      .query('allowedTipAddresses')
+      .withIndex('walletAddress', (q) => q.eq('walletAddress', walletAddress))
+      .unique();
+    
+    // Return whether the address is allowed to tip
+    return {
+      allowed: !!allowedAddress && allowedAddress.isActive,
+      message: allowedAddress 
+        ? (allowedAddress.isActive 
+          ? "Wallet address is approved for tipping" 
+          : "Wallet address is in the system but inactive")
+        : "Wallet address is not approved for tipping"
+    };
+  },
+});
+

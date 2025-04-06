@@ -927,7 +927,88 @@ http.route({
   }),
 });
 
-// Bind wallet address to agent
+// Add allowed tip address API endpoint
+http.route({
+  path: '/api/allowed-tip-address/add',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Parse request body
+      const body = await request.json();
+      
+      // Validate required fields
+      const { walletAddress, note } = body;
+      
+      if (!walletAddress) {
+        return new Response(JSON.stringify({ 
+          error: 'Missing required field: walletAddress is required' 
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Call the mutation to add the address
+      const result = await ctx.runMutation(api.wallet.addAllowedTipAddress, {
+        walletAddress,
+        note
+      });
+      
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ 
+        error: 'Failed to add allowed tip address',
+        details: errorMessage 
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
+// Get agent bound to a wallet address
+http.route({
+  path: '/api/agent/by-wallet',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    try {
+      // Get wallet address from query parameter
+      const url = new URL(request.url);
+      const walletAddress = url.searchParams.get('walletAddress');
+      
+      if (!walletAddress) {
+        return new Response(JSON.stringify({ error: 'walletAddress query parameter is required' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Call the query to get the bound agent
+      const result = await ctx.runQuery(api.wallet.getAgentByUserWallet, {
+        walletAddress
+      });
+      
+      return new Response(JSON.stringify(result), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return new Response(JSON.stringify({ 
+        error: 'Failed to get agent by wallet address',
+        details: errorMessage 
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }),
+});
+
+// Bind wallet address to agent - MODIFIED WITH VALIDATIONS
 http.route({
   path: '/api/bind-wallet-to-agent',
   method: 'POST',
@@ -942,6 +1023,35 @@ http.route({
       if (!imageUrl || !name || !profession || !interest || !walletAddress || !worldId) {
         return new Response(JSON.stringify({ 
           error: 'Missing required fields: imageUrl, name, profession, interest, walletAddress, worldId' 
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Validate that the wallet address is allowed to tip
+      const allowedAddress = await ctx.runQuery(api.wallet.isAllowedToTip, {
+        walletAddress
+      });
+      
+      if (!allowedAddress || !allowedAddress.allowed) {
+        return new Response(JSON.stringify({ 
+          error: 'This wallet address is not eligible for tipping. Please complete the required actions first.' 
+        }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Check if wallet already has a bound agent
+      const existingBinding = await ctx.runQuery(api.wallet.getAgentByUserWallet, {
+        walletAddress
+      });
+      
+      if (existingBinding.bound) {
+        return new Response(JSON.stringify({ 
+          error: 'This wallet address is already bound to an agent',
+          boundAgent: existingBinding.agent
         }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },

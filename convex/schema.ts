@@ -82,6 +82,20 @@ export default defineSchema({
     .index('walletAddress', ['walletAddress'])
     .index('points', ['points']),
 
+  // Allowed tip addresses - stores wallet addresses permitted to tip agents
+  allowedTipAddresses: defineTable({
+    // Wallet address that is allowed to tip
+    walletAddress: v.string(),
+    // When the address was added
+    addedAt: v.number(),
+    // Optional note about why this address was added
+    note: v.optional(v.string()),
+    // Whether this address is active (can be used to deactivate without deletion)
+    isActive: v.boolean(),
+  })
+    .index('walletAddress', ['walletAddress'])
+    .index('activeStatus', ['isActive']),
+
   // Authentication challenges for wallet signature verification
   authChallenges: defineTable({
     // Wallet address the challenge is for

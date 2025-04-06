@@ -515,7 +515,8 @@ export const getAllAgents = internalQuery({
         inferences: agent.inferences || 0,
         tips: agent.tips || 0,
         avatarUrl: agent.avatarUrl || `https://worlf-fun.s3.ap-northeast-1.amazonaws.com/world.fun/${Math.floor(Math.random() * 30) + 1}.png`,
-        isFavorited: favoritedAgentIds.has(agent.agentId)
+        isFavorited: favoritedAgentIds.has(agent.agentId),
+        walletAddress: agent.walletAddress || null
       };
     });
     
@@ -554,6 +555,7 @@ export const getAllAgentsPublic = query({
     energy: number;
     inferences: number;
     tips: number;
+    walletAddress: string | null;
   }>> => {
     // Simply call the internal query
     const agents = await ctx.runQuery(internal.aiTown.game.getAllAgents, args);
