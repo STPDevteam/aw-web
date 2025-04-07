@@ -16,6 +16,154 @@ import { sleep } from '../util/sleep';
 import { serializedPlayer } from './player';
 import { Id } from '../_generated/dataModel';
 
+/**
+ * Simplified input batch processing class
+ * Defined inline in agent operations module to avoid reference issues
+ */
+class SimpleInputBatcher {
+  private lastProcessedTime: Map<string, number> = new Map();
+  private inputFrequency: Map<string, {
+    count: number,
+    lastReset: number,
+    threshold: number
+  }> = new Map();
+  
+  // Minimum processing intervals - reduced to ensure actions flow consistently
+  private minProcessIntervals = {
+    high: 150,    // 150ms for high priority (conversations, critical actions)
+    medium: 350,  // 350ms for medium priority (position updates, activities)
+    low: 800      // 800ms for low priority (background activities)
+  };
+  
+  // Input priority categorization
+  private getInputPriority(name: string, args: any): 'high' | 'medium' | 'low' {
+    if (name.includes('conversation') || name.includes('Message') || name.includes('Remember')) {
+      return 'high';  // Conversation interactions are high priority
+    } else if (name === 'finishDoSomething' && args.destination) {
+      return 'medium'; // Movement updates are medium priority
+    } else {
+      return 'low';    // Other updates like activities are low priority
+    }
+  }
+  
+  // Check if an input is a critical agent action that should never be filtered
+  private isCriticalAction(name: string, args: any): boolean {
+    return name.includes('start') || 
+           name.includes('leave') || 
+           name.includes('Message') || 
+           name.includes('conversation') || 
+           name.includes('Remember') || 
+           (name === 'finishDoSomething' && args.activity); // Activity setting is critical
+  }
+  
+  async batchInput(ctx: ActionCtx, worldId: Id<'worlds'>, name: string, args: any): Promise<void> {
+    const key = this.generateBatchKey(name, args);
+    const now = Date.now();
+    const priority = this.getInputPriority(name, args);
+    const minInterval = this.minProcessIntervals[priority];
+    
+    // Critical actions bypass frequency checking
+    const isCritical = this.isCriticalAction(name, args);
+    
+    // Check if this input is being sent too frequently
+    const lastTime = this.lastProcessedTime.get(key) || 0;
+    const timeSinceLastProcess = now - lastTime;
+    
+    // Track input frequency to detect spam patterns
+    if (!this.inputFrequency.has(key)) {
+      this.inputFrequency.set(key, { count: 0, lastReset: now, threshold: 5 });
+    }
+    
+    const freqData = this.inputFrequency.get(key)!;
+    
+    // Reset counter if it's been over 5 seconds
+    if (now - freqData.lastReset > 5000) {
+      freqData.count = 0;
+      freqData.lastReset = now;
+    }
+    
+    freqData.count++;
+    
+    // Always allow critical actions to proceed
+    if (!isCritical) {
+      // Skip high-frequency inputs based on priority and frequency
+      if (timeSinceLastProcess < minInterval) {
+        // For frequently sent inputs, dynamically increase the threshold to reduce DB load
+        if (freqData.count > freqData.threshold) {
+          this.inputFrequency.set(key, {
+            ...freqData,
+            threshold: Math.min(freqData.threshold + 2, 20) // Gradually increase threshold up to 20
+          });
+          return; // Skip this input
+        }
+        
+        // Skip redundant movements and non-critical updates at high frequency
+        if ((name === 'finishDoSomething' && args.destination) || 
+            (priority === 'low' && freqData.count > 2)) {
+          // Occasionally let movement inputs through even during high frequency
+          // Add randomness to give diversity to agent movements
+          if (Math.random() > 0.2) { // 20% chance to let it through anyway
+            return; // Skip this input
+          }
+        }
+      }
+    }
+    
+    // Record this processing time
+    this.lastProcessedTime.set(key, now);
+    
+    // Only process inputs that passed all filters
+    try {
+      await ctx.runMutation(api.aiTown.main.sendInput, {
+        worldId,
+        name,
+        args
+      });
+    } catch (error) {
+      console.error(`Error sending input ${name}:`, error);
+      this.lastProcessedTime.delete(key);
+    }
+  }
+  
+  /**
+   * Generate a batch key based on input name and arguments to group similar operations
+   */
+  private generateBatchKey(name: string, args: any): string {
+    if (!args) return name;
+    
+    let key = name;
+    
+    // Include relevant IDs in the key to group by entity
+    if (args.agentId) key += `:agent:${args.agentId}`;
+    if (args.playerId) key += `:player:${args.playerId}`;
+    if (args.conversationId) key += `:conversation:${args.conversationId}`;
+    
+    // For specific input types, add more specialized grouping
+    if (name === 'finishDoSomething') {
+      if (args.destination) {
+        // Less specific grouping for movement to allow more diverse movement patterns
+        const x = args.destination.x;
+        const y = args.destination.y;
+        if (x !== undefined && y !== undefined) {
+          // Use 45-degree octants rather than exact directions
+          const angle = Math.atan2(y, x);
+          const octant = Math.floor((angle + Math.PI) / (Math.PI/4));
+          key += `:move:oct${octant}`;
+        } else {
+          key += ':move';
+        }
+      }
+      else if (args.activity) key += ':activity';
+      else if (args.invitee) key += ':invite';
+    }
+    
+    return key;
+  }
+}
+
+// 创建批处理实例
+const inputBatcher = new SimpleInputBatcher();
+
 export const agentRememberConversation = internalAction({
   args: {
     worldId: v.id('worlds'),
@@ -33,27 +181,49 @@ export const agentRememberConversation = internalAction({
         args.playerId as GameId<'players'>,
         args.conversationId as GameId<'conversations'>,
       );
-      await sleep(Math.random() * 1000);
-      await ctx.runMutation(api.aiTown.main.sendInput, {
-        worldId: args.worldId,
-        name: 'finishRememberConversation',
-        args: {
+      // Use a fixed small delay instead of random to prevent stuttering
+      await sleep(200);
+      
+      // 添加备用机制
+      try {
+        // 首先尝试使用批处理系统
+        await inputBatcher.batchInput(ctx, args.worldId, 'finishRememberConversation', {
           agentId: args.agentId,
           operationId: args.operationId,
-        },
-      });
+        });
+      } catch (error) {
+        // 如果批处理失败，使用直接发送方式作为备份
+        console.error("Batch input failed in agentRememberConversation, using direct send instead:", error);
+        await ctx.runMutation(api.aiTown.main.sendInput, {
+          worldId: args.worldId,
+          name: 'finishRememberConversation',
+          args: {
+            agentId: args.agentId,
+            operationId: args.operationId,
+          }
+        });
+      }
     } catch (error) {
       // Capture error, log it but don't affect main flow
       console.error(`Error in agentRememberConversation for ${args.conversationId}:`, error);
       // Still mark operation as completed so system can continue
-      await ctx.runMutation(api.aiTown.main.sendInput, {
-        worldId: args.worldId,
-        name: 'finishRememberConversation',
-        args: {
+      try {
+        await inputBatcher.batchInput(ctx, args.worldId, 'finishRememberConversation', {
           agentId: args.agentId,
           operationId: args.operationId,
-        },
-      });
+        });
+      } catch (secondError) {
+        // 备用方案
+        console.error("Batch input failed during error recovery, using direct send:", secondError);
+        await ctx.runMutation(api.aiTown.main.sendInput, {
+          worldId: args.worldId,
+          name: 'finishRememberConversation',
+          args: {
+            agentId: args.agentId,
+            operationId: args.operationId,
+          }
+        });
+      }
     }
   },
 });
@@ -132,17 +302,15 @@ export const agentGenerateMessage = internalAction({
         assertNever(args.type);
     }
     
-    // Use the new direct mutation instead of the old approach
-    try {
-      await ctx.runMutation(internal.aiTown.agentOperations.directIncrementInferences, {
-        worldId: args.worldId,
-        agentId: args.agentId
-      });
-      console.log(`Used direct mutation to increment inferences for agent ${args.agentId}`);
-    } catch (error) {
+    // Use the new direct mutation instead of the old approach - and run it in parallel
+    const incrementPromise = ctx.runMutation(internal.aiTown.agentOperations.directIncrementInferences, {
+      worldId: args.worldId,
+      agentId: args.agentId
+    }).catch(error => {
       console.error(`Failed to increment inferences for agent ${args.agentId}:`, error);
-    }
+    });
     
+    // Generate the message text
     const text = await completionFn(
       ctx,
       args.worldId,
@@ -151,16 +319,33 @@ export const agentGenerateMessage = internalAction({
       args.otherPlayerId as GameId<'players'>,
     );
 
-    await ctx.runMutation(internal.aiTown.agent.agentSendMessage, {
-      worldId: args.worldId,
+    // Wait for the increment to complete (should already be done, but just in case)
+    await incrementPromise;
+    
+    // 添加备用机制
+    const messageData = {
       conversationId: args.conversationId,
       agentId: args.agentId,
-      playerId: args.playerId,
+      playerId: args.playerId, 
       text,
       messageUuid: args.messageUuid,
       leaveConversation: args.type === 'leave',
       operationId: args.operationId,
-    });
+      timestamp: Date.now()
+    };
+    
+    try {
+      // 首先尝试使用批处理系统
+      await inputBatcher.batchInput(ctx, args.worldId, 'agentFinishSendingMessage', messageData);
+    } catch (error) {
+      // 如果批处理失败，使用直接发送方式作为备份
+      console.error("Batch input failed in agentGenerateMessage, using direct send instead:", error);
+      await ctx.runMutation(api.aiTown.main.sendInput, {
+        worldId: args.worldId,
+        name: 'agentFinishSendingMessage',
+        args: messageData
+      });
+    }
   },
 });
 
@@ -234,6 +419,13 @@ export const agentDoSomething = internalAction({
     // If there is enough time passed (cool down is over), prioritize conversation
     const preferConversation = !justLeftConversation && !recentlyAttemptedInvite;
     
+    // Avoid random sleep timing that can cause stuttering
+    // Instead use a constant minimal delay that's just enough to prevent conflicts
+    const ACTION_TIMING_DELAY = 100; // Further reduced to 100ms
+    
+    // Prepare input data
+    let inputData = null;
+    
     // If we prioritize conversation and there is no cool down limit, try to find a conversation partner
     if (preferConversation) {
       const invitee = await ctx.runQuery(internal.aiTown.agent.findConversationCandidate, {
@@ -244,8 +436,7 @@ export const agentDoSomething = internalAction({
       });
       
       if (invitee) {
-        await sleep(500); // Use fixed delay
-        await ctx.runMutation(api.aiTown.main.sendInput, {
+        inputData = {
           worldId: args.worldId,
           name: 'finishDoSomething',
           args: {
@@ -253,20 +444,18 @@ export const agentDoSomething = internalAction({
             agentId: args.agent.id,
             invitee,
           },
-        });
-        return;
+        };
       }
     }
     
     // If we don't find a conversation partner or don't prioritize conversation, continue with the original logic
     // Decide whether to do an activity or wander somewhere.
-    if (!player.pathfinding) {
+    if (!inputData && !player.pathfinding) {
       // When we can't do a conversation, alternate between activity and wandering
       const shouldWander = player.activity && player.activity.until < now;
       
       if (shouldWander) {
-        await sleep(500); // Use fixed delay
-        await ctx.runMutation(api.aiTown.main.sendInput, {
+        inputData = {
           worldId: args.worldId,
           name: 'finishDoSomething',
           args: {
@@ -274,14 +463,12 @@ export const agentDoSomething = internalAction({
             agentId: agent.id,
             destination: wanderDestination(map),
           },
-        });
-        return;
+        };
       } else {
         // Select activity, not using random number
         const activityIndex = Math.floor((now / 1000) % ACTIVITIES.length);
         const activity = ACTIVITIES[activityIndex];
-        await sleep(500); // Use fixed delay
-        await ctx.runMutation(api.aiTown.main.sendInput, {
+        inputData = {
           worldId: args.worldId,
           name: 'finishDoSomething',
           args: {
@@ -293,35 +480,52 @@ export const agentDoSomething = internalAction({
               until: Date.now() + activity.duration,
             },
           },
-        });
-        return;
+        };
       }
     }
     
-    // If we get here, the player is moving and there is no conversation choice
+    // If we get here and still don't have input data, the player is moving and there is no conversation choice
     // Check if we can invite a conversation
-    const invitee = 
-      justLeftConversation || recentlyAttemptedInvite
-        ? undefined
-        : await ctx.runQuery(internal.aiTown.agent.findConversationCandidate, {
-            now,
-            worldId: args.worldId,
-            player: args.player,
-            otherFreePlayers: args.otherFreePlayers,
-          });
+    if (!inputData) {
+      const invitee = 
+        justLeftConversation || recentlyAttemptedInvite
+          ? undefined
+          : await ctx.runQuery(internal.aiTown.agent.findConversationCandidate, {
+              now,
+              worldId: args.worldId,
+              player: args.player,
+              otherFreePlayers: args.otherFreePlayers,
+            });
+      
+      inputData = {
+        worldId: args.worldId,
+        name: 'finishDoSomething',
+        args: {
+          operationId: args.operationId,
+          agentId: agent.id,
+          invitee,
+        },
+      };
+    }
     
-    // TODO: We hit a lot of OCC errors on sending inputs in this file. It's
-    // easy for them to get scheduled at the same time and line up in time.
-    await sleep(500);
-    await ctx.runMutation(api.aiTown.main.sendInput, {
-      worldId: args.worldId,
-      name: 'finishDoSomething',
-      args: {
-        operationId: args.operationId,
-        agentId: agent.id,
-        invitee,
-      },
-    });
+    // Use consistent fixed delay for all operations
+    await sleep(ACTION_TIMING_DELAY);
+    
+    // Only if we have input data to send
+    if (inputData) {
+      try {
+        // 首先尝试使用批处理系统
+        await inputBatcher.batchInput(ctx, inputData.worldId, inputData.name, inputData.args);
+      } catch (error) {
+        // 如果批处理失败，使用直接发送方式作为备份
+        console.error("Batch input failed, using direct send instead:", error);
+        await ctx.runMutation(api.aiTown.main.sendInput, {
+          worldId: inputData.worldId,
+          name: inputData.name,
+          args: inputData.args
+        });
+      }
+    }
   },
 });
 

@@ -20,6 +20,9 @@ crons.daily('vacuum old entries', { hourUTC: 4, minuteUTC: 20 }, internal.crons.
 // Clean up expired authentication challenges every 10 minutes
 crons.interval('clean expired auth challenges', { minutes: 10 }, internal.crons.cleanExpiredAuthChallenges);
 
+// Regularly clean up old inputs to prevent table growth
+crons.interval('clean old inputs', { minutes: 15 }, internal.crons.cleanOldInputs);
+
 // Reduce agent energy by 5 points every hour
 // DISABLED: Energy is now reduced with each message (inference) instead of on a schedule
 // crons.interval('reduce agent energy', { hours: 1 }, internal.crons.reduceAgentEnergy);
@@ -138,6 +141,92 @@ export const cleanExpiredAuthChallenges = internalMutation({
       scheduledAnotherRun: expiredChallenges.length === batchSize
     };
   },
+});
+
+/**
+ * Clean up old inputs from the inputs table
+ * This job runs every 15 minutes to prevent the inputs table from growing too large
+ */
+export const cleanOldInputs = internalMutation({
+  handler: async (ctx) => {
+    // Get current time
+    const now = Date.now();
+    
+    // Define age thresholds in milliseconds - increase the thresholds to be less aggressive
+    const PROCESSED_INPUT_MAX_AGE = 120 * 60 * 1000; // 2 hours for processed inputs (increased from 1 hour)
+    const UNPROCESSED_INPUT_MAX_AGE = 30 * 60 * 1000; // 30 minutes for unprocessed inputs (increased from 10 minutes)
+    
+    // Process in batches
+    const batchSize = 300; // Reduced batch size to prevent too many deletions at once
+    let deletedCount = 0;
+    
+    // First handle processed inputs (those with returnValue)
+    const processedInputs = await ctx.db
+      .query('inputs')
+      .withIndex('by_creation_time', (q) => 
+        q.lt('_creationTime', now - PROCESSED_INPUT_MAX_AGE)
+      )
+      .collect();
+      
+    // Filter and delete processed inputs
+    for (const input of processedInputs) {
+      if (input.returnValue !== undefined) {
+        // Skip critical input types for archival purposes
+        if (input.name && (
+            input.name.includes('Message') || 
+            input.name.includes('conversation') ||
+            input.name.includes('Remember')
+        )) {
+          continue; // Preserve important inputs for longer
+        }
+        
+        await ctx.db.delete(input._id);
+        deletedCount++;
+        
+        // Stop if we hit batch size
+        if (deletedCount >= batchSize) break;
+      }
+    }
+    
+    // If we haven't reached batch size, process unprocessed inputs
+    if (deletedCount < batchSize) {
+      // Next handle stuck unprocessed inputs (likely errors or abandoned)
+      const unprocessedInputs = await ctx.db
+        .query('inputs')
+        .withIndex('by_creation_time', (q) => 
+          q.lt('_creationTime', now - UNPROCESSED_INPUT_MAX_AGE)
+        )
+        .collect();
+      
+      // Filter and delete unprocessed inputs
+      for (const input of unprocessedInputs) {
+        if (input.returnValue === undefined) {
+          // Skip critical input types even if unprocessed
+          if (input.name && (
+              input.name.includes('Message') || 
+              input.name.includes('conversation') ||
+              input.name.includes('Remember')
+          )) {
+            continue; // Preserve important inputs for longer
+          }
+          
+          await ctx.db.delete(input._id);
+          deletedCount++;
+          
+          // Stop if we hit batch size
+          if (deletedCount >= batchSize) break;
+        }
+      }
+    }
+    
+    // Schedule another run if we hit the batch limit
+    if (deletedCount >= batchSize) {
+      await ctx.scheduler.runAfter(1, internal.crons.cleanOldInputs);
+    }
+    
+    console.log(`Cleaned up ${deletedCount} old inputs while preserving critical data`);
+    return { deletedCount };
+  }
 });
 
 /**

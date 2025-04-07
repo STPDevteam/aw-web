@@ -1,6 +1,7 @@
 import { Infer, ObjectType, v } from 'convex/values';
-import { Point, Vector, path, point, vector, Path } from '../util/types';
-import { GameId, allocGameId, parseGameId, playerId } from './ids';
+import { Point, Vector, path, point, vector } from '../util/types';
+import { GameId, parseGameId } from './ids';
+import { playerId } from './ids';
 import {
   PATHFINDING_TIMEOUT,
   PATHFINDING_BACKOFF,
@@ -12,9 +13,8 @@ import { pointsEqual, pathPosition } from '../util/geometry';
 import { Game } from './game';
 import { stopPlayer, findRoute, blocked, movePlayer } from './movement';
 import { inputHandler } from './inputHandler';
-import { characters, movementSpeed } from '../../data/characters';
+import { characters } from '../../data/characters';
 import { PlayerDescription } from './playerDescription';
-import { ACTIVITY_COOLDOWN } from '../constants';
 
 const pathfinding = v.object({
   destination: point,
@@ -99,8 +99,8 @@ export class Player {
       stopPlayer(this);
     }
 
-    // Increase pathfinding timeout to reduce the chance of stopping due to timeout
-    if (pathfinding.started + PATHFINDING_TIMEOUT * 2 < now) {
+    // Stop pathfinding if we've timed out.
+    if (pathfinding.started + PATHFINDING_TIMEOUT < now) {
       console.warn(`Timing out pathfinding for ${this.id}`);
       stopPlayer(this);
     }
@@ -116,37 +116,11 @@ export class Player {
       if (game.numPathfinds === MAX_PATHFINDS_PER_STEP) {
         console.warn(`Reached max pathfinds for this step`);
       }
-      
-      // Attempt pathfinding
       const route = findRoute(game, now, this, pathfinding.destination);
-      
       if (route === null) {
-        // If pathfinding fails, don't give up immediately, use a direct path instead
-        console.log(`Failed to route to ${JSON.stringify(pathfinding.destination)}, using direct path`);
-        
-        // Create a simple direct path
-        const startTime = now;
-        const distance = Math.sqrt(
-          Math.pow(this.position.x - pathfinding.destination.x, 2) + 
-          Math.pow(this.position.y - pathfinding.destination.y, 2)
-        );
-        const endTime = startTime + (distance / movementSpeed) * 1000;
-        
-        // Calculate facing direction
-        const dx = pathfinding.destination.x - this.position.x;
-        const dy = pathfinding.destination.y - this.position.y;
-        const length = Math.sqrt(dx * dx + dy * dy);
-        const normalizedDx = length > 0 ? dx / length : 0;
-        const normalizedDy = length > 0 ? dy / length : 0;
-        
-        const directPath: Path = [
-          [this.position.x, this.position.y, normalizedDx, normalizedDy, startTime],
-          [pathfinding.destination.x, pathfinding.destination.y, normalizedDx, normalizedDy, endTime]
-        ];
-        
-        pathfinding.state = { kind: 'moving', path: directPath };
+        console.log(`Failed to route to ${JSON.stringify(pathfinding.destination)}`);
+        stopPlayer(this);
       } else {
-        // Pathfinding successful
         if (route.newDestination) {
           console.warn(
             `Updating destination from ${JSON.stringify(
@@ -167,67 +141,28 @@ export class Player {
       return;
     }
 
-    // Add validity check for the path
-    if (!this.pathfinding.state.path || !Array.isArray(this.pathfinding.state.path) || this.pathfinding.state.path.length < 2) {
-      console.warn(`Invalid path for player ${this.id}, stopping pathfinding`);
-      stopPlayer(this);
+    // Compute a candidate new position and check if it collides
+    // with anything.
+    const candidate = pathPosition(this.pathfinding.state.path as any, now);
+    if (!candidate) {
+      console.warn(`Path out of range of ${now} for ${this.id}`);
       return;
     }
-
-    try {
-      // Compute a candidate new position and check if it collides
-      // with anything.
-      const candidate = pathPosition(this.pathfinding.state.path as Path, now);
-      
-      // Check if candidate is valid
-      if (!candidate || 
-          typeof candidate.position?.x !== 'number' || 
-          typeof candidate.position?.y !== 'number' ||
-          isNaN(candidate.position?.x) || 
-          isNaN(candidate.position?.y)) {
-        console.warn(`Invalid position calculated for ${this.id}, stopping pathfinding`);
-        stopPlayer(this);
-        return;
-      }
-
-      const { position, facing, velocity } = candidate;
-      
-      // Check if position is within map boundaries
-      if (position.x < 0 || position.y < 0 || 
-          position.x >= game.worldMap.width || 
-          position.y >= game.worldMap.height) {
-        console.warn(`Position out of bounds for ${this.id}, stopping pathfinding`);
-        stopPlayer(this);
-        return;
-      }
-      
-      // Enable collision detection, don't allow passing through obstacles
-      const collisionReason = blocked(game, now, position, this.id);
-      if (collisionReason !== null) {
-        const backoff = Math.random() * PATHFINDING_BACKOFF;
-        console.warn(`Stopping path for ${this.id}, waiting for ${backoff}ms: ${collisionReason}`);
-        this.pathfinding.state = {
-          kind: 'waiting',
-          until: now + backoff,
-        };
-        this.speed = 0;
-        return;
-      }
-      
-      // Update position
-      this.position = position;
-      this.facing = facing;
-      this.speed = velocity;
-
-      // Check if reached destination
-      if (pointsEqual(this.position, this.pathfinding.destination)) {
-        stopPlayer(this);
-      }
-    } catch (e) {
-      // Catch any possible errors to ensure the game doesn't crash
-      console.error(`Error in tickPosition for player ${this.id}: ${e}`);
-      stopPlayer(this);
+    const { position, facing, velocity } = candidate;
+    const collisionReason = blocked(game, now, position, this.id);
+    if (collisionReason !== null) {
+      const backoff = Math.random() * PATHFINDING_BACKOFF;
+      console.warn(`Stopping path for ${this.id}, waiting for ${backoff}ms: ${collisionReason}`);
+      this.pathfinding.state = {
+        kind: 'waiting',
+        until: now + backoff,
+      };
+      return;
     }
+    // Update the player's location.
+    this.position = position;
+    this.facing = facing;
+    this.speed = velocity;
   }
 
   static join(

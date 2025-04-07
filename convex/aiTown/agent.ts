@@ -30,6 +30,7 @@ export const serializedAgent = {
   toRemember: v.optional(conversationId),
   lastConversation: v.optional(v.number()),
   lastInviteAttempt: v.optional(v.number()),
+  lastPathUpdate: v.optional(v.number()),
   inProgressOperation: v.optional(
     v.object({
       name: v.string(),
@@ -49,6 +50,7 @@ export class Agent {
   toRemember?: GameId<'conversations'>;
   lastConversation?: number;
   lastInviteAttempt?: number;
+  lastPathUpdate?: number;
   inProgressOperation?: {
     name: string;
     operationId: string;
@@ -56,7 +58,7 @@ export class Agent {
   };
 
   constructor(serialized: SerializedAgent) {
-    const { id, lastConversation, lastInviteAttempt, inProgressOperation } = serialized;
+    const { id, lastConversation, lastInviteAttempt, lastPathUpdate, inProgressOperation } = serialized;
     const playerId = parseGameId('players', serialized.playerId);
     this.id = parseGameId('agents', id);
     this.playerId = playerId;
@@ -66,6 +68,7 @@ export class Agent {
         : undefined;
     this.lastConversation = lastConversation;
     this.lastInviteAttempt = lastInviteAttempt;
+    this.lastPathUpdate = lastPathUpdate;
     this.inProgressOperation = inProgressOperation;
   }
 
@@ -382,6 +385,7 @@ export class Agent {
       toRemember: this.toRemember,
       lastConversation: this.lastConversation,
       lastInviteAttempt: this.lastInviteAttempt,
+      lastPathUpdate: this.lastPathUpdate,
       inProgressOperation: this.inProgressOperation,
     };
   }

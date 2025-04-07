@@ -45,10 +45,15 @@ const gameStateDiff = v.object({
 type GameStateDiff = Infer<typeof gameStateDiff>;
 
 export class Game extends AbstractGame {
-  tickDuration = 16;
-  stepDuration = 1000;
+  tickDuration = 16;  // Keep 16ms per frame for smooth animation
+  stepDuration = 300; // Further reduced to 300ms for even more frequent updates
   maxTicksPerStep = 600;
-  maxInputsPerStep = 32;
+  maxInputsPerStep = 500; // Increased to 500 to handle more inputs per step
+
+  // Tracking parameters for input optimization
+  lastInputCounts: Map<string, number> = new Map();
+  inputRateLimits: Map<string, number> = new Map();
+  maxAllowedPathfinds = 40; // Increased from 20 to 40 pathfinding operations per step
 
   world: World;
 
@@ -85,6 +90,11 @@ export class Game extends AbstractGame {
     this.historicalLocations = new Map();
 
     this.numPathfinds = 0;
+    
+    // Initialize rate limits for different input types - increased limits
+    this.inputRateLimits.set('finishDoSomething', 10); // Increased from 5 to 10
+    this.inputRateLimits.set('agentFinishSendingMessage', 5); // Increased from 2 to 5
+    this.inputRateLimits.set('update', 5); // Increased from 3 to 5
   }
 
   static async load(
@@ -174,7 +184,54 @@ export class Game extends AbstractGame {
     if (!handler) {
       throw new Error(`Invalid input: ${name}`);
     }
+    
+    // Critical inputs that should never be rate-limited
+    const isCriticalInput = 
+      name.includes('start') || 
+      name.includes('leave') || 
+      name.includes('Message') || 
+      name.includes('conversation') ||
+      name.includes('Remember') ||
+      (name === 'finishDoSomething' && args && typeof args === 'object' && 'activity' in args); // Activity setting is critical
+    
+    // Check if this input type is rate-limited
+    const inputKey = this.getInputRateLimitKey(name as string, args);
+    if (!isCriticalInput && inputKey && this.inputRateLimits.has(name as string)) {
+      // Get the current count for this input type/entity
+      const currentCount = this.lastInputCounts.get(inputKey) || 0;
+      const limit = this.inputRateLimits.get(name as string)!;
+      
+      // If over the limit, skip processing
+      if (currentCount >= limit) {
+        console.log(`Rate limiting input ${name} for ${inputKey}, skipping`);
+        return null;
+      }
+      
+      // Increment the count
+      this.lastInputCounts.set(inputKey, currentCount + 1);
+    }
+    
+    // Process the input normally
     return handler(this, now, args as any);
+  }
+  
+  // Generate a key for rate limiting based on input type and arguments
+  private getInputRateLimitKey(name: string, args: any): string | null {
+    if (!args) return null;
+    
+    if (name === 'finishDoSomething' && args.agentId) {
+      return `${name}:${args.agentId}`;
+    }
+    
+    if (name.includes('agent') && args.agentId) {
+      return `${name}:${args.agentId}`;
+    }
+    
+    if (name.startsWith('update') && args.id) {
+      return `${name}:${args.id}`;
+    }
+    
+    return null;
   }
 
   beginStep(_now: number) {
@@ -186,7 +243,10 @@ export class Game extends AbstractGame {
         new HistoricalObject(locationFields, playerLocation(player)),
       );
     }
+    
+    // Reset counters at the start of each step
     this.numPathfinds = 0;
+    this.lastInputCounts.clear();
   }
 
   tick(now: number) {
@@ -516,7 +576,8 @@ export const getAllAgents = internalQuery({
         tips: agent.tips || 0,
         avatarUrl: agent.avatarUrl || `https://worlf-fun.s3.ap-northeast-1.amazonaws.com/world.fun/${Math.floor(Math.random() * 30) + 1}.png`,
         isFavorited: favoritedAgentIds.has(agent.agentId),
-        walletAddress: agent.walletAddress || null
+        walletAddress: agent.walletAddress || null,
+        userWalletAddress: agent.userWalletAddress || null,
       };
     });
     
