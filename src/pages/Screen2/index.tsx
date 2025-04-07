@@ -55,7 +55,7 @@ export const Screen2:FC<{ feAgentsInfo:any, currentIndex: number }> = ({  feAgen
           <Box className=' w100 center fx-col' >
             <Nav/>
             <Box h={worldHeight}>
-              <Game worldHeight={worldHeight} feAgentsInfo={feAgentsInfo}/>
+              <Game feAgentsInfo={feAgentsInfo}/>
             </Box>
           </Box>
 

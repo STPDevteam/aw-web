@@ -8,22 +8,21 @@ import { useWorldHeartbeat } from '../../hooks/useWorldHeartbeat.ts';
 import { useHistoricalTime } from '../../hooks/useHistoricalTime.ts';
 import {  GameId } from '../../../convex/aiTown/ids.ts';
 import { useServerGame } from '../../hooks/serverGame.ts';
-import {  Box,  Text, Image } from '@chakra-ui/react'
+import {  Box,  Text, Image, Button} from '@chakra-ui/react'
 import { AgentList } from '@/pages/Screen2/AgentList'
 import { PixiGame } from './PixiGame'
 import { selectedAgentInfo, selectedAgentInfoAction } from '@/redux/reducer'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks.ts'
 import { PageLoading, BorderButton } from '@/components'
 import { FEPlayerDetails } from './FEPlayerDetails'
-import ReactDOM from 'react-dom';
-import { Mouse1, Mouse2, Mouse3 } from '@/images'
+import { Mouse1, Mouse2, Mouse3, Search} from '@/images'
 
 export const mapContainerWidth = 1720
 export const mapContainerHeight = 661
 export const mapLeftWidth = 1145
 export const mapRightWidth = 494
 
-export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAgentsInfo, worldHeight }) => {
+export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
   
   const [delayRender, setDelayRender] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
@@ -39,11 +38,6 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
     id: GameId<'players'>;
   }>();
 
-
-
-  const [gameWrapperRef, { width:mapWidth, height:mapHeight }] = useElementSize();
-
-
   const worldStatus = useQuery(api.world.defaultWorldStatus);
   const worldId = worldStatus?.worldId;
   const engineId = worldStatus?.engineId;
@@ -51,7 +45,7 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
 
   const game = useServerGame(worldId)
 
-  // Send a periodic heartbeat to our world to keep it alive.
+
   useWorldHeartbeat();
   
   const memoizedFeDetail = useMemo(() => {
@@ -60,7 +54,7 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
 
   const worldState = useQuery(api.world.worldState, worldId ? { worldId } : 'skip');
   const { historicalTime, timeManager } = useHistoricalTime(worldState?.engine);
-  const scrollViewRef = useRef<HTMLDivElement>(null);
+ 
   const newRef = useRef<HTMLDivElement | null>(null)
 
   function handleClickOutside(event:MouseEvent) {
@@ -151,119 +145,110 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
         </Text>
     </Box>
   )
-  
+
+
 
   return (  
     <Box 
-      className='map1_border fx-row ai-ct jc-sb' 
-      w='100%'
-      maxW={`${mapContainerWidth}px`} 
-      // h={worldHeight}
-      py={['8px','8px','16px','16px','18px','30px']}
-      px={['4px','4px','12px','12px','12px','24px']}
+      className=' ' 
+      bgColor="#000"
       pos='relative'
-      // borderWidth="2px"
-      // borderStyle='solid'
-      // borderColor={['red','green','yellow','blue','red','pink',]}
+      h="100vh"
+      w="100vw"
     >
-      <Box pos='absolute' left="50px" top="44px" zIndex={99}  display={mapLoadingStatus === 'end' ? 'flex' : 'none'} > 
-        <AgentList  worldId={worldId}/>
+      <Box pos='absolute' right="0px" bottom="240px" zIndex={99}> 
+        <Button className='fx-row ai-ct click jc-sb click' w="120px" h="64px" px="20px">
+            <Image src={Search} h="20px" w="20px" />
+            <Text color="#000000" fontSize="14px" ml="12px" fontWeight={700}>Search</Text>
+        </Button>
       </Box>         
-        
-      <Box maxW={`${mapContainerWidth}px`} className='map1_border_content w100 fx-row ai-ct jc-sb'>
-        <Box
-          w={_leftWidth}
-          h={`${h}px`}
-          className='center'  
-          cursor={ mapLoadingStatus === 'end' ? 'all-scroll' : 'default'}
-          pos='relative'
-        > 
-          <BorderBox >
-              {
-                 mapLoadingStatus !== 'end' && 
-                <Box className='center h100 w100 fx-col ai-ct'>
-                  { welcomeText() }
-                  { 
-                    mapLoadingStatus === 'notStarted' &&                       
-                      <Box w="369px">
-                        <BorderButton
-                          isFixedWidth={true}
-                          w={369}
-                          h={58}
-                          onClick={() => setMapLoadingStatus('loading')}
-                          title="Launch 1,000-Agent AI Town"
-                        />          
-                      </Box>                
-                  }
-                  { mapLoadingStatus === 'loading' &&  
-                    <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setMapLoadingStatus(p === 1 ? 'end' : 'loading')} />
-                  }
-                </Box>
-              }
 
-              {
-                delayRender &&  
-                <Box 
-                  className='box_clip20' 
-                  h="calc(100% - 1px)" 
-                  display={ mapLoadingStatus === 'end' ? 'block' : 'none'}
-                >
-                  {
-                    guideOpen && 
-                    <Box 
-                      ref={newRef} 
-                      onWheel={(e) => null}  
-                      onClick={hideGuide} 
-                      className=' box_clip click jc-sb fx-row ai-ct' 
-                      bgColor="rgba(0,0,0,0.8)" 
-                      w="100%"
-                      h="100%"
-                      pos='absolute'                   
-                      px={['90px','90px','90px','126px','144px','180px']}
-                    >
-                      <Box className='fx-col ai-ct '>
-                        <Box className='fx-row ai-ct'>
-                          <Image src={Mouse1} w={['35px','35px','35px','49px','56px','71px',]} h={['55px','55px','55px','77px','88px','111px']}/>
-                          <Image src={Mouse2} w={['38px','38px','38px','53px','60px','76px',]} h={['38px','38px','38px','53px','60px','76px']} ml={['15px','15px','15px','21px','24px','30px']} />
-                        </Box>
-                        <Text className='fm2' mt="30px" color='#E0E0E0' fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>Hold left-click and drag to move the map</Text>
-                      </Box>  
+      <Box        
+        className='center h100 w100'  
+        cursor={ mapLoadingStatus === 'end' ? 'all-scroll' : 'default'}
+        pos='relative'
+      > 
+        {
+          mapLoadingStatus !== 'end' && 
+          <Box className='center h100 w100 fx-col ai-ct'>
+            { welcomeText() }
+            { 
+              mapLoadingStatus === 'notStarted' &&                       
+                <Box w="369px">
+                  <BorderButton
+                    isFixedWidth={true}
+                    w={369}
+                    h={58}
+                    onClick={() => setMapLoadingStatus('loading')}
+                    title="Launch 1,000-Agent AI Town"
+                  />          
+                </Box>                
+            }
+            { mapLoadingStatus === 'loading' &&  
+              <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setMapLoadingStatus(p === 1 ? 'end' : 'loading')} />
+            }
+          </Box>
+        }
 
-                      <Box className='fx-col ai-ct '>
-                        <Image src={Mouse3} w={['35px','35px','35px','49px','56px','71px',]} h={['55px','55px','55px','77px','88px','111px']}/>
-                        <Text className='fm2' mt="30px" color='#E0E0E0' fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>Scroll to zoom in/out on the map</Text>
-                      </Box>              
-                    </Box>
-                  }
+        {
+          delayRender &&  
+          <Box display={ mapLoadingStatus === 'end' ? 'block' : 'none'}>
+            {
+              guideOpen &&  
+              <Box 
+                ref={newRef} 
+                onWheel={(e) => null}  
+                onClick={hideGuide} 
+                className='  click jc-sb fx-row ai-ct' 
+                bgColor="rgba(0,0,0,0.8)" 
+                w="100%"
+                h="100%"
+                pos='absolute'                   
+                px={['90px','90px','90px','126px','144px','180px']}
+              >
+                <Box className='fx-col ai-ct '>
+                  <Box className='fx-row ai-ct'>
+                    <Image src={Mouse1} w={['35px','35px','35px','49px','56px','71px',]} h={['55px','55px','55px','77px','88px','111px']}/>
+                    <Image src={Mouse2} w={['38px','38px','38px','53px','60px','76px',]} h={['38px','38px','38px','53px','60px','76px']} ml={['15px','15px','15px','21px','24px','30px']} />
+                  </Box>
+                  <Text className='fm2' mt="30px" color='#E0E0E0' fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>Hold left-click and drag to move the map</Text>
+                </Box>  
 
-                  <Stage width={_leftWidth } height={h} options={{ backgroundColor: '#1F1F23' }}>
-                    <ConvexProvider client={convex}>
-                      <PixiGame
-                        selectedAgentId={selectedFEAgentId}
-                        pixiWidth={_leftWidth}
-                        agentInfo={agentInfo}
-                        game={game}
-                        worldId={worldId}
-                        engineId={engineId}
-                        historicalTime={historicalTime}
-                        setSelectedElement={setSelectedElement}
-                        onClearFEAgent={() => setCurrentFEAgent(null)}
-                        clearSelectedAgentInfo={() => dispatch(selectedAgentInfoAction(null))}
-                      />
-                    </ConvexProvider>
-                  </Stage>  
-                </Box>
-              }          
-          </BorderBox>
-        </Box>
+                <Box className='fx-col ai-ct '>
+                  <Image src={Mouse3} w={['35px','35px','35px','49px','56px','71px',]} h={['55px','55px','55px','77px','88px','111px']}/>
+                  <Text className='fm2' mt="30px" color='#E0E0E0' fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>Scroll to zoom in/out on the map</Text>
+                </Box>              
+              </Box>
+            }
+
+            <Stage width={window.innerWidth } height={window.innerHeight} options={{ backgroundColor: '#1F1F23' }}>
+              <ConvexProvider client={convex}>
+                <PixiGame
+                  selectedAgentId={selectedFEAgentId}
+                  pixiWidth={window.innerWidth}
+                  agentInfo={agentInfo}
+                  game={game}
+                  worldId={worldId}
+                  engineId={engineId}
+                  historicalTime={historicalTime}
+                  setSelectedElement={setSelectedElement}
+                  onClearFEAgent={() => setCurrentFEAgent(null)}
+                  clearSelectedAgentInfo={() => dispatch(selectedAgentInfoAction(null))}
+                />
+              </ConvexProvider>
+            </Stage>  
+          </Box>
+        }          
+      </Box>
               
         {/* right */}
-        <Box
+
+        {/* <Box
            w={___rightWidth}
            h={`${h}px`}
            className='fx jc-ct ai-ct'
         >
-          <BorderBox>      
+        
             <Box className='h100 center'>
               <Box 
                 className='' 
@@ -287,10 +272,10 @@ export const Game:React.FC<{ feAgentsInfo:any[], worldHeight: string}>= ({  feAg
                 }
               </Box>
             </Box>          
-          </BorderBox>
-        </Box>
-            
-      </Box>
+        </Box>           */}
+
+
+     
     </Box>
   );
 }
@@ -311,29 +296,3 @@ export const BorderBox:React.FC<{ children:React.ReactNode }> = ({ children }) =
 }
 
 
-interface LoadingOverlayProps {
-  onCompleted: (p: number) => void;
-  maxW: number;
- 
-  h: number
-}
-
-const LoadingOverlay = ({ onCompleted, maxW, h}: LoadingOverlayProps): React.ReactPortal => {
-  const portalContent = (   
-      <Box 
-        position="absolute"
-        top={`calc(100% - ${h}px) `}
-        // left="150px"
-        zIndex={3}
-        className='bd2 w100 center'
-      >
-        <PageLoading maxW={maxW} onCompleted={onCompleted} />
-      </Box>    
-  );
-
-  return ReactDOM.createPortal(
-    // @ts-ignore
-    portalContent as unknown as React.ReactElement,
-    document.body
-  ) as unknown as React.ReactPortal;
-};

@@ -6,7 +6,7 @@ import 'uplot/dist/uPlot.min.css';
 import 'react-toastify/dist/ReactToastify.css';
 import ConvexClientProvider from './components/ConvexClientProvider.tsx';
 import { ChakraProvider } from '@chakra-ui/react'
-import { Pages } from './pages'
+import { IframeScreen } from './pages/IframeScreen'
 
 import './styles/animation.css';
 import './styles/colors.css';
@@ -32,7 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <RainbowKitProvider initialChain={base}>
             <ChakraProvider>
               <ConvexClientProvider>      
-                  <Pages />
+                  <IframeScreen />
                 </ConvexClientProvider>
               </ChakraProvider>
           </RainbowKitProvider>

@@ -2,16 +2,14 @@
 
 
 import React, { FC, useState, useMemo } from 'react'
-import { Text, Link, Box, Image } from '@chakra-ui/react'
-import { Transform, X, XHover, PopupDropdown, ButtonBgMd, ButtonBgMdHover } from '@/images'
+import { Text, Button, Box, Image } from '@chakra-ui/react'
+import { Transform, Search } from '@/images'
 import { BorderButton, ClickButtonWrapper, Font16 } from '@/components'
 import { api } from '../../../convex/_generated/api.js'
 import {  Id } from '../../../convex/_generated/dataModel'
 import { useMutation, useQuery } from 'convex/react'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { selectedAgentInfoAction } from '@/redux/reducer/agentReducer'
-import { SimulatedAgent} from '@/components/createSimulatedAgentSprite'
-import { BorderBox } from './Game'
 
 export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
     const [visible, setVisible] = useState<boolean>(false)
@@ -56,6 +54,7 @@ export const AgentList:FC<{  worldId: Id<'worlds'> }> = ({ worldId }) => {
                     </Box>
                 }
             />   
+           
             {
                 visible &&   //
                     <Box className='card1_border  h100 '  h='397px' >
