@@ -27,6 +27,7 @@ export class Conversation {
   };
   numMessages: number;
   participants: Map<GameId<'players'>, ConversationMembership>;
+  typingPlayers: GameId<'players'>[];
 
   constructor(serialized: SerializedConversation) {
     const { id, creator, created, isTyping, lastMessage, numMessages, participants } = serialized;
@@ -44,6 +45,7 @@ export class Conversation {
     };
     this.numMessages = numMessages;
     this.participants = parseMap(participants, ConversationMembership, (m) => m.playerId);
+    this.typingPlayers = [];
   }
 
   tick(game: Game, now: number) {
@@ -152,14 +154,48 @@ export class Conversation {
     return { conversationId };
   }
 
-  setIsTyping(now: number, player: Player, messageUuid: string) {
-    if (this.isTyping) {
-      if (this.isTyping.playerId !== player.id) {
-        throw new Error(`Player ${this.isTyping.playerId} is already typing in ${this.id}`);
+  setIsTyping(arg1: Game | number, arg2: GameId<'conversations'> | Player, arg3?: GameId<'players'> | string, arg4?: boolean | string): void {
+    if (typeof arg1 === 'number') {
+      const now = arg1;
+      const player = arg2 as Player;
+      const messageUuid = arg3 as string;
+
+      if (this.isTyping && this.isTyping.playerId !== player.id) {
+        console.log(`Player ${this.isTyping.playerId} is already typing in ${this.id}, ignoring request from ${player.id}`);
+        return;
       }
-      return;
+      
+      this.isTyping = { 
+        playerId: player.id, 
+        messageUuid, 
+        since: now 
+      };
+    } else {
+      const game = arg1 as Game;
+      const conversationId = arg2 as GameId<'conversations'>;
+      const playerId = arg3 as GameId<'players'>;
+      const isTyping = arg4 as boolean;
+      
+      if (this.id !== conversationId) {
+        console.error(`Mismatch conversation ID: ${this.id} vs ${conversationId}`);
+        return;
+      }
+      
+      if (isTyping) {
+        if (this.isTyping && this.isTyping.playerId !== playerId) {
+          console.log(`Player ${this.isTyping.playerId} is already typing in ${conversationId}, ignoring request from ${playerId}`);
+          return;
+        }
+        
+        this.isTyping = { 
+          playerId, 
+          messageUuid: crypto.randomUUID(), 
+          since: Date.now() 
+        };
+      } else if (this.isTyping && this.isTyping.playerId === playerId) {
+        delete this.isTyping;
+      }
     }
-    this.isTyping = { playerId: player.id, messageUuid, since: now };
   }
 
   acceptInvite(game: Game, player: Player) {
@@ -293,11 +329,12 @@ export const conversationInputs = {
       if (!conversation) {
         throw new Error(`Invalid conversation ID: ${conversationId}`);
       }
+      
       if (conversation.isTyping && conversation.isTyping.playerId !== playerId) {
-        throw new Error(
-          `Player ${conversation.isTyping.playerId} is already typing in ${conversationId}`,
-        );
+        console.log(`Player ${conversation.isTyping.playerId} is already typing in ${conversationId}, ignoring request from ${playerId}`);
+        return null;
       }
+      
       conversation.isTyping = { playerId, messageUuid: args.messageUuid, since: now };
       return null;
     },
@@ -393,3 +430,4 @@ export const conversationInputs = {
     },
   }),
 };
+

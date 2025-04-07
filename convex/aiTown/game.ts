@@ -185,6 +185,23 @@ export class Game extends AbstractGame {
       throw new Error(`Invalid input: ${name}`);
     }
     
+    // Log all input processing
+    console.log(`Processing game input: ${name}`);
+    
+    // Temporarily disable rate limiting and process all inputs directly
+    try {
+      const result = handler(this, now, args as any);
+      if (result) {
+        console.log(`Input ${name} processed successfully`);
+      }
+      return result;
+    } catch (error) {
+      console.error(`Error processing input ${name}:`, error);
+      // Return a non-null value even if an error occurs to avoid input being discarded
+      return { error: true, message: "Error processing input" };
+    }
+    
+    /* The original rate limiting code, temporarily disabled
     // Critical inputs that should never be rate-limited
     const isCriticalInput = 
       name.includes('start') || 
@@ -213,6 +230,7 @@ export class Game extends AbstractGame {
     
     // Process the input normally
     return handler(this, now, args as any);
+    */
   }
   
   // Generate a key for rate limiting based on input type and arguments

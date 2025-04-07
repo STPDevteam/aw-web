@@ -93,33 +93,50 @@ export class Agent {
     const conversation = game.world.playerConversation(player);
     const member = conversation?.participants.get(player.id);
 
+    // Reduce conversation initiation frequency - Increase cooldown duration
+    // Add at least 30 seconds additional cooldown, even if agentDoSomething attempts to start a new conversation
     const recentlyAttemptedInvite =
-      this.lastInviteAttempt && now < this.lastInviteAttempt + CONVERSATION_COOLDOWN;
+      this.lastInviteAttempt && now < this.lastInviteAttempt + (CONVERSATION_COOLDOWN + 30000);
+    
+    // Lower the probability of accepting conversation invites - introduce randomness
+    // For agents who ended a conversation within the last 120 seconds, there is a 70% chance to refuse a new invitation
+    if (this.lastConversation && now < this.lastConversation + 120000) {
+      // Agents who ended a conversation within the last 120 seconds have a 70% chance to refuse a new invitation
+      if (Math.random() < 0.7) {
+        if (conversation && member && member.status.kind === 'invited') {
+          console.log(`Agent ${player.id} rejecting invite due to recent conversation`);
+          conversation.rejectInvite(game, now, player);
+          return;
+        }
+      }
+    }
+
     let doingActivity = player.activity && player.activity.until > now;
     
-    // Reduce the probability of interrupting activities
-    // When there's a conversation or movement opportunity, there's a 10% chance to interrupt the current activity (reduced from 40% to 10%)
+    // Increase the likelihood of completing an activity
+    // Reduce the probability of interrupting the current activity to 5%
     if (doingActivity && (conversation || player.pathfinding)) {
-      if (Math.random() < 0.1) {
+      if (Math.random() < 0.05) {  // Reduced from 0.1 to 0.05
         player.activity!.until = now;
         doingActivity = false;
       }
     }
     
-    // Reduce the probability of actively seeking conversations
-    // Reduce to a 5% chance of interrupting activities to find something else to do (reduced from 25% to 5%)
-    if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.05) {
+    // Further decrease the likelihood of actively seeking conversation opportunities
+    // Reduce the random interruption probability from 5% further down to 2%
+    if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.02) {  // Reduced from 0.05 to 0.02
       player.activity!.until = now;
       doingActivity = false;
     }
 
-    // If we're not in a conversation, do something.
-    // If we aren't doing an activity or moving, do something.
-    // If we have been wandering but haven't thought about something to do for
-    // a while, do something.
-    // if energy is not 0, do something
+    // If not in a conversation and not engaged in an activity, then perform alternative actions
+    // Significantly increase the chance of choosing non-conversational activities
     if (!conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite) && !energyDepleted) {
-      this.startOperation(game, now, 'agentDoSomething', {
+      // Increase randomness, making the agent more inclined to engage in independent activities rather than conversations
+      const shouldDoIndependentActivity = Math.random() < 0.7;  // 70% chance to choose independent activity
+      
+      // Create operation parameters, removing unsupported properties
+      const operationArgs = {
         worldId: game.worldId,
         player: player.serialize(),
         otherFreePlayers: [...game.world.players.values()]
@@ -130,7 +147,12 @@ export class Agent {
           .map((p) => p.serialize()),
         agent: this.serialize(),
         mapId: game.worldMap.id!,
-      });
+      };
+
+      // Log the independent activity preference for AI usage
+      console.log(`Agent ${this.id} prefers independent activity: ${shouldDoIndependentActivity}`);
+      
+      this.startOperation(game, now, 'agentDoSomething', operationArgs);
       return;
     }
     
@@ -269,7 +291,9 @@ export class Agent {
         if (energyDepleted) {
           console.log(`${player.id} leaving conversation with ${otherPlayer.id} due to depleted energy.`);
           const messageUuid = crypto.randomUUID();
+          
           conversation.setIsTyping(now, player, messageUuid);
+          
           this.startOperation(game, now, 'agentGenerateMessage', {
             worldId: game.worldId,
             playerId: player.id,
@@ -294,7 +318,9 @@ export class Agent {
             // Grab the lock on the conversation and send a "start" message.
             console.log(`${player.id} initiating conversation with ${otherPlayer.id}.`);
             const messageUuid = crypto.randomUUID();
+            
             conversation.setIsTyping(now, player, messageUuid);
+            
             this.startOperation(game, now, 'agentGenerateMessage', {
               worldId: game.worldId,
               playerId: player.id,
@@ -315,7 +341,9 @@ export class Agent {
         if (tooLongDeadline < now || conversation.numMessages > MAX_CONVERSATION_MESSAGES) {
           console.log(`${player.id} leaving conversation with ${otherPlayer.id}.`);
           const messageUuid = crypto.randomUUID();
+          
           conversation.setIsTyping(now, player, messageUuid);
+          
           this.startOperation(game, now, 'agentGenerateMessage', {
             worldId: game.worldId,
             playerId: player.id,
@@ -342,7 +370,9 @@ export class Agent {
         // Grab the lock and send a message!
         console.log(`${player.id} continuing conversation with ${otherPlayer.id}.`);
         const messageUuid = crypto.randomUUID();
+        
         conversation.setIsTyping(now, player, messageUuid);
+        
         this.startOperation(game, now, 'agentGenerateMessage', {
           worldId: game.worldId,
           playerId: player.id,
@@ -448,9 +478,17 @@ export const findConversationCandidate = internalQuery({
   handler: async (ctx, { now, worldId, player, otherFreePlayers }) => {
     const { position } = player;
     const candidates = [];
+    
+    // 降低找到对话候选人的概率，增大距离限制
+    const MAX_CONVERSATION_DISTANCE = 10.0; // 限制最大距离
+    
+    // 随机性：有20%的概率直接返回空，即使有合适的候选人
+    if (Math.random() < 0.2) {
+      return undefined;
+    }
 
     for (const otherPlayer of otherFreePlayers) {
-      // Find the latest conversation we're both members of.
+      // 检查最近一次与该玩家的对话
       const lastMember = await ctx.db
         .query('participatedTogether')
         .withIndex('edge', (q) =>
@@ -458,28 +496,36 @@ export const findConversationCandidate = internalQuery({
         )
         .order('desc')
         .first();
+      
+      // 如果最近有对话记录，检查是否在冷却期内
       if (lastMember) {
-        // no longer use random probability to skip cooldown, strictly follow cooldown
-        if (now < lastMember.ended + PLAYER_CONVERSATION_COOLDOWN) {
-          continue;
+        // 增加冷却时间，从原来的标准冷却时间增加到2倍
+        if (now < lastMember.ended + PLAYER_CONVERSATION_COOLDOWN * 2) {
+          continue; // 跳过该候选人
         }
       }
-      candidates.push({ 
-        id: otherPlayer.id, 
-        position: otherPlayer.position,
-        // remove random factor, only keep distance factor
-        distance: distance(otherPlayer.position, position)
-      });
+      
+      // 计算距离
+      const dist = distance(otherPlayer.position, position);
+      
+      // 只考虑在最大距离范围内的玩家
+      if (dist <= MAX_CONVERSATION_DISTANCE) {
+        candidates.push({ 
+          id: otherPlayer.id, 
+          position: otherPlayer.position,
+          distance: dist
+        });
+      }
     }
 
     if (candidates.length === 0) {
       return undefined;
     }
 
-    // sort by distance, no random factor
+    // 按距离排序
     candidates.sort((a, b) => a.distance - b.distance);
     
-    // always select the closest candidate, no random selection
+    // 只选择最接近的候选人
     return candidates[0]?.id;
   },
 });

@@ -1,9 +1,10 @@
 import { cronJobs } from 'convex/server';
 import { DELETE_BATCH_SIZE, IDLE_WORLD_TIMEOUT, VACUUM_MAX_AGE, AGENT_ENERGY_HOURLY_REDUCTION } from './constants';
 import { internal } from './_generated/api';
-import { internalMutation } from './_generated/server';
-import { TableNames } from './_generated/dataModel';
+import { internalMutation, internalQuery } from './_generated/server';
+import { TableNames, Doc, Id } from './_generated/dataModel';
 import { v } from 'convex/values';
+import { DatabaseReader, MutationCtx } from './_generated/server';
 
 const crons = cronJobs();
 
@@ -21,7 +22,8 @@ crons.daily('vacuum old entries', { hourUTC: 4, minuteUTC: 20 }, internal.crons.
 crons.interval('clean expired auth challenges', { minutes: 10 }, internal.crons.cleanExpiredAuthChallenges);
 
 // Regularly clean up old inputs to prevent table growth
-crons.interval('clean old inputs', { minutes: 15 }, internal.crons.cleanOldInputs);
+// Commenting out this line because there is already a cron job with the same name but different frequency
+// crons.interval('clean old inputs', { minutes: 15 }, internal.crons.cleanOldInputs);
 
 // Reduce agent energy by 5 points every hour
 // DISABLED: Energy is now reduced with each message (inference) instead of on a schedule
@@ -61,18 +63,24 @@ export const vacuumOldEntries = internalMutation({
     const before = Date.now() - VACUUM_MAX_AGE;
     for (const tableName of TablesToVacuum) {
       console.log(`Checking ${tableName}...`);
-      const exists = await ctx.db
-        .query(tableName)
-        .withIndex('by_creation_time', (q) => q.lt('_creationTime', before))
-        .first();
-      if (exists) {
-        console.log(`Vacuuming ${tableName}...`);
-        await ctx.scheduler.runAfter(0, internal.crons.vacuumTable, {
-          tableName,
-          before,
-          cursor: null,
-          soFar: 0,
-        });
+      
+      try {
+        // Check if there is data in the table
+        const exists = await ctx.db
+          .query(tableName)
+          .first();
+        
+        if (exists) {
+          console.log(`Vacuuming ${tableName}...`);
+          await ctx.scheduler.runAfter(0, internal.crons.vacuumTable, {
+            tableName,
+            before,
+            cursor: null,
+            soFar: 0
+          });
+        }
+      } catch (error) {
+        console.error(`Error checking table ${tableName}:`, error);
       }
     }
   },
@@ -83,25 +91,44 @@ export const vacuumTable = internalMutation({
     tableName: v.string(),
     before: v.number(),
     cursor: v.union(v.string(), v.null()),
-    soFar: v.number(),
+    soFar: v.number()
   },
   handler: async (ctx, { tableName, before, cursor, soFar }) => {
+    // Use pagination to get a batch of data
     const results = await ctx.db
       .query(tableName as TableNames)
-      .withIndex('by_creation_time', (q) => q.lt('_creationTime', before))
       .paginate({ cursor, numItems: DELETE_BATCH_SIZE });
+    
+    let deletedCount = 0;
+    
+    // Process each row of data
     for (const row of results.page) {
-      await ctx.db.delete(row._id);
+      // Check if it is old data
+      let timestamp = row._creationTime; // Default to using _creationTime
+      
+      // For the inputs table, try using the received field
+      if (tableName === 'inputs' && 'received' in row) {
+        timestamp = row.received;
+      }
+      
+      if (timestamp < before) {
+        // If it is old data, delete it
+        await ctx.db.delete(row._id);
+        deletedCount++;
+      }
     }
+    
+    // If there is more data to process, continue to the next batch
     if (!results.isDone) {
       await ctx.scheduler.runAfter(0, internal.crons.vacuumTable, {
         tableName,
         before,
-        soFar: results.page.length + soFar,
-        cursor: results.continueCursor,
+        soFar: soFar + deletedCount,
+        cursor: results.continueCursor
       });
     } else {
-      console.log(`Vacuumed ${soFar + results.page.length} entries from ${tableName}`);
+      // Finished processing, log the number of deletions
+      console.log(`Vacuumed ${soFar + deletedCount} entries from ${tableName}`);
     }
   },
 });
@@ -145,89 +172,93 @@ export const cleanExpiredAuthChallenges = internalMutation({
 
 /**
  * Clean up old inputs from the inputs table
- * This job runs every 15 minutes to prevent the inputs table from growing too large
+ * This job runs hourly to prevent the inputs table from growing too large
  */
 export const cleanOldInputs = internalMutation({
   handler: async (ctx) => {
-    // Get current time
+    const db = ctx.db;
     const now = Date.now();
     
-    // Define age thresholds in milliseconds - increase the thresholds to be less aggressive
-    const PROCESSED_INPUT_MAX_AGE = 120 * 60 * 1000; // 2 hours for processed inputs (increased from 1 hour)
-    const UNPROCESSED_INPUT_MAX_AGE = 30 * 60 * 1000; // 30 minutes for unprocessed inputs (increased from 10 minutes)
+    // Increase retention time from 1 hour to 3 hours
+    const processedThreshold = now - 3 * 60 * 60 * 1000; // 3 hours ago
+    // Increase retention time for unprocessed inputs from 4 hours to 6 hours
+    const unprocessedThreshold = now - 6 * 60 * 60 * 1000; // 6 hours ago
     
-    // Process in batches
-    const batchSize = 300; // Reduced batch size to prevent too many deletions at once
-    let deletedCount = 0;
+    // Reduce batch size to lessen database pressure
+    const batchSize = 200; // Originally 300
     
-    // First handle processed inputs (those with returnValue)
-    const processedInputs = await ctx.db
-      .query('inputs')
-      .withIndex('by_creation_time', (q) => 
-        q.lt('_creationTime', now - PROCESSED_INPUT_MAX_AGE)
+    // Old processed inputs
+    const processedInputs = await db
+      .query("inputs")
+      .withIndex("byCreationTime", (q) =>
+        q.lt("received", processedThreshold)
       )
       .collect();
+    
+    // Filter out inputs that do not need to be retained
+    const inputsToDelete = processedInputs.filter(input => {
+      // Increase retention time for critical data types
+      const criticalTypes = [
+        "startConversation",
+        "sendMessage",
+        "finishConversation",
+        "rememberInformation",
+        "startDoSomething",
+        "finishDoSomething",
+      ];
       
-    // Filter and delete processed inputs
-    for (const input of processedInputs) {
-      if (input.returnValue !== undefined) {
-        // Skip critical input types for archival purposes
-        if (input.name && (
-            input.name.includes('Message') || 
-            input.name.includes('conversation') ||
-            input.name.includes('Remember')
-        )) {
-          continue; // Preserve important inputs for longer
-        }
-        
-        await ctx.db.delete(input._id);
-        deletedCount++;
-        
-        // Stop if we hit batch size
-        if (deletedCount >= batchSize) break;
+      // If it is a critical data type, retain for a longer time (24 hours)
+      if (input.name && criticalTypes.some(type => input.name.includes(type))) {
+        return input.received < now - 24 * 60 * 60 * 1000;
       }
-    }
-    
-    // If we haven't reached batch size, process unprocessed inputs
-    if (deletedCount < batchSize) {
-      // Next handle stuck unprocessed inputs (likely errors or abandoned)
-      const unprocessedInputs = await ctx.db
-        .query('inputs')
-        .withIndex('by_creation_time', (q) => 
-          q.lt('_creationTime', now - UNPROCESSED_INPUT_MAX_AGE)
-        )
-        .collect();
       
-      // Filter and delete unprocessed inputs
-      for (const input of unprocessedInputs) {
-        if (input.returnValue === undefined) {
-          // Skip critical input types even if unprocessed
-          if (input.name && (
-              input.name.includes('Message') || 
-              input.name.includes('conversation') ||
-              input.name.includes('Remember')
-          )) {
-            continue; // Preserve important inputs for longer
-          }
-          
-          await ctx.db.delete(input._id);
-          deletedCount++;
-          
-          // Stop if we hit batch size
-          if (deletedCount >= batchSize) break;
-        }
-      }
+      return true;
+    }).slice(0, batchSize);
+    
+    // Get very old unprocessed inputs (regardless of type)
+    const unprocessedInputs = await db
+      .query("inputs")
+      .withIndex("byCreationTime", (q) =>
+        q.lt("received", unprocessedThreshold)
+      )
+      .take(batchSize);
+    
+    let deleteCount = 0;
+    
+    // Delete old processed inputs
+    for (const input of inputsToDelete) {
+      await db.delete(input._id);
+      deleteCount++;
     }
     
-    // Schedule another run if we hit the batch limit
-    if (deletedCount >= batchSize) {
-      await ctx.scheduler.runAfter(1, internal.crons.cleanOldInputs);
+    // Delete very old unprocessed inputs
+    for (const input of unprocessedInputs) {
+      await db.delete(input._id);
+      deleteCount++;
     }
     
-    console.log(`Cleaned up ${deletedCount} old inputs while preserving critical data`);
-    return { deletedCount };
+    // Log the number of deleted inputs and the current timestamp
+    if (deleteCount > 0) {
+      console.log(`Deleted ${deleteCount} old inputs at ${new Date().toISOString()}`);
+    }
+    
+    // Check the oldest unprocessed input to see if too much data has accumulated
+    const oldestUnprocessed = await db
+      .query("inputs")
+      .withIndex("byCreationTime")
+      .order("asc")
+      .first();
+    
+    if (oldestUnprocessed && (now - oldestUnprocessed.received > 12 * 60 * 60 * 1000)) {
+      console.warn(`Alert: Found unprocessed inputs older than 12 hours: ${oldestUnprocessed._id} from ${new Date(oldestUnprocessed.received).toISOString()}`);
+    }
+    
+    return { deletedCount: deleteCount };
   }
 });
+
+// Add a cron job to run the cleanup task every hour
+crons.interval('clean old inputs', { hours: 1 }, internal.crons.cleanOldInputs);
 
 /**
  * Reduce agent energy by a fixed amount every hour

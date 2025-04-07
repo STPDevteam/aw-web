@@ -399,6 +399,9 @@ export const agentDoSomething = internalAction({
   handler: async (ctx, args) => {
     const { player, agent } = args;
 
+    // Check logs to determine if there is an independent activity preference
+    const logsPreferIndependentActivity = console.log.toString().includes(`Agent ${agent.id} prefers independent activity: true`);
+    const shouldPreferIndependentActivity = logsPreferIndependentActivity || Math.random() < 0.7;
 
     const mapData = await ctx.runQuery(internal.aiTown.game.getFirstMap);
     if (!mapData) {
@@ -407,27 +410,36 @@ export const agentDoSomething = internalAction({
     }
     const map = new WorldMap(mapData as SerializedWorldMap);
     const now = Date.now();
-    // Don't try to start a new conversation if we were just in one.
+    
+    // Increase conversation cooldown time to prevent the AI from entering new conversations too quickly
+    const EXTENDED_CONVERSATION_COOLDOWN = CONVERSATION_COOLDOWN * 3; // Three times the normal cooldown time
+    
+    // Check if just left a conversation or attempted an invite
     const justLeftConversation =
-      agent.lastConversation && now < agent.lastConversation + CONVERSATION_COOLDOWN;
-    // Don't try again if we recently tried to find someone to invite.
+      agent.lastConversation && now < agent.lastConversation + EXTENDED_CONVERSATION_COOLDOWN;
     const recentlyAttemptedInvite =
-      agent.lastInviteAttempt && now < agent.lastInviteAttempt + CONVERSATION_COOLDOWN;
+      agent.lastInviteAttempt && now < agent.lastInviteAttempt + EXTENDED_CONVERSATION_COOLDOWN;
     const recentActivity = player.activity && now < player.activity.until + ACTIVITY_COOLDOWN;
     
-    // Decide whether to do a conversation - no longer using random probability, based on time instead
-    // If there is enough time passed (cool down is over), prioritize conversation
-    const preferConversation = !justLeftConversation && !recentlyAttemptedInvite;
+    // Significantly lower the priority of conversation - only consider conversation under specific conditions
+    // 1. Not in the conversation cooldown period
+    // 2. Did not just attempt an invite
+    // 3. Random number is less than 0.2 (only 20% chance)
+    // 4. No preference for independent activity set
+    const shouldTryConversation = 
+      !justLeftConversation && 
+      !recentlyAttemptedInvite && 
+      Math.random() < 0.2 && 
+      !shouldPreferIndependentActivity;
     
-    // Avoid random sleep timing that can cause stuttering
-    // Instead use a constant minimal delay that's just enough to prevent conflicts
-    const ACTION_TIMING_DELAY = 100; // Further reduced to 100ms
+    // Use a uniform operation delay of 100ms to avoid jitter
+    const ACTION_TIMING_DELAY = 100;
     
     // Prepare input data
     let inputData = null;
     
-    // If we prioritize conversation and there is no cool down limit, try to find a conversation partner
-    if (preferConversation) {
+    // Attempt to find a conversation partner under these conditions
+    if (shouldTryConversation) {
       const invitee = await ctx.runQuery(internal.aiTown.agent.findConversationCandidate, {
         now,
         worldId: args.worldId,
@@ -436,6 +448,7 @@ export const agentDoSomething = internalAction({
       });
       
       if (invitee) {
+        console.log(`Agent ${agent.id} is initiating a conversation with ${invitee}`);
         inputData = {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -448,13 +461,15 @@ export const agentDoSomething = internalAction({
       }
     }
     
-    // If we don't find a conversation partner or don't prioritize conversation, continue with the original logic
-    // Decide whether to do an activity or wander somewhere.
-    if (!inputData && !player.pathfinding) {
-      // When we can't do a conversation, alternate between activity and wandering
-      const shouldWander = player.activity && player.activity.until < now;
+    // If there is no conversation to be had (the more likely scenario), decide on an activity or wander
+    if (!inputData) {
+      // Alternate between random wandering and activities to increase movement frequency
+      // 75% chance to choose wandering, 25% chance to choose an activity
+      const activityOrWander = Math.random();
       
-      if (shouldWander) {
+      if (activityOrWander < 0.75 || (player.activity && player.activity.until < now)) {
+        // Randomly wander to a new destination
+        console.log(`Agent ${agent.id} is wandering to a new location`);
         inputData = {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -465,9 +480,10 @@ export const agentDoSomething = internalAction({
           },
         };
       } else {
-        // Select activity, not using random number
+        // Choose an activity using a deterministic activity selection
         const activityIndex = Math.floor((now / 1000) % ACTIVITIES.length);
         const activity = ACTIVITIES[activityIndex];
+        console.log(`Agent ${agent.id} is doing activity: ${activity.description}`);
         inputData = {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -484,40 +500,16 @@ export const agentDoSomething = internalAction({
       }
     }
     
-    // If we get here and still don't have input data, the player is moving and there is no conversation choice
-    // Check if we can invite a conversation
-    if (!inputData) {
-      const invitee = 
-        justLeftConversation || recentlyAttemptedInvite
-          ? undefined
-          : await ctx.runQuery(internal.aiTown.agent.findConversationCandidate, {
-              now,
-              worldId: args.worldId,
-              player: args.player,
-              otherFreePlayers: args.otherFreePlayers,
-            });
-      
-      inputData = {
-        worldId: args.worldId,
-        name: 'finishDoSomething',
-        args: {
-          operationId: args.operationId,
-          agentId: agent.id,
-          invitee,
-        },
-      };
-    }
-    
-    // Use consistent fixed delay for all operations
+    // Operation delay
     await sleep(ACTION_TIMING_DELAY);
     
-    // Only if we have input data to send
+    // Only send if there is input data
     if (inputData) {
       try {
-        // 首先尝试使用批处理系统
+        // First attempt to use the batch input system
         await inputBatcher.batchInput(ctx, inputData.worldId, inputData.name, inputData.args);
       } catch (error) {
-        // 如果批处理失败，使用直接发送方式作为备份
+        // If batch input fails, use direct send as a backup
         console.error("Batch input failed, using direct send instead:", error);
         await ctx.runMutation(api.aiTown.main.sendInput, {
           worldId: inputData.worldId,

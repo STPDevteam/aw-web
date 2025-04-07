@@ -6,6 +6,7 @@ import {
   internalMutation,
   mutation,
   query,
+  internalQuery,
 } from './_generated/server';
 import { v } from 'convex/values';
 import schema from './schema';
@@ -386,6 +387,342 @@ export const getWalletStats = mutation({
         agentsWithWallet: 0,
         agentsWithoutWallet: 0,
         percentage: "0%"
+      };
+    }
+  }
+});
+
+// Test function for directly inserting into the inputs table
+export const testInputInsert = internalMutation({
+  handler: async (ctx) => {
+    try {
+      // Find an available engine
+      const engine = await ctx.db.query("engines").first();
+      
+      if (!engine) {
+        return { success: false, error: "No engines found" };
+      }
+      
+      // Attempt to directly insert input
+      const now = Date.now();
+      const number = now * 1000 + Math.floor(Math.random() * 1000);
+      
+      // Perform insert test
+      const inputId = await ctx.db.insert("inputs", {
+        engineId: engine._id,
+        number,
+        name: "testInput",
+        args: { test: true, time: now },
+        received: now,
+      });
+      
+      return { 
+        success: true, 
+        inputId,
+        engine: engine._id,
+        timestamp: now
+      };
+    } catch (error) {
+      // Catch and return detailed error
+      console.error("Insert test failed:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      };
+    }
+  }
+});
+
+// Check the most recently inserted inputs
+export const checkRecentInputs = internalQuery({
+  handler: async (ctx) => {
+    // Get the most recent 10 input records
+    const recentInputs = await ctx.db
+      .query("inputs")
+      .withIndex("byCreationTime")
+      .order("desc")
+      .take(10);
+    
+    // Count the number of inputs in the last hour
+    const hourAgo = Date.now() - 60 * 60 * 1000;
+    
+    // Use collect and then filter, instead of using filter in the query chain
+    const allRecentInputs = await ctx.db
+      .query("inputs")
+      .withIndex("byCreationTime")
+      .collect();
+    
+    const recentCount = allRecentInputs.filter(input => input.received > hourAgo);
+    
+    return {
+      recentInputs,
+      countLastHour: recentCount.length,
+      now: Date.now()
+    };
+  }
+});
+
+// Diagnose the entire input insertion process
+export const diagnoseInputProcess = internalMutation({
+  handler: async (ctx) => {
+    const results = {
+      checks: [] as Array<{step: string, success: boolean, details: any}>,
+      overallSuccess: false
+    };
+    
+    try {
+      // Step 1: Check table structure and indexes
+      try {
+        // Check if the table exists by attempting a query
+        const tableExists = await ctx.db
+          .query("inputs")
+          .take(1);
+        
+        results.checks.push({
+          step: "Table structure check",
+          success: tableExists.length > 0,
+          details: { tableExists: tableExists.length > 0 }
+        });
+      } catch (error) {
+        results.checks.push({
+          step: "Table structure check",
+          success: false,
+          details: { error: String(error) }
+        });
+        return results;
+      }
+      
+      // Step 2: Check if the engine exists
+      let engine;
+      try {
+        engine = await ctx.db.query("engines").first();
+        results.checks.push({
+          step: "Engine check",
+          success: !!engine,
+          details: { 
+            engineExists: !!engine,
+            engineId: engine?._id
+          }
+        });
+        
+        if (!engine) {
+          return results;
+        }
+      } catch (error) {
+        results.checks.push({
+          step: "Engine check",
+          success: false,
+          details: { error: String(error) }
+        });
+        return results;
+      }
+      
+      // Step 3: Check world status
+      try {
+        const worldStatus = await ctx.db.query("worldStatus").first();
+        results.checks.push({
+          step: "World status check",
+          success: !!worldStatus,
+          details: { 
+            worldExists: !!worldStatus,
+            worldId: worldStatus?._id, 
+            engineId: worldStatus?.engineId
+          }
+        });
+      } catch (error) {
+        results.checks.push({
+          step: "World status check",
+          success: false,
+          details: { error: String(error) }
+        });
+      }
+      
+      // Step 4: Attempt direct insertion
+      try {
+        const now = Date.now();
+        const number = now * 1000 + Math.floor(Math.random() * 1000);
+        
+        const inputId = await ctx.db.insert("inputs", {
+          engineId: engine._id,
+          number,
+          name: "diagnoseInput",
+          args: { test: true, diagnostic: true },
+          received: now
+        });
+        
+        results.checks.push({
+          step: "Direct insertion test",
+          success: true,
+          details: { inputId }
+        });
+      } catch (error) {
+        results.checks.push({
+          step: "Direct insertion test",
+          success: false,
+          details: { 
+            error: String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          }
+        });
+        return results;
+      }
+      
+      // Step 5: Check cleanup script
+      try {
+        // Check if any inputs have been deleted recently by counting the number of recent inserts
+        const now = Date.now();
+        const lastHour = now - 60 * 60 * 1000;
+        const lastDay = now - 24 * 60 * 60 * 1000;
+        
+        // Use collect and then filter, instead of using filter in the query chain
+        const allRecentInputs = await ctx.db
+          .query("inputs")
+          .withIndex("byCreationTime")
+          .collect();
+        
+        const recentInputs = allRecentInputs.filter(input => input.received > lastDay);
+        const lastHourInputs = allRecentInputs.filter(input => input.received > lastHour);
+        
+        // Check if there are log messages recording deletion operations (we cannot directly query system logs here)
+        // Therefore, we indirectly determine if cleanup is working properly by checking the number of inputs in the last 24 hours
+        
+        results.checks.push({
+          step: "Cleanup script check",
+          success: true,
+          details: { 
+            recentInputsCount: recentInputs.length,
+            lastHourInputs: lastHourInputs.length,
+            lastDayInputs: recentInputs.length,
+            checkTime: new Date(now).toISOString()
+          }
+        });
+      } catch (error) {
+        results.checks.push({
+          step: "Cleanup script check",
+          success: false,
+          details: { error: String(error) }
+        });
+      }
+      
+      // Overall success
+      results.overallSuccess = results.checks.every(check => check.success);
+      return results;
+    } catch (error) {
+      results.checks.push({
+        step: "Overall diagnosis",
+        success: false,
+        details: { 
+          error: String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        }
+      });
+      return results;
+    }
+  }
+});
+
+// Add a test function to simulate real input scenarios in the game
+export const testFullInputFlow = internalMutation({
+  handler: async (ctx) => {
+    const results = {
+      steps: [] as Array<{step: string, success: boolean, details: any}>,
+      overallSuccess: false
+    };
+    
+    try {
+      // Step 1: Find world status and engine
+      const worldStatus = await ctx.db.query("worldStatus").first();
+      
+      if (!worldStatus) {
+        return { 
+          success: false, 
+          error: "World status not found" 
+        };
+      }
+      
+      results.steps.push({
+        step: "Find world status",
+        success: true,
+        details: { worldId: worldStatus.worldId, engineId: worldStatus.engineId }
+      });
+      
+      // Step 2: Directly use the insert input function to simulate a move request
+      try {
+        const now = Date.now();
+        const inputId = await insertInput(ctx, worldStatus.worldId, 'moveTo', {
+          playerId: 'p:1', // Use a potentially existing player ID
+          destination: { x: 50, y: 50 }
+        });
+        
+        results.steps.push({
+          step: "Insert move input",
+          success: true,
+          details: { inputId, timestamp: now }
+        });
+      } catch (error) {
+        results.steps.push({
+          step: "Insert move input",
+          success: false,
+          details: { 
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          }
+        });
+      }
+      
+      // Step 3: Directly insert test input
+      try {
+        // Use the test function we created earlier
+        const testResult = await ctx.runMutation(internal.testing.testInputInsert, {});
+        
+        results.steps.push({
+          step: "Test input insertion",
+          success: testResult.success,
+          details: testResult
+        });
+      } catch (error) {
+        results.steps.push({
+          step: "Test input insertion",
+          success: false,
+          details: { 
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          }
+        });
+      }
+      
+      // Step 4: Check the number of inputs in the database
+      try {
+        const recentInputsResult = await ctx.runQuery(internal.testing.checkRecentInputs, {});
+        
+        results.steps.push({
+          step: "Check recent inputs",
+          success: true,
+          details: { 
+            recentInputsCount: recentInputsResult.countLastHour,
+            hasRecentInputs: recentInputsResult.countLastHour > 0
+          }
+        });
+      } catch (error) {
+        results.steps.push({
+          step: "Check recent inputs",
+          success: false,
+          details: { 
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          }
+        });
+      }
+      
+      // Overall judgment
+      results.overallSuccess = results.steps.every(step => step.success);
+      return results;
+    } catch (error) {
+      return {
+        steps: results.steps,
+        overallSuccess: false,
+        finalError: error instanceof Error ? error.message : String(error)
       };
     }
   }

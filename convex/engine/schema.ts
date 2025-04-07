@@ -51,6 +51,8 @@ export const engine = v.object({
 export type Engine = Infer<typeof engine>;
 
 export const engineTables = {
-  inputs: defineTable(input).index('byInputNumber', ['engineId', 'number']),
+  inputs: defineTable(input)
+    .index('byInputNumber', ['engineId', 'number'])
+    .index('byCreationTime', ['received']),
   engines: defineTable(engine),
 };

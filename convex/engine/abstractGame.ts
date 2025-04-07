@@ -4,6 +4,29 @@ import { ActionCtx, DatabaseReader, MutationCtx, internalQuery } from '../_gener
 import { engine } from '../engine/schema';
 import { internal } from '../_generated/api';
 
+// Define completedInput outside the class for proper accessibility
+const completedInput = v.object({
+  inputId: v.id('inputs'),
+  returnValue: v.union(
+    v.object({
+      kind: v.literal('ok'),
+      value: v.any(),
+    }),
+    v.object({
+      kind: v.literal('error'),
+      message: v.string(),
+    }),
+  ),
+});
+
+// Define engineUpdate outside the class to avoid reference errors
+export const engineUpdate = v.object({
+  engine,
+  expectedGenerationNumber: v.number(),
+  completedInputs: v.array(completedInput),
+});
+export type EngineUpdate = Infer<typeof engineUpdate>;
+
 export abstract class AbstractGame {
   abstract tickDuration: number;
   abstract stepDuration: number;
@@ -86,28 +109,67 @@ export abstract class AbstractGame {
 
     console.debug(`Simulated from ${startTs} to ${currentTs} (${currentTs - startTs}ms)`);
   }
+
+  async engineInsertInput(
+    ctx: MutationCtx,
+    engineId: Id<'engines'>,
+    name: string,
+    args: any
+  ): Promise<Id<'inputs'>> {
+    const now = Date.now();
+    
+    console.log(`Inserting input ${name} for engine ${engineId} at ${now}`);
+    
+    try {
+      // To ensure the input can be inserted, perform a single insert instead of batch processing
+      const number = now * 1000 + Math.floor(Math.random() * 1000); // Ensure uniqueness
+      
+      // Ensure input parameters are serializable
+      let serializedArgs = args;
+      try {
+        // Test serialization
+        JSON.stringify(args);
+      } catch (e) {
+        console.error(`Input args serialization error for ${name}:`, e);
+        serializedArgs = { _error: "Original args could not be serialized" };
+      }
+      
+      // Directly insert the input
+      const inputId = await ctx.db.insert("inputs", {
+        engineId,
+        number,
+        name,
+        args: serializedArgs,
+        received: now,
+      });
+      
+      console.log(`Successfully inserted input ${name} with number ${number}`);
+      return inputId;
+    } catch (error) {
+      // If the insert fails, attempt an emergency insert
+      console.error(`Failed to insert input ${name}:`, error);
+      
+      try {
+        console.log(`Trying emergency insert for input ${name}`);
+        const emergencyNumber = now * 1000 + Math.floor(Math.random() * 1000) + 500; // Use timestamp as emergency number
+        
+        const inputId = await ctx.db.insert("inputs", {
+          engineId,
+          number: emergencyNumber,
+          name,
+          args: { _emergency: true, originalName: name },
+          received: now,
+        });
+        
+        console.log(`Emergency insert successful for input ${name} with number ${emergencyNumber}`);
+        return inputId;
+      } catch (finalError) {
+        console.error(`Emergency insert also failed for input ${name}:`, finalError);
+        throw new Error(`Could not insert input ${name}: ${finalError}`);
+      }
+    }
+  }
 }
-
-const completedInput = v.object({
-  inputId: v.id('inputs'),
-  returnValue: v.union(
-    v.object({
-      kind: v.literal('ok'),
-      value: v.any(),
-    }),
-    v.object({
-      kind: v.literal('error'),
-      message: v.string(),
-    }),
-  ),
-});
-
-export const engineUpdate = v.object({
-  engine,
-  expectedGenerationNumber: v.number(),
-  completedInputs: v.array(completedInput),
-});
-export type EngineUpdate = Infer<typeof engineUpdate>;
 
 export async function loadEngine(
   db: DatabaseReader,
@@ -148,7 +210,7 @@ type PendingInput = {
 const pendingInputBatches: Map<string, PendingInput[]> = new Map();
 const BATCH_SIZE = 5; // Number of inputs to collect before batch insert
 const lastBatchTimes: Map<string, number> = new Map(); 
-const BATCH_MAX_WAIT = 100; // 降低最大等待时间，确保更快处理批次
+const BATCH_MAX_WAIT = 100; // Reduce maximum wait time to ensure faster batch processing
 
 // Clean up old cache entries periodically
 function cleanupOldCache() {
@@ -173,7 +235,7 @@ async function processPendingBatches(ctx: MutationCtx) {
   // Find batches that are ready to process (either full or waited long enough)
   for (const [batchKey, inputs] of pendingInputBatches.entries()) {
     const lastBatchTime = lastBatchTimes.get(batchKey) || 0;
-    // 降低批处理阈值，确保更多批次被处理
+    // Reduce batch processing threshold to ensure more batches are processed
     if (inputs.length >= BATCH_SIZE || (now - lastBatchTime > BATCH_MAX_WAIT && inputs.length > 0)) {
       batchesToProcess.push(batchKey);
     }
@@ -203,7 +265,7 @@ async function processPendingBatches(ctx: MutationCtx) {
     } catch (error) {
       console.error(`Failed to process input batch ${batchKey}:`, error);
       
-      // 批处理失败处理策略：将批次分拆，尝试逐个插入
+      // Batch processing failure strategy: split batch and try inserting individually
       try {
         console.log(`Trying to insert inputs individually after batch failure for ${batchKey}`);
         const failedInputs = [...inputs]; // Copy the array before deleting from map
@@ -226,7 +288,7 @@ async function processPendingBatches(ctx: MutationCtx) {
         }
       } catch (retryError) {
         console.error(`Failed retry strategy for batch ${batchKey}:`, retryError);
-        // 最后的兜底策略：保留批次但减小大小，下次会再次尝试
+        // Fallback strategy: keep batch but reduce its size, will try again next time
         const remainingInputs = pendingInputBatches.get(batchKey);
         if (remainingInputs && remainingInputs.length > 2) {
           // Keep only the most recent 2 inputs from the batch
@@ -235,228 +297,6 @@ async function processPendingBatches(ctx: MutationCtx) {
       }
     }
   }
-}
-
-/**
- * Optimized function to insert input with intelligent batching
- * to reduce database operations and prevent stuttering
- */
-export async function engineInsertInput(
-  ctx: MutationCtx,
-  engineId: Id<'engines'>,
-  name: string,
-  args: any,
-): Promise<Id<'inputs'>> {
-  const now = Date.now();
-  
-  // Clean up old cache entries and process pending batches
-  cleanupOldCache();
-  await processPendingBatches(ctx);
-  
-  // Initialize cache for this engine if it doesn't exist
-  if (!recentInputNumbers.has(engineId)) {
-    recentInputNumbers.set(engineId, new Set());
-    (recentInputNumbers.get(engineId) as any).lastCleanup = now;
-  }
-  
-  // Track input frequency to detect high-frequency inputs
-  const freqKey = `${engineId}:${name}`;
-  if (!inputFrequencies.has(freqKey)) {
-    inputFrequencies.set(freqKey, { count: 0, lastReset: now });
-  }
-  
-  const freq = inputFrequencies.get(freqKey)!;
-  
-  // Reset frequency counter every 5 seconds
-  if (now - freq.lastReset > 5000) {
-    freq.count = 0;
-    freq.lastReset = now;
-  }
-  
-  freq.count++;
-  
-  // Determine input category for specialized handling
-  const isCriticalInput = name.includes('start') || 
-                          name.includes('leave') || 
-                          name.includes('Message') || 
-                          name.includes('conversation') ||
-                          name.includes('Remember');
-  
-  const isMovementInput = name === 'finishDoSomething' && args.destination;
-  const isLowPriorityInput = name.startsWith('update') || isMovementInput;
-  
-  // Generate a unique input number
-  const numbersCache = recentInputNumbers.get(engineId)!;
-  let number = now * 1000;
-  
-  // Try to find a unique number with minimal randomness
-  for (let offset = 0; offset < 100; offset++) {
-    const candidateNumber = number + offset;
-    if (!numbersCache.has(candidateNumber)) {
-      number = candidateNumber;
-      numbersCache.add(number);
-      break;
-    }
-  }
-  
-  // Always process critical inputs immediately
-  if (isCriticalInput) {
-    const inputId = await ctx.db.insert('inputs', {
-      engineId,
-      number,
-      name,
-      args,
-      received: now,
-    });
-    return inputId;
-  }
-  
-  // 降低过滤门槛，让更多移动请求通过
-  if (isMovementInput && freq.count > 30) {
-    // 改为10个移动输入中通过4个（之前是3个中通过1个）
-    if (freq.count % 10 > 6) {
-      // 避免使用假ID，而是实际插入数据库
-      const inputId = await ctx.db.insert('inputs', {
-        engineId,
-        number,
-        name,
-        args,
-        received: now,
-      });
-      return inputId;
-    }
-  }
-  
-  // Apply batching for non-critical inputs to reduce database load
-  if (isLowPriorityInput) {
-    // Create a batch key based on input type and entity
-    const batchKey = `${engineId}:${name}:${getBatchEntityKey(args)}`;
-    
-    // Initialize batch if needed
-    if (!pendingInputBatches.has(batchKey)) {
-      pendingInputBatches.set(batchKey, []);
-      lastBatchTimes.set(batchKey, now);
-    }
-    
-    // Add to batch
-    const batch = pendingInputBatches.get(batchKey)!;
-    
-    // For movement inputs, only keep the latest position
-    if (isMovementInput && batch.length > 0) {
-      // Replace the previous movement input to reduce redundant movements
-      batch[batch.length-1] = {
-        engineId,
-        name,
-        args,
-        number,
-        received: now
-      };
-    } else {
-      // Add new input to batch
-      batch.push({
-        engineId,
-        name,
-        args,
-        number,
-        received: now
-      });
-    }
-    
-    // Update last batch time
-    lastBatchTimes.set(batchKey, now);
-    
-    // 移动请求的批处理阈值降低，让批次更快处理
-    const threshold = isMovementInput ? 3 : BATCH_SIZE;
-    
-    // If batch is full, process it immediately
-    if (batch.length >= threshold) {
-      try {
-        // 处理批次
-        for (const input of batch) {
-          await ctx.db.insert('inputs', {
-            engineId: input.engineId,
-            number: input.number,
-            name: input.name,
-            args: input.args,
-            received: input.received,
-          });
-        }
-        
-        // Clear the batch after successful processing
-        pendingInputBatches.delete(batchKey);
-        lastBatchTimes.delete(batchKey);
-        
-        // Return the ID of the last input in the batch
-        return `${engineId}_${batch[batch.length-1].number}` as Id<'inputs'>;
-      } catch (error) {
-        console.error(`Failed to process batch ${batchKey}:`, error);
-        
-        // 批处理失败后，尝试单独处理当前输入
-        try {
-          const inputId = await ctx.db.insert('inputs', {
-            engineId,
-            number,
-            name,
-            args,
-            received: now,
-          });
-          return inputId;
-        } catch (finalError) {
-          console.error('Failed to insert input even after batch failure:', finalError);
-          return `${engineId}_${number}_error` as Id<'inputs'>;
-        }
-      }
-    }
-    
-    // 减少等待时间，较早的批次应该已经处理了
-    if (now - (lastBatchTimes.get(batchKey) || 0) > BATCH_MAX_WAIT) {
-      try {
-        // 处理该批次
-        for (const input of batch) {
-          await ctx.db.insert('inputs', {
-            engineId: input.engineId,
-            number: input.number,
-            name: input.name,
-            args: input.args,
-            received: input.received,
-          });
-        }
-        
-        // 清理批次
-        pendingInputBatches.delete(batchKey);
-        lastBatchTimes.delete(batchKey);
-        
-        return `${engineId}_${batch[batch.length-1].number}` as Id<'inputs'>;
-      } catch (error) {
-        console.error(`Failed to process timeout batch ${batchKey}:`, error);
-      }
-    }
-    
-    // 对于重要的移动请求，不要太依赖批处理，保证至少部分请求直接处理
-    if (isMovementInput && Math.random() < 0.3) {  // 30%概率直接处理
-      const inputId = await ctx.db.insert('inputs', {
-        engineId,
-        number,
-        name,
-        args,
-        received: now,
-      });
-      return inputId;
-    }
-    
-    // Return a temporary ID, the batch will be processed later
-    return `${engineId}_${number}_batched` as Id<'inputs'>;
-  }
-  
-  // For all other inputs, process them normally
-  const inputId = await ctx.db.insert('inputs', {
-    engineId,
-    number,
-    name,
-    args,
-    received: now,
-  });
-  return inputId;
 }
 
 /**
@@ -473,7 +313,7 @@ function getBatchEntityKey(args: any): string {
   if (args.destination && 
       typeof args.destination.x === 'number' && 
       typeof args.destination.y === 'number') {
-    // 增大网格单元大小，减少细粒度的批处理分组
+    // Increase grid cell size to reduce fine-grained batch processing grouping
     const gridX = Math.floor(args.destination.x / 8);
     const gridY = Math.floor(args.destination.y / 8);
     return `move:${gridX},${gridY}`;
@@ -519,10 +359,74 @@ export async function applyEngineUpdate(
     if (!input) {
       throw new Error(`Input ${completedInput.inputId} not found`);
     }
-    if (input.returnValue) {
+    if ('returnValue' in input && input.returnValue) {
       throw new Error(`Input ${completedInput.inputId} already completed`);
     }
-    input.returnValue = completedInput.returnValue;
-    await ctx.db.replace(input._id, input);
+    // We need to patch the input with the return value, not replace it entirely
+    await ctx.db.patch(completedInput.inputId, { returnValue: completedInput.returnValue });
+  }
+}
+
+/**
+ * Optimized function to insert input with intelligent error handling
+ * to ensure all inputs get inserted into the database
+ */
+export async function engineInsertInput(
+  ctx: MutationCtx,
+  engineId: Id<'engines'>,
+  name: string,
+  args: any,
+): Promise<Id<'inputs'>> {
+  const now = Date.now();
+  
+  console.log(`Inserting input ${name} for engine ${engineId} at ${now}`);
+  
+  try {
+    // Directly insert without using batch processing
+    const number = now * 1000 + Math.floor(Math.random() * 1000); // Ensure uniqueness
+    
+    // Ensure input parameters are serializable
+    let serializedArgs = args;
+    try {
+      // Test serialization
+      JSON.stringify(args);
+    } catch (e) {
+      console.error(`Input args serialization error for ${name}:`, e);
+      serializedArgs = { _error: "Original args could not be serialized" };
+    }
+    
+    // Directly insert input
+    const inputId = await ctx.db.insert("inputs", {
+      engineId,
+      number,
+      name,
+      args: serializedArgs,
+      received: now,
+    });
+    
+    console.log(`Successfully inserted input ${name} with number ${number}`);
+    return inputId;
+  } catch (error) {
+    // If insertion fails, try emergency insertion
+    console.error(`Failed to insert input ${name}:`, error);
+    
+    try {
+      console.log(`Trying emergency insert for input ${name}`);
+      const emergencyNumber = now * 1000 + Math.floor(Math.random() * 1000) + 500; // Use timestamp as emergency number
+      
+      const inputId = await ctx.db.insert("inputs", {
+        engineId,
+        number: emergencyNumber,
+        name,
+        args: { _emergency: true, originalName: name },
+        received: now,
+      });
+      
+      console.log(`Emergency insert successful for input ${name} with number ${emergencyNumber}`);
+      return inputId;
+    } catch (finalError) {
+      console.error(`Emergency insert also failed for input ${name}:`, finalError);
+      throw new Error(`Could not insert input ${name}: ${finalError}`);
+    }
   }
 }
