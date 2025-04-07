@@ -13,9 +13,11 @@ export class AgentDescription {
   tips: number; // Initial value 0, maximum value 10000
   avatarUrl?: string; // Agent avatar URL
   userWalletAddress?: string; // agent owner's wallet address
+  status?: any; // Agent status information
+  events?: any[]; // Agent daily events
 
   constructor(serialized: SerializedAgentDescription) {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress } = serialized;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events } = serialized;
     this.agentId = parseGameId('agents', agentId);
     this.identity = identity;
     this.plan = plan;
@@ -27,10 +29,12 @@ export class AgentDescription {
     this.tips = tips ?? 0; // Default value is 0
     this.avatarUrl = avatarUrl;
     this.userWalletAddress = userWalletAddress;
+    this.status = status;
+    this.events = events;
   }
 
   serialize(): SerializedAgentDescription {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress } = this;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events } = this;
     return { 
       agentId, 
       identity, 
@@ -42,7 +46,9 @@ export class AgentDescription {
       inferences,
       tips,
       avatarUrl,
-      userWalletAddress
+      userWalletAddress,
+      status,
+      events
     };
   }
 }
@@ -59,5 +65,30 @@ export const serializedAgentDescription = {
   tips: v.optional(v.number()), // Initial value 0, maximum value 10000
   avatarUrl: v.optional(v.string()), // Agent avatar URL
   userWalletAddress: v.optional(v.string()), // agent owner's wallet address
+  // Agent status information (optional for backward compatibility)
+  status: v.optional(
+    v.union(
+      v.array(v.object({
+        title: v.string(),
+        icon: v.string(),
+      })),
+      v.object({
+        emotion: v.string(),
+        status: v.string(),
+        current_work: v.string(),
+        energy_level: v.string(),
+        location: v.string(),
+        mood_trend: v.string(),
+      })
+    )
+  ),
+  // Agent daily events (optional for backward compatibility)
+  events: v.optional(v.array(v.object({
+    time: v.string(),
+    action: v.string(),
+    details: v.string(),
+  }))),
 };
 export type SerializedAgentDescription = ObjectType<typeof serializedAgentDescription>;
+
+

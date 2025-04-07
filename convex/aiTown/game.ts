@@ -578,6 +578,8 @@ export const getAllAgents = internalQuery({
         isFavorited: favoritedAgentIds.has(agent.agentId),
         walletAddress: agent.walletAddress || null,
         userWalletAddress: agent.userWalletAddress || null,
+        status: agent.status || generateDefaultStatus(name, agent.identity || ""),
+        events: agent.events || generateDefaultEvents(agent.identity || "")
       };
     });
     
@@ -617,12 +619,50 @@ export const getAllAgentsPublic = query({
     inferences: number;
     tips: number;
     walletAddress: string | null;
+    status?: Array<{ title: string; icon: string }> | { 
+      emotion: string; 
+      status: string; 
+      current_work: string;
+      energy_level?: string;
+      location?: string;
+      mood_trend?: string;
+    };
+    events?: Array<{ 
+      time: string;
+      action: string;
+      details: string;
+    }>;
   }>> => {
     // Simply call the internal query
     const agents = await ctx.runQuery(internal.aiTown.game.getAllAgents, args);
     return agents;
   },
 });
+
+// Generate default status and events
+function generateDefaultStatus(name: string, description: string) {
+  // Default status, similar to generateAgentStatus in agentStatus.ts but simplified
+  return [
+    { title: 'Current Work', icon: '💻' },
+    { title: 'Emotion', icon: '😊' },
+    { title: 'Status', icon: '🚶' },
+    { title: 'Energy Level', icon: '🔋🔋' },
+    { title: 'Location', icon: '🏠' }
+  ];
+}
+
+// Helper function to generate default daily events
+function generateDefaultEvents(description: string) {
+  // Default events, similar to generateAgentEvents in agentStatus.ts but simplified
+  return [
+    { time: '6:00 to 7:00', action: 'Morning routine', details: '🌅' },
+    { time: '9:00 to 12:00', action: 'Work', details: '💼' },
+    { time: '12:30 to 13:30', action: 'Lunch', details: '🍱' },
+    { time: '14:00 to 16:30', action: 'Meetings', details: '👥' },
+    { time: '18:30 to 19:30', action: 'Dinner', details: '🍽️' },
+    { time: '20:00 to 21:30', action: 'Relaxation', details: '📺' }
+  ];
+}
 
 // Mutation to set low energy activity
 export const setLowEnergyActivity = internalMutation({
