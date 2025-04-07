@@ -55,6 +55,11 @@ export class Game extends AbstractGame {
   inputRateLimits: Map<string, number> = new Map();
   maxAllowedPathfinds = 40; // Increased from 20 to 40 pathfinding operations per step
 
+  // Additional throttling parameters for movement
+  private lastGlobalMovementProcessTime = 0;
+  private maxMovementInputsPerStep = 30; // Doubled from 15 to 30 movement inputs per step
+  private minTimeBetweenMovementSteps = 150; // Reduced from 500ms to 150ms
+
   world: World;
 
   historicalLocations: Map<GameId<'players'>, HistoricalObject<Location>>;
@@ -89,12 +94,17 @@ export class Game extends AbstractGame {
 
     this.historicalLocations = new Map();
 
+    // Reset pathfinding counter
     this.numPathfinds = 0;
     
-    // Initialize rate limits for different input types - increased limits
-    this.inputRateLimits.set('finishDoSomething', 10); // Increased from 5 to 10
-    this.inputRateLimits.set('agentFinishSendingMessage', 5); // Increased from 2 to 5
-    this.inputRateLimits.set('update', 5); // Increased from 3 to 5
+    // Add this comment to highlight the importance:
+    // Reduce input processing limits to prevent agent movement stuttering
+    // These values control how many inputs will be processed in each type category
+    this.inputRateLimits.clear(); // Reset to default values
+    this.inputRateLimits.set('moveTo', 10);          // Increased from 3 to 10
+    this.inputRateLimits.set('finishDoSomething', 20); // Increased from 10 to 20
+    this.inputRateLimits.set('agentFinishSendingMessage', 10); // Increased from 5 to 10
+    this.inputRateLimits.set('update', 10);           // Increased from 5 to 10
   }
 
   static async load(
@@ -188,49 +198,110 @@ export class Game extends AbstractGame {
     // Log all input processing
     console.log(`Processing game input: ${name}`);
     
-    // Temporarily disable rate limiting and process all inputs directly
+    // Identify if this is a movement-related input
+    const isMovementInput = (
+      name === 'moveTo' || 
+      (name === 'finishDoSomething' && typeof args === 'object' && args && 'destination' in args)
+    );
+    
     try {
-      const result = handler(this, now, args as any);
-      if (result) {
-        console.log(`Input ${name} processed successfully`);
+      // More permissive throttling for movement inputs at the Game class level
+      if (isMovementInput) {
+        // Apply a global pause between ALL movement processing
+        if (now - this.lastGlobalMovementProcessTime < this.minTimeBetweenMovementSteps) {
+          // Allow more movements to pass through even during cooldown (80% chance)
+          if (Math.random() < 0.8) {
+            console.log(`Movement cooldown active but allowing anyway: ${now - this.lastGlobalMovementProcessTime}ms`);
+          } else {
+            console.log(`🚫 GAME THROTTLING: Global movement cooldown in effect. Last movement processed ${now - this.lastGlobalMovementProcessTime}ms ago. Waiting...`);
+            return null;
+          }
+        }
+        
+        // Update the timestamp for movement processing
+        this.lastGlobalMovementProcessTime = now;
       }
+      
+      // Get the entity ID for rate limiting
+      let entityId = null;
+      let isAgentEntity = false;
+      
+      if (typeof args === 'object' && args) {
+        if ('playerId' in args) {
+          entityId = args.playerId;
+          // Check if this player is controlled by an agent
+          for (const agent of this.world.agents.values()) {
+            if (agent.playerId === entityId) {
+              isAgentEntity = true;
+              break;
+            }
+          }
+        } else if ('agentId' in args) {
+          entityId = args.agentId;
+          isAgentEntity = true;
+        }
+      }
+      
+      // Less restrictive rate limiting for agent movement inputs
+      if (isMovementInput && isAgentEntity && entityId) {
+        const inputKey = `${name}:${entityId}`;
+        const currentCount = this.lastInputCounts.get(inputKey) || 0;
+        
+        // Dynamically set limits based on agent's state
+        let allowedLimit = this.inputRateLimits.get(name as string) || 3; // Increased default to 3
+        
+        // If player is found and is already moving, but nearly complete, allow new movement
+        if (entityId) {
+          let player = null;
+          
+          // Find the player for this entity
+          if (isAgentEntity && 'agentId' in args) {
+            // Get the player through the agent
+            const agent = this.world.agents.get(entityId as GameId<'agents'>);
+            if (agent) {
+              player = this.world.players.get(agent.playerId);
+            }
+          } else if ('playerId' in args) {
+            // Direct player reference
+            player = this.world.players.get(entityId as GameId<'players'>);
+          }
+          
+          // If player is moving but very close to destination, allow new input
+          if (player && player.pathfinding && player.pathfinding.state.kind === 'moving') {
+            const destination = player.pathfinding.destination;
+            const position = player.position;
+            const remainingDistance = Math.abs(position.x - destination.x) + Math.abs(position.y - destination.y);
+            
+            if (remainingDistance < 1.0) {
+              // Close to destination, allow new movement
+              allowedLimit = 1;
+              console.log(`Player ${entityId} close to destination (${remainingDistance.toFixed(2)} tiles), allowing new movement`);
+            } else {
+              allowedLimit = 0; // Still restrict while not near destination
+              console.log(`🚫 GAME THROTTLING: Moving player ${entityId} not close to destination yet (${remainingDistance.toFixed(2)} tiles)`);
+            }
+          }
+        }
+        
+        // If over the limit, skip processing entirely
+        if (currentCount >= allowedLimit) {
+          console.log(`🚫 GAME THROTTLING: ${name} input for ${entityId}, count=${currentCount}/${allowedLimit}`);
+          return null;
+        }
+        
+        // Increment the count for this step
+        this.lastInputCounts.set(inputKey, currentCount + 1);
+        console.log(`Game tracking input ${inputKey}: count=${currentCount + 1}/${allowedLimit}`);
+      }
+      
+      // Process the input
+      const result = handler(this, now, args as any);
       return result;
     } catch (error) {
       console.error(`Error processing input ${name}:`, error);
-      // Return a non-null value even if an error occurs to avoid input being discarded
-      return { error: true, message: "Error processing input" };
+      // Return a non-null value to avoid input being discarded
+      return { error: true, message: String(error) };
     }
-    
-    /* The original rate limiting code, temporarily disabled
-    // Critical inputs that should never be rate-limited
-    const isCriticalInput = 
-      name.includes('start') || 
-      name.includes('leave') || 
-      name.includes('Message') || 
-      name.includes('conversation') ||
-      name.includes('Remember') ||
-      (name === 'finishDoSomething' && args && typeof args === 'object' && 'activity' in args); // Activity setting is critical
-    
-    // Check if this input type is rate-limited
-    const inputKey = this.getInputRateLimitKey(name as string, args);
-    if (!isCriticalInput && inputKey && this.inputRateLimits.has(name as string)) {
-      // Get the current count for this input type/entity
-      const currentCount = this.lastInputCounts.get(inputKey) || 0;
-      const limit = this.inputRateLimits.get(name as string)!;
-      
-      // If over the limit, skip processing
-      if (currentCount >= limit) {
-        console.log(`Rate limiting input ${name} for ${inputKey}, skipping`);
-        return null;
-      }
-      
-      // Increment the count
-      this.lastInputCounts.set(inputKey, currentCount + 1);
-    }
-    
-    // Process the input normally
-    return handler(this, now, args as any);
-    */
   }
   
   // Generate a key for rate limiting based on input type and arguments
@@ -252,7 +323,7 @@ export class Game extends AbstractGame {
     return null;
   }
 
-  beginStep(_now: number) {
+  beginStep(now: number) {
     // Store the current location of all players in the history tracking buffer.
     this.historicalLocations.clear();
     for (const player of this.world.players.values()) {
@@ -265,6 +336,9 @@ export class Game extends AbstractGame {
     // Reset counters at the start of each step
     this.numPathfinds = 0;
     this.lastInputCounts.clear();
+    
+    // Log step start with timestamp
+    console.log(`Beginning new game step at ${now}. Resetting input counters.`);
   }
 
   tick(now: number) {

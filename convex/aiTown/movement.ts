@@ -35,6 +35,16 @@ type PathCandidate = {
   prev?: PathCandidate;
 };
 
+// Global movement controller to prevent excessive pathfinding
+const globalMovementController = {
+  lastPathfindTime: 0,
+  pathfindsInLastSecond: 0,
+  maxPathfindsPerSecond: 20, // Doubled from 10 to 20 pathfinds per second
+  agentMovementCooldowns: new Map<string, number>(), // Map of agent ID to last movement time
+  minimumCooldown: 500, // Further reduced from 1000ms to 500ms (0.5 second)
+  lastCleanupTime: 0
+};
+
 export function stopPlayer(player: Player) {
   try {
     if (!player) {
@@ -61,104 +71,181 @@ export function movePlayer(
   destination: Point,
   allowInConversation?: boolean,
 ) {
-  if (Math.floor(destination.x) !== destination.x || Math.floor(destination.y) !== destination.y) {
-    throw new Error(`Non-integral destination: ${JSON.stringify(destination)}`);
-  }
-  const { position } = player;
-  
-  // Optimization: Calculate Manhattan distance to avoid unnecessary movement
-  const distanceToDestination = Math.abs(position.x - destination.x) + Math.abs(position.y - destination.y);
-  
-  // Skip only extremely tiny movements (less than 0.1 units away)
-  if (distanceToDestination < 0.1) {
-    return;
-  }
-  
-  // Optimization: Don't send movement commands to positions that are nearly identical
-  // Close enough to current position => no-op.
-  if (pointsEqual(position, destination)) {
-    return;
-  }
-  
-  // Don't allow players in a conversation to move.
-  const inConversation = [...game.world.conversations.values()].some(
-    (c) => c.participants.get(player.id)?.status.kind === 'participating',
-  );
-  if (inConversation && !allowInConversation) {
-    throw new Error(`Can't move when in a conversation. Leave the conversation first!`);
-  }
-  
-  // Optimization: Check if there's already an active pathfinding operation
-  // If it's to the same or very close destination, don't change anything to avoid stuttering
-  if (player.pathfinding && player.pathfinding.destination) {
-    const currentDest = player.pathfinding.destination;
+  try {
+    // First, check and clean up the agent cooldowns map periodically
+    if (now - globalMovementController.lastCleanupTime > 30000) { // Every 30 seconds
+      globalMovementController.lastCleanupTime = now;
+      // Remove entries older than 1 minute
+      for (const [agentId, lastMovementTime] of globalMovementController.agentMovementCooldowns.entries()) {
+        if (now - lastMovementTime > 60000) {
+          globalMovementController.agentMovementCooldowns.delete(agentId);
+        }
+      }
+      console.log(`Cleaned up agent movement cooldowns. Tracking ${globalMovementController.agentMovementCooldowns.size} agents.`);
+    }
     
-    // If we already have a path to somewhere very close to the requested destination,
-    // don't bother creating a new path - but use a smaller threshold to allow more movement
-    const distToCurrentDest = Math.abs(currentDest.x - destination.x) + Math.abs(currentDest.y - destination.y);
-    if (distToCurrentDest < 0.5) { // Reduced from 2.0 to 0.5
+    // Reset global pathfinding counter every second
+    if (now - globalMovementController.lastPathfindTime > 1000) {
+      globalMovementController.lastPathfindTime = now;
+      const previousCount = globalMovementController.pathfindsInLastSecond;
+      globalMovementController.pathfindsInLastSecond = 0;
+      console.log(`Global pathfind counter reset. Previous second had ${previousCount} pathfinds.`);
+    }
+
+    // Check global pathfinding limit
+    if (globalMovementController.pathfindsInLastSecond >= globalMovementController.maxPathfindsPerSecond) {
+      console.log(`🚫 GLOBAL PATHFIND LIMIT REACHED: Blocking movement for ${player.id}`);
       return;
     }
-  }
-  
-  // Find if this is an agent's player and check the last path update time
-  let shouldThrottle = false;
-  let agent = null;
-  
-  // Check if this player belongs to an agent
-  for (const a of game.world.agents.values()) {
-    if (a.playerId === player.id) {
-      agent = a;
-      break;
-    }
-  }
-  
-  // Throttle path updates for agents to reduce input frequency
-  if (agent) {
-    // Adaptive throttling based on distance - significantly reduced intervals
-    // For close movements: 300ms between updates
-    // For medium movements: 500ms between updates
-    // For far movements: 800ms between updates
-    let minUpdateInterval = 300; // default minimum interval - reduced from 800
     
-    if (distanceToDestination > 8) {
-      minUpdateInterval = 800; // Far movements - reduced from 2000
-    } else if (distanceToDestination > 3) {
-      minUpdateInterval = 500; // Medium distance movements - reduced from 1200
+    if (Math.floor(destination.x) !== destination.x || Math.floor(destination.y) !== destination.y) {
+      throw new Error(`Non-integral destination: ${JSON.stringify(destination)}`);
+    }
+    const { position } = player;
+    
+    // Calculate Manhattan distance to avoid unnecessary movement
+    const distanceToDestination = Math.abs(position.x - destination.x) + Math.abs(position.y - destination.y);
+    
+    // Skip extremely tiny movements
+    if (distanceToDestination < 0.1) {
+      console.log(`Skipping tiny movement for ${player.id}, distance too small: ${distanceToDestination}`);
+      return;
     }
     
-    const timeSinceLastUpdate = agent.lastPathUpdate ? now - agent.lastPathUpdate : 9999;
-    if (timeSinceLastUpdate < minUpdateInterval) {
-      // Occasionally let some updates through even during throttling period
-      // to ensure agents don't get stuck in place
-      if (Math.random() < 0.1) { // 10% chance to bypass throttling
-        shouldThrottle = false;
-      } else {
-        shouldThrottle = true;
+    // Don't send movement commands to positions that are nearly identical
+    if (pointsEqual(position, destination)) {
+      console.log(`Skipping duplicate movement for ${player.id} to same position`);
+      return;
+    }
+    
+    // Don't allow players in a conversation to move
+    const inConversation = [...game.world.conversations.values()].some(
+      (c) => c.participants.get(player.id)?.status.kind === 'participating',
+    );
+    if (inConversation && !allowInConversation) {
+      console.log(`Player ${player.id} can't move while in conversation`);
+      throw new Error(`Can't move when in a conversation. Leave the conversation first!`);
+    }
+    
+    // Check if this player belongs to an agent
+    let agent = null;
+    for (const a of game.world.agents.values()) {
+      if (a.playerId === player.id) {
+        agent = a;
+        break;
       }
     }
-  }
-  
-  // If we're throttling, don't create a new pathfinding operation
-  if (shouldThrottle) {
+    
+    // *** EXTREME THROTTLING FOR AGENT MOVEMENT ***
+    if (agent) {
+      console.log(`MOVEMENT REQUEST: Agent ${player.id} trying to move to (${destination.x},${destination.y})`);
+      
+      // Check agent-specific cooldown
+      const lastMovementTime = globalMovementController.agentMovementCooldowns.get(agent.id);
+      if (lastMovementTime) {
+        const timeSinceLastMovement = now - lastMovementTime;
+        
+        // Scale cooldown based on distance - even shorter cooldowns
+        let requiredCooldown = globalMovementController.minimumCooldown;
+        
+        // For farther distances, enforce minimal cooldowns
+        if (distanceToDestination > 15) {
+          requiredCooldown = 1000; // Further reduced from 2000ms to 1000ms (1 second)
+        } else if (distanceToDestination > 8) {
+          requiredCooldown = 800; // Further reduced from 1500ms to 800ms (0.8 seconds)
+        } else if (distanceToDestination > 4) {
+          requiredCooldown = 500; // Further reduced from 1000ms to 500ms (0.5 seconds)
+        }
+        
+        // Apply cooldown check
+        if (timeSinceLastMovement < requiredCooldown) {
+          console.log(`🚫 EXTREME THROTTLING: Agent ${agent.id} must wait ${(requiredCooldown - timeSinceLastMovement) / 1000}s more before next movement.`);
+          return;
+        }
+      }
+      
+      // Always check if player has existing pathfinding
+      if (player.pathfinding) {
+        // Get current destination and how far we've progressed
+        const currentDest = player.pathfinding.destination;
+        const remainingDistance = Math.abs(position.x - currentDest.x) + Math.abs(position.y - currentDest.y);
+        
+        // Check if agent is still in "moving" state
+        const isCurrentlyMoving = player.pathfinding.state.kind === 'moving';
+        
+        // If agent is already moving and hasn't reached the destination yet (within 0.2 tiles)
+        // then completely block any new movement inputs
+        if (remainingDistance > 0.2 || isCurrentlyMoving) {
+          console.log(`🚫 BLOCKING: Agent ${player.id} is still moving to (${currentDest.x},${currentDest.y}). Remaining distance: ${remainingDistance.toFixed(2)}. State: ${player.pathfinding.state.kind}`);
+          return;
+        }
+        
+        // Even when movement is nearly complete, add shorter mandatory cooldown
+        if (agent.lastPathUpdate && now - agent.lastPathUpdate < 800) {
+          console.log(`🚫 BLOCKING: Agent ${player.id} movement in cooldown period. Time since last update: ${now - agent.lastPathUpdate}ms`);
+          return;
+        }
+        
+        // If we're here, agent has nearly reached its destination, so we can allow a new movement
+        console.log(`✅ ALLOWING: Agent ${player.id} has completed previous movement. Allowing new movement to (${destination.x},${destination.y})`);
+      } else {
+        console.log(`✅ ALLOWING: Agent ${player.id} has no ongoing pathfinding, allowing movement to (${destination.x},${destination.y})`);
+      }
+      
+      // Update the global movement cache with this agent's movement time
+      globalMovementController.agentMovementCooldowns.set(agent.id, now);
+      
+      // Increment the global pathfinding counter
+      globalMovementController.pathfindsInLastSecond++;
+      
+      // Update the last movement timestamp
+      agent.lastPathUpdate = now;
+      console.log(`✅ TIMESTAMP: Updated agent ${player.id} lastPathUpdate to ${now}`);
+      
+      // For agents, prefer longer paths to reduce movement frequency
+      // If the destination is close, try to find a farther point in the same direction
+      if (distanceToDestination < 3 && Math.random() < 0.7) {
+        // Calculate direction vector
+        const dx = destination.x - position.x;
+        const dy = destination.y - position.y;
+        
+        // Normalize and extend to a farther point (2-5x the distance)
+        const multiplier = 2 + Math.floor(Math.random() * 3);
+        const farX = position.x + Math.round(dx * multiplier);
+        const farY = position.y + Math.round(dy * multiplier);
+        
+        // Ensure the farther point is within map bounds
+        const boundedX = Math.max(0, Math.min(game.worldMap.width - 1, farX));
+        const boundedY = Math.max(0, Math.min(game.worldMap.height - 1, farY));
+        
+        // Only use the farther point if it's different from the original
+        if (boundedX !== destination.x || boundedY !== destination.y) {
+          const farPoint = { x: boundedX, y: boundedY };
+          
+          // Check if the farther point is accessible
+          if (!blocked(game, now, farPoint, player.id)) {
+            console.log(`✅ EXTENDING: Agent ${player.id} movement from (${destination.x},${destination.y}) to farther point (${boundedX},${boundedY})`);
+            destination = farPoint;
+          }
+        }
+      }
+    }
+    
+    // Set up new pathfinding operation
+    player.pathfinding = {
+      destination: destination,
+      started: now,
+      state: {
+        kind: 'needsPath',
+      },
+    };
+    
+    console.log(`✅ PATHFINDING: Started new movement for ${player.id} to (${destination.x},${destination.y}), distance: ${distanceToDestination.toFixed(2)}`);
+    return;
+  } catch (error) {
+    console.error(`❌ ERROR in movePlayer for ${player?.id || 'unknown player'}:`, error);
     return;
   }
-  
-  // Set up new pathfinding operation
-  player.pathfinding = {
-    destination: destination,
-    started: now,
-    state: {
-      kind: 'needsPath',
-    },
-  };
-  
-  // Update the agent's lastPathUpdate timestamp
-  if (agent) {
-    agent.lastPathUpdate = now;
-  }
-  
-  return;
 }
 
 // Helper function to ensure we never have a zero vector for facing direction
@@ -172,7 +259,7 @@ function ensureValidFacingVector(vector: Vector): Vector {
 
 export function findRoute(game: Game, now: number, player: Player, destination: Point) {
   try {
-    // First check if the destination point is within the map boundaries
+    // First, validate destination is within map boundaries
     if (destination.x < 0 || destination.y < 0 || 
         destination.x >= game.worldMap.width || 
         destination.y >= game.worldMap.height) {
@@ -186,18 +273,37 @@ export function findRoute(game: Game, now: number, player: Player, destination: 
       return null;
     }
     
-    // Limit pathfinding operations to avoid overloading the system
-    // Increment counter to track pathfinding operations per step
+    // Check if agent-controlled
+    let isAgentPlayer = false;
+    for (const agent of game.world.agents.values()) {
+      if (agent.playerId === player.id) {
+        isAgentPlayer = true;
+        break;
+      }
+    }
+    
+    // If this is an agent player, apply extreme throttling
+    if (isAgentPlayer) {
+      // Increment global counter
+      globalMovementController.pathfindsInLastSecond++;
+      
+      // If we've done too many pathfinds in this step, defer until the next step
+      if (globalMovementController.pathfindsInLastSecond > globalMovementController.maxPathfindsPerSecond) {
+        console.log(`🚫 THROTTLING: Too many pathfinds (${globalMovementController.pathfindsInLastSecond}) in this second, deferring for ${player.id}`);
+        return null;
+      }
+    }
+    
+    // Track pathfinding operations to avoid system overload
     game.numPathfinds++;
     
     // If we've done too many pathfinds in this step, defer until the next step
-    // But use a higher limit to ensure sufficient pathfinding operations are processed
-    if (game.numPathfinds > 40) { // Increased from 20 to 40
-      console.log(`Too many pathfinds (${game.numPathfinds}) in this step, deferring pathfinding for ${player.id}`);
+    if (game.numPathfinds > 10) { // Lower limit further to reduce database pressure
+      console.log(`Too many pathfinds (${game.numPathfinds}) in this step, deferring for ${player.id}`);
       return null;
     }
     
-    // Update the agent's lastPathUpdate timestamp if this is an agent
+    // Update the agent's lastPathUpdate timestamp
     for (const agent of game.world.agents.values()) {
       if (agent.playerId === player.id) {
         agent.lastPathUpdate = now;
@@ -205,16 +311,18 @@ export function findRoute(game: Game, now: number, player: Player, destination: 
       }
     }
     
-    const startTime = now;
     const startPos = { ...player.position }; // Clone to avoid reference issues
     
-    // If the direct path has no obstacles, use a simple path
-    const directPath = findDirectPath(game, now, player, destination);
-    if (directPath) {
-      return directPath;
+    // For very short distance moves (5 tiles or less), try direct path first
+    const distance = Math.abs(startPos.x - destination.x) + Math.abs(startPos.y - destination.y);
+    if (distance <= 5) {
+      const directPath = findDirectPath(game, now, player, destination);
+      if (directPath) {
+        return directPath;
+      }
     }
     
-    // Otherwise use A* pathfinding algorithm
+    // For anything else, use A* pathfinding
     return findPathAStar(game, now, player, destination);
   } catch (e) {
     console.error(`Error in findRoute: ${e}`);

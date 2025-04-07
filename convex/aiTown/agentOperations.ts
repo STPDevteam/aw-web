@@ -15,6 +15,7 @@ import { api, internal } from '../_generated/api';
 import { sleep } from '../util/sleep';
 import { serializedPlayer } from './player';
 import { Id } from '../_generated/dataModel';
+import { Point } from '../util/types';
 
 /**
  * Simplified input batch processing class
@@ -163,6 +164,31 @@ class SimpleInputBatcher {
 
 // 创建批处理实例
 const inputBatcher = new SimpleInputBatcher();
+
+// Global throttling for all agent operations
+const globalAgentThrottle = {
+  lastOperationTimes: new Map<string, number>(),
+  minimumInterval: 10000, // 10 seconds between any operations for the same agent
+  movementBuffer: new Map<string, {
+    lastMovement: number,
+    pendingDestination: { x: number, y: number } | null
+  }>(),
+  clearOldEntries: (now: number) => {
+    // Clean up entries older than 5 minutes
+    for (const [key, time] of globalAgentThrottle.lastOperationTimes.entries()) {
+      if (now - time > 300000) { // 5 minutes
+        globalAgentThrottle.lastOperationTimes.delete(key);
+      }
+    }
+    
+    // Clean up movement buffer entries older than 5 minutes
+    for (const [key, data] of globalAgentThrottle.movementBuffer.entries()) {
+      if (now - data.lastMovement > 300000) { // 5 minutes
+        globalAgentThrottle.movementBuffer.delete(key);
+      }
+    }
+  }
+};
 
 export const agentRememberConversation = internalAction({
   args: {
@@ -398,7 +424,23 @@ export const agentDoSomething = internalAction({
   },
   handler: async (ctx, args) => {
     const { player, agent } = args;
-
+    const now = Date.now();
+    
+    // Clean up old throttle entries every 100 operations
+    if (Math.random() < 0.01) {
+      globalAgentThrottle.clearOldEntries(now);
+    }
+    
+    // Check if this agent has operated recently
+    const lastOperationTime = globalAgentThrottle.lastOperationTimes.get(agent.id);
+    if (lastOperationTime && now - lastOperationTime < globalAgentThrottle.minimumInterval) {
+      console.log(`🚫 EXTREME THROTTLING: Agent ${agent.id} operated ${now - lastOperationTime}ms ago. Must wait ${globalAgentThrottle.minimumInterval - (now - lastOperationTime)}ms more.`);
+      return;
+    }
+    
+    // Record operation time
+    globalAgentThrottle.lastOperationTimes.set(agent.id, now);
+    
     // Check logs to determine if there is an independent activity preference
     const logsPreferIndependentActivity = console.log.toString().includes(`Agent ${agent.id} prefers independent activity: true`);
     const shouldPreferIndependentActivity = logsPreferIndependentActivity || Math.random() < 0.7;
@@ -409,7 +451,6 @@ export const agentDoSomething = internalAction({
       throw new Error('No maps found in database');
     }
     const map = new WorldMap(mapData as SerializedWorldMap);
-    const now = Date.now();
     
     // Increase conversation cooldown time to prevent the AI from entering new conversations too quickly
     const EXTENDED_CONVERSATION_COOLDOWN = CONVERSATION_COOLDOWN * 3; // Three times the normal cooldown time
@@ -463,27 +504,50 @@ export const agentDoSomething = internalAction({
     
     // If there is no conversation to be had (the more likely scenario), decide on an activity or wander
     if (!inputData) {
-      // Alternate between random wandering and activities to increase movement frequency
-      // 75% chance to choose wandering, 25% chance to choose an activity
+      // Dramatically increase movement frequency - prefer movement over activities
+      // 95% chance to choose wandering, 5% chance to choose an activity
       const activityOrWander = Math.random();
       
-      if (activityOrWander < 0.75 || (player.activity && player.activity.until < now)) {
+      if (activityOrWander < 0.95) { // Increased from 0.8 to 0.95 (95% chance of movement)
+        // Check movement buffer for this agent
+        let movementData = globalAgentThrottle.movementBuffer.get(agent.id);
+        if (!movementData) {
+          movementData = { lastMovement: 0, pendingDestination: null };
+        }
+        
+        // Allow frequent movement with minimal cooldown
+        const timeSinceLastMovement = now - movementData.lastMovement;
+        
+        // Even shorter cooldown (from 3000ms to 1000ms)
+        if (timeSinceLastMovement < 1000) { // Reduced cooldown to 1 second
+          console.log(`Agent ${agent.id} moved ${timeSinceLastMovement}ms ago, but forcing movement anyway`);
+          // Continue with movement generation
+        } 
+        
         // Randomly wander to a new destination
-        console.log(`Agent ${agent.id} is wandering to a new location`);
+        console.log(`Agent ${agent.id} is wandering to a new location after ${timeSinceLastMovement}ms`);
+        const newDestination = wanderDestination(map);
+        
+        // Update the movement buffer
+        globalAgentThrottle.movementBuffer.set(agent.id, {
+          lastMovement: now,
+          pendingDestination: newDestination
+        });
+        
         inputData = {
           worldId: args.worldId,
           name: 'finishDoSomething',
           args: {
             operationId: args.operationId,
             agentId: agent.id,
-            destination: wanderDestination(map),
+            destination: newDestination,
           },
         };
       } else {
-        // Choose an activity using a deterministic activity selection
+        // Choose an activity for a very short duration
         const activityIndex = Math.floor((now / 1000) % ACTIVITIES.length);
         const activity = ACTIVITIES[activityIndex];
-        console.log(`Agent ${agent.id} is doing activity: ${activity.description}`);
+        console.log(`Agent ${agent.id} is doing activity: ${activity.description} (briefly)`);
         inputData = {
           worldId: args.worldId,
           name: 'finishDoSomething',
@@ -493,7 +557,7 @@ export const agentDoSomething = internalAction({
             activity: {
               description: activity.description,
               emoji: activity.emoji,
-              until: Date.now() + activity.duration,
+              until: Date.now() + 1000, // Even shorter activity duration (1 second)
             },
           },
         };
@@ -521,50 +585,47 @@ export const agentDoSomething = internalAction({
   },
 });
 
-function wanderDestination(worldMap: WorldMap) {
-  // More intelligently select target positions, ensuring there are no obstacles
+// Replace the wanderDestination function with a completely new implementation
+// to generate truly random coordinates across the entire map
+function wanderDestination(map: WorldMap): Point {
+  const { width, height } = map;
   
-  // The selected position needs to be farther from the map edges
-  const margin = Math.floor(worldMap.width / 10);  // Margin to prevent selecting positions too close to the edge
+  // Generate truly random coordinates across the entire map
+  // Avoid using fixed values like 1 or width-2
+  // Use the full range of the map with small margin (2 tiles) from the edges
+  const margin = 2;
   
-  // Try selecting possible positions multiple times, avoid selecting obstacles
-  for (let attempts = 0; attempts < 20; attempts++) {  // Increase the number of attempts to improve the probability of finding a suitable position
-    const x = margin + Math.floor(Math.random() * (worldMap.width - 2 * margin));
-    const y = margin + Math.floor(Math.random() * (worldMap.height - 2 * margin));
+  // Random coordinates between margin and width/height minus margin
+  const x = margin + Math.floor(Math.random() * (width - (2 * margin)));
+  const y = margin + Math.floor(Math.random() * (height - (2 * margin)));
+  
+  // Add some variation to ensure we don't get same values repeatedly
+  // Force occasional large jumps to make movement more interesting
+  const shouldJump = Math.random() < 0.3; // 30% chance for a long jump
+  
+  if (shouldJump) {
+    // Calculate a jump to a distant part of the map
+    // Divide the map into quadrants and jump to a different quadrant
+    const currentQuadrant = {
+      x: x < width/2 ? 'left' : 'right',
+      y: y < height/2 ? 'top' : 'bottom'
+    };
     
-    // Check if the selected position has obstacles
-    let hasObstacle = false;
+    // Target the opposite quadrant
+    const targetX = currentQuadrant.x === 'left' ? 
+      (width/2) + Math.floor(Math.random() * (width/2 - margin)) : 
+      margin + Math.floor(Math.random() * (width/2 - margin));
     
-    // Check all object layers
-    for (let layerIndex = 0; layerIndex < worldMap.objectTiles.length; layerIndex++) {
-      const layer = worldMap.objectTiles[layerIndex];
-      // Check if there is a tile at this position, tile index >= 0 indicates an obstacle
-      if (layer[x] && layer[x][y] >= 0) {
-        hasObstacle = true;
-        break;
-      }
-    }
+    const targetY = currentQuadrant.y === 'top' ? 
+      (height/2) + Math.floor(Math.random() * (height/2 - margin)) : 
+      margin + Math.floor(Math.random() * (height/2 - margin));
     
-    // If there are no obstacles, return this position
-    if (!hasObstacle) {
-      return { x, y };
-    }
+    console.log(`Generated long jump destination: (${targetX}, ${targetY})`);
+    return { x: targetX, y: targetY };
   }
   
-  // If a suitable position can't be found after multiple attempts, use a simpler strategy:
-  // Return a random point near the center of the map
-  const centerX = Math.floor(worldMap.width / 2);
-  const centerY = Math.floor(worldMap.height / 2);
-  
-  // Choose a point in a 5x5 area around the center
-  const offsetX = Math.floor(Math.random() * 5) - 2;
-  const offsetY = Math.floor(Math.random() * 5) - 2;
-  
-  // Ensure the point is within the map range
-  const finalX = Math.max(0, Math.min(worldMap.width - 1, centerX + offsetX));
-  const finalY = Math.max(0, Math.min(worldMap.height - 1, centerY + offsetY));
-  
-  return { x: finalX, y: finalY };
+  console.log(`Generated random destination: (${x}, ${y})`);
+  return { x, y };
 }
 
 // Function to reset all agent energy levels to 100
