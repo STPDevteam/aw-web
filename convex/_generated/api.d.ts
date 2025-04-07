@@ -23,6 +23,7 @@ import type * as aiTown_agentOperations from "../aiTown/agentOperations.js";
 import type * as aiTown_agentStatus from "../aiTown/agentStatus.js";
 import type * as aiTown_conversation from "../aiTown/conversation.js";
 import type * as aiTown_conversationMembership from "../aiTown/conversationMembership.js";
+import type * as aiTown_deterministicDestination from "../aiTown/deterministicDestination.js";
 import type * as aiTown_game from "../aiTown/game.js";
 import type * as aiTown_ids from "../aiTown/ids.js";
 import type * as aiTown_inferenceCount from "../aiTown/inferenceCount.js";
@@ -83,6 +84,7 @@ declare const fullApi: ApiFromModules<{
   "aiTown/agentStatus": typeof aiTown_agentStatus;
   "aiTown/conversation": typeof aiTown_conversation;
   "aiTown/conversationMembership": typeof aiTown_conversationMembership;
+  "aiTown/deterministicDestination": typeof aiTown_deterministicDestination;
   "aiTown/game": typeof aiTown_game;
   "aiTown/ids": typeof aiTown_ids;
   "aiTown/inferenceCount": typeof aiTown_inferenceCount;

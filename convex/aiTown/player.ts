@@ -9,7 +9,7 @@ import {
   MAX_HUMAN_PLAYERS,
   MAX_PATHFINDS_PER_STEP,
 } from '../constants';
-import { pointsEqual, pathPosition } from '../util/geometry';
+import { pointsEqual, pathPosition, distance } from '../util/geometry';
 import { Game } from './game';
 import { stopPlayer, findRoute, blocked, movePlayer } from './movement';
 import { inputHandler } from './inputHandler';
@@ -157,11 +157,18 @@ export class Player {
         kind: 'waiting',
         until: now + backoff,
       };
+      // Set speed to 0 when stopped due to collision
+      this.speed = 0;
       return;
     }
-    // Update the player's location.
+    // Update the player's location and facing direction.
+    // Ensure facing is never a zero vector
     this.position = position;
-    this.facing = facing;
+    // Only update facing if the new facing vector is not (0,0)
+    if (facing.dx !== 0 || facing.dy !== 0) {
+        this.facing = facing;
+    } 
+    // If the new facing is (0,0), keep the old one - prevents facing reset at path end
     this.speed = velocity;
   }
 
@@ -187,28 +194,79 @@ export class Player {
         throw new Error(`Only ${MAX_HUMAN_PLAYERS} human players allowed at once.`);
       }
     }
-    let position;
-    for (let attempt = 0; attempt < 10; attempt++) {
+
+    // Improved initial position finding for better distribution
+    let position: Point | undefined;
+    const maxAttempts = 20;
+    const margin = 5; // Larger margin from edges
+    const centerMarginRatio = 0.3; // Avoid the central 30% of the map
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // Generate random coordinates further from the center and edges
       const candidate = {
-        x: Math.floor(Math.random() * game.worldMap.width),
-        y: Math.floor(Math.random() * game.worldMap.height),
+        x: margin + Math.floor(Math.random() * (game.worldMap.width - 2 * margin)),
+        y: margin + Math.floor(Math.random() * (game.worldMap.height - 2 * margin)),
       };
+
+      // Check if the position is blocked
       if (blocked(game, now, candidate)) {
         continue;
       }
+      
+      // Check if the position is too close to the center
+      const isCenter = 
+        candidate.x > game.worldMap.width * centerMarginRatio &&
+        candidate.x < game.worldMap.width * (1 - centerMarginRatio) &&
+        candidate.y > game.worldMap.height * centerMarginRatio &&
+        candidate.y < game.worldMap.height * (1 - centerMarginRatio);
+
+      if (isCenter) {
+          // 70% chance to reroll if it's in the center to encourage edge spawning
+          if (Math.random() < 0.7) continue;
+      }
+      
+      // Check if too close to another player
+      let tooClose = false;
+      for (const otherPlayer of game.world.players.values()) {
+        if (distance(candidate, otherPlayer.position) < 3) { // Minimum distance of 3 tiles
+          tooClose = true;
+          break;
+        }
+      }
+      if (tooClose) {
+        continue;
+      }
+
+      // Found a suitable position
       position = candidate;
       break;
     }
+
     if (!position) {
-      throw new Error(`Failed to find a free position!`);
+      // Fallback: place randomly even if potentially blocked or central, but not on top of another player
+      console.warn("Could not find ideal dispersed starting position, using fallback.");
+       for (let attempt = 0; attempt < 10; attempt++) {
+          const fallbackCandidate = {
+            x: Math.floor(Math.random() * game.worldMap.width),
+            y: Math.floor(Math.random() * game.worldMap.height),
+          };
+          let tooCloseFallback = false;
+          for (const otherPlayer of game.world.players.values()) {
+              if (distance(fallbackCandidate, otherPlayer.position) < 1) { // Allow closer fallback
+                  tooCloseFallback = true;
+                  break;
+              }
+          }
+          if (!tooCloseFallback) {
+              position = fallbackCandidate;
+              break;
+          }
+       }
+       if(!position) { // Ultimate fallback: place anywhere
+            position = { x: Math.floor(Math.random() * game.worldMap.width), y: Math.floor(Math.random() * game.worldMap.height)};
+       }
     }
-    const facingOptions = [
-      { dx: 1, dy: 0 },
-      { dx: -1, dy: 0 },
-      { dx: 0, dy: 1 },
-      { dx: 0, dy: -1 },
-    ];
-    const facing = facingOptions[Math.floor(Math.random() * facingOptions.length)];
+    
     if (!characters.find((c) => c.name === character)) {
       throw new Error(`Invalid character: ${character}`);
     }
@@ -220,7 +278,7 @@ export class Player {
         human: tokenIdentifier,
         lastInput: now,
         position,
-        facing,
+        facing: { dx: 1, dy: 0 },
         speed: 0,
       }),
     );

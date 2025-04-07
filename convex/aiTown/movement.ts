@@ -173,14 +173,14 @@ export function movePlayer(
         // Check if agent is still in "moving" state
         const isCurrentlyMoving = player.pathfinding.state.kind === 'moving';
         
-        // If agent is already moving and hasn't reached the destination yet (within 0.2 tiles)
+        // If agent is already moving and hasn't reached the destination yet (within 0.1 tiles)
         // then completely block any new movement inputs
-        if (remainingDistance > 0.2 || isCurrentlyMoving) {
+        if (remainingDistance > 0.1 || isCurrentlyMoving) {
           console.log(`🚫 BLOCKING: Agent ${player.id} is still moving to (${currentDest.x},${currentDest.y}). Remaining distance: ${remainingDistance.toFixed(2)}. State: ${player.pathfinding.state.kind}`);
           return;
         }
         
-        // Even when movement is nearly complete, add shorter mandatory cooldown
+        // Even when movement is nearly complete, add mandatory cooldown
         if (agent.lastPathUpdate && now - agent.lastPathUpdate < 800) {
           console.log(`🚫 BLOCKING: Agent ${player.id} movement in cooldown period. Time since last update: ${now - agent.lastPathUpdate}ms`);
           return;
@@ -586,10 +586,10 @@ function rebuildPath(cameFrom: Map<string, { x: number, y: number }>, endKey: st
   waypoints.unshift({ x: startX, y: startY });
   
   if (waypoints.length === 0) {
-    // If there are no path points, return the current position
+    // If there are no path points, return the current position with valid facing
     return [{
       position: player.position,
-      facing: player.facing || { dx: 1, dy: 0 },
+      facing: ensureValidFacingVector(player.facing), // Ensure valid facing
       t: startTime
     }];
   }
@@ -597,32 +597,32 @@ function rebuildPath(cameFrom: Map<string, { x: number, y: number }>, endKey: st
   // Build path components
   const msPerTile = 1000 / movementSpeed;
   let currentTime = startTime;
+  let lastValidFacing = ensureValidFacingVector(player.facing); // Start with player's current facing
   
   for (let i = 0; i < waypoints.length; i++) {
     const current = waypoints[i];
-    
-    // Determine facing direction
     let facing = { dx: 0, dy: 0 };
+    
     if (i < waypoints.length - 1) {
       const next = waypoints[i + 1];
       facing.dx = Math.sign(next.x - current.x);
       facing.dy = Math.sign(next.y - current.y);
-    } else if (i > 0) {
-      // Last point uses the previous direction
-      const prev = waypoints[i - 1];
-      facing.dx = Math.sign(current.x - prev.x);
-      facing.dy = Math.sign(current.y - prev.y);
     } else {
-      // If there's only one point, use the player's current direction
-      facing = player.facing || { dx: 1, dy: 0 };
+      // Last point uses the previous segment's direction
+      facing = lastValidFacing;
     }
     
-    // Ensure facing vector is valid
+    // Ensure facing vector is valid and non-zero
     facing = ensureValidFacingVector(facing);
+    
+    // If the new facing is valid, update the last known valid facing
+    if (facing.dx !== 0 || facing.dy !== 0) {
+        lastValidFacing = facing;
+    }
     
     path.push({
       position: current,
-      facing,
+      facing: lastValidFacing, // Always use the last known valid facing
       t: currentTime
     });
     
@@ -782,4 +782,20 @@ export function blockedWithPositions(position: Point, otherPositions: Point[], m
     console.error("Error in blockedWithPositions function:", error);
     return 'error checking position';
   }
+}
+
+// Estimate how far along a path we are based on the current time
+function estimatePathProgress(path: PathComponent[], now: number): number {
+  if (!path || path.length < 2) return 1.0; // No path or single point = 100% done
+  
+  // Get start and end times from the path
+  const startTime = path[0].t;
+  const endTime = path[path.length - 1].t;
+  
+  // Calculate how far along the time range we are
+  const totalDuration = endTime - startTime;
+  if (totalDuration <= 0) return 1.0; // Avoid division by zero
+  
+  // Bound progress between 0 and 1
+  return Math.min(1.0, Math.max(0.0, (now - startTime) / totalDuration));
 }

@@ -22,6 +22,7 @@ import { distance } from '../util/geometry';
 import { internal } from '../_generated/api';
 import { movePlayer, blocked } from './movement';
 import { insertInput } from './insertInput';
+import { Player } from './player';
 
 // Define serializedAgent schema first before using it
 export const serializedAgent = {
@@ -77,88 +78,46 @@ export class Agent {
     if (!player) {
       throw new Error(`Invalid player ID ${this.playerId}`);
     }
+    
+    // --- Simplified Agent Tick Logic --- 
+
+    // 1. Check if agent has an operation in progress
     if (this.inProgressOperation) {
       if (now < this.inProgressOperation.started + ACTION_TIMEOUT) {
         // Wait on the operation to finish.
         return;
       }
+      // Operation timed out, clear it and decide new action
       console.log(`Timing out ${JSON.stringify(this.inProgressOperation)}`);
       delete this.inProgressOperation;
     }
-    
-    // Check if agent energy is 0
-    const agentDescription = game.agentDescriptions.get(this.id);
-    const energyDepleted = agentDescription && agentDescription.energy <= 0;
-    
+
+    // 2. Check if agent is in a conversation
     const conversation = game.world.playerConversation(player);
-    const member = conversation?.participants.get(player.id);
-
-    // Reduce conversation initiation frequency - Increase cooldown duration
-    // Add at least 30 seconds additional cooldown, even if agentDoSomething attempts to start a new conversation
-    const recentlyAttemptedInvite =
-      this.lastInviteAttempt && now < this.lastInviteAttempt + (CONVERSATION_COOLDOWN + 30000);
-    
-    // Lower the probability of accepting conversation invites - introduce randomness
-    // For agents who ended a conversation within the last 120 seconds, there is a 70% chance to refuse a new invitation
-    if (this.lastConversation && now < this.lastConversation + 120000) {
-      // Agents who ended a conversation within the last 120 seconds have a 70% chance to refuse a new invitation
-      if (Math.random() < 0.7) {
-        if (conversation && member && member.status.kind === 'invited') {
-          console.log(`Agent ${player.id} rejecting invite due to recent conversation`);
-          conversation.rejectInvite(game, now, player);
-          return;
-        }
-      }
+    if (conversation) {
+      // If in conversation, handle conversation logic (accept invite, walk over, participate, leave)
+      // This part remains largely the same as it handles the conversation state machine
+      this.handleConversationTick(game, now, player, conversation);
+      return; // Agent is busy with conversation, no other actions needed
     }
 
-    let doingActivity = player.activity && player.activity.until > now;
-    
-    // Increase the likelihood of completing an activity
-    // Reduce the probability of interrupting the current activity to 5%
-    if (doingActivity && (conversation || player.pathfinding)) {
-      if (Math.random() < 0.05) {  // Reduced from 0.1 to 0.05
-        player.activity!.until = now;
-        doingActivity = false;
-      }
-    }
-    
-    // Further decrease the likelihood of actively seeking conversation opportunities
-    // Reduce the random interruption probability from 5% further down to 2%
-    if (doingActivity && !conversation && !player.pathfinding && Math.random() < 0.02) {  // Reduced from 0.05 to 0.02
-      player.activity!.until = now;
-      doingActivity = false;
+    // 3. Check if agent is currently moving (pathfinding)
+    if (player.pathfinding) {
+      // Agent is moving, let them continue. No new action needed.
+      // Pathfinding completion and new destination requests are handled by agentDoSomething when it's triggered next time.
+      return; 
     }
 
-    // If not in a conversation and not engaged in an activity, then perform alternative actions
-    // Significantly increase the chance of choosing non-conversational activities
-    if (!conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite) && !energyDepleted) {
-      // Increase randomness, making the agent more inclined to engage in independent activities rather than conversations
-      const shouldDoIndependentActivity = Math.random() < 0.7;  // 70% chance to choose independent activity
-      
-      // Create operation parameters, removing unsupported properties
-      const operationArgs = {
-        worldId: game.worldId,
-        player: player.serialize(),
-        otherFreePlayers: [...game.world.players.values()]
-          .filter((p) => p.id !== player.id)
-          .filter(
-            (p) => ![...game.world.conversations.values()].find((c) => c.participants.has(p.id)),
-          )
-          .map((p) => p.serialize()),
-        agent: this.serialize(),
-        mapId: game.worldMap.id!,
-      };
+    // 4. Check if agent is doing a non-interruptible activity (optional)
+    // If we want activities, we need a way to decide if they *block* new actions.
+    // For now, we assume activities don't block triggering agentDoSomething.
+    // let doingActivity = player.activity && player.activity.until > now;
+    // if (doingActivity) {
+    //   return; // Let activity finish
+    // }
 
-      // Log the independent activity preference for AI usage
-      console.log(`Agent ${this.id} prefers independent activity: ${shouldDoIndependentActivity}`);
-      
-      this.startOperation(game, now, 'agentDoSomething', operationArgs);
-      return;
-    }
-    
-    // Check to see if we have a conversation we need to remember.
+    // 5. Check if agent needs to remember a conversation
     if (this.toRemember) {
-      // Fire off the action to remember the conversation.
       console.log(`Agent ${this.id} remembering conversation ${this.toRemember}`);
       this.startOperation(game, now, 'agentRememberConversation', {
         worldId: game.worldId,
@@ -167,224 +126,198 @@ export class Agent {
         conversationId: this.toRemember,
       });
       delete this.toRemember;
+      return; 
+    }
+
+    // 6. If agent is idle (no operation, not in conversation, not moving), trigger agentDoSomething
+    console.log(`Agent ${this.id} is idle, triggering agentDoSomething.`);
+    
+    // Simplified parameters for agentDoSomething
+    const operationArgs = {
+      worldId: game.worldId,
+      player: player.serialize(),
+      // We might not need otherFreePlayers if we simplify conversation logic inside agentDoSomething
+      otherFreePlayers: [], 
+      agent: this.serialize(),
+      mapId: game.worldMap.id!,
+    };
+    this.startOperation(game, now, 'agentDoSomething', operationArgs);
+  }
+
+  // Add a helper method to handle conversation state logic cleanly
+  handleConversationTick(game: Game, now: number, player: Player, conversation: any): void {
+    const member = conversation?.participants.get(player.id);
+    if (!member) return; // Should not happen if conversation exists
+    
+    const [otherPlayerId, otherMember] = [...conversation.participants.entries()].find(
+      ([id]) => id !== player.id,
+    )!;
+    const otherPlayer = game.world.players.get(otherPlayerId)!;
+
+    // Handle different conversation states
+    switch(member.status.kind) {
+      case 'invited':
+        this.handleInvitedState(game, now, player, conversation, otherPlayer);
+        break;
+      case 'walkingOver':
+        this.handleWalkingOverState(game, now, player, conversation, otherPlayer, member);
+        break;
+      case 'participating':
+        this.handleParticipatingState(game, now, player, conversation, otherPlayer, member);
+        break;
+    }
+  }
+
+  // Extracted helper methods for conversation states
+  handleInvitedState(game: Game, now: number, player: Player, conversation: any, otherPlayer: Player): void {
+    // (Keep the existing logic for accepting/rejecting invites)
+    const agentDescription = game.agentDescriptions.get(this.id);
+    const energyDepleted = agentDescription && agentDescription.energy <= 0;
+    
+    if (energyDepleted) {
+      console.log(`Agent ${player.id} rejecting invite from ${otherPlayer.id} due to depleted energy`);
+      conversation.rejectInvite(game, now, player);
       return;
     }
     
-    if (conversation && member) {
-      const [otherPlayerId, otherMember] = [...conversation.participants.entries()].find(
-        ([id]) => id !== player.id,
-      )!;
-      const otherPlayer = game.world.players.get(otherPlayerId)!;
-      
-      if (member.status.kind === 'invited') {
-        // get agent energy
-        const agentDescription = game.agentDescriptions.get(this.id);
-        const energyDepleted = agentDescription && agentDescription.energy <= 0;
-        
-        // if energy is 0, reject conversation invitation
-        if (energyDepleted) {
-          console.log(`Agent ${player.id} rejecting invite from ${otherPlayer.id} due to depleted energy`);
-          conversation.rejectInvite(game, now, player);
-          return;
-        }
-        
-        // Accept a conversation with another agent with some probability and with
-        // a human unconditionally.
-        if (otherPlayer.human || Math.random() < INVITE_ACCEPT_PROBABILITY) {
-          console.log(`Agent ${player.id} accepting invite from ${otherPlayer.id}`);
-          
-          conversation.acceptInvite(game, player);
-          // Stop moving so we can start walking towards the other player.
-          if (player.pathfinding) {
-            delete player.pathfinding;
-          }
-        } else {
-          console.log(`Agent ${player.id} rejecting invite from ${otherPlayer.id}`);
-          conversation.rejectInvite(game, now, player);
-        }
-        return;
+    if (otherPlayer.human || Math.random() < INVITE_ACCEPT_PROBABILITY) {
+      console.log(`Agent ${player.id} accepting invite from ${otherPlayer.id}`);
+      conversation.acceptInvite(game, player);
+      if (player.pathfinding) {
+        delete player.pathfinding;
       }
-      
-      if (member.status.kind === 'walkingOver') {
-        // Check if agent has run out of energy while walking to conversation
-        const agentDescription = game.agentDescriptions.get(this.id);
-        const energyDepleted = agentDescription && agentDescription.energy <= 0;
-        
-        // If energy is depleted, give up on the conversation
-        if (energyDepleted) {
-          console.log(`Agent ${player.id} giving up on invite to ${otherPlayer.id} due to depleted energy`);
-          conversation.leave(game, now, player);
-          return;
-        }
-        
-        // Leave a conversation if we've been waiting for too long.
-        if (member.invited + INVITE_TIMEOUT < now) {
-          console.log(`Giving up on invite to ${otherPlayer.id}`);
-          conversation.leave(game, now, player);
-          return;
-        }
-
-        // Don't keep moving around if we're near enough.
-        const playerDistance = distance(player.position, otherPlayer.position);
-        if (playerDistance < CONVERSATION_DISTANCE) {
-          return;
-        }
-
-        // Keep moving towards the other player.
-        // If we're close enough to the player, just walk to them directly.
-        if (!player.pathfinding) {
-          let destination;
-          if (playerDistance < MIDPOINT_THRESHOLD) {
-            destination = {
-              x: Math.floor(otherPlayer.position.x),
-              y: Math.floor(otherPlayer.position.y),
-            };
-          } else {
-            destination = {
-              x: Math.floor((player.position.x + otherPlayer.position.x) / 2),
-              y: Math.floor((player.position.y + otherPlayer.position.y) / 2),
-            };
-          }
-          console.log(`Agent ${player.id} walking towards ${otherPlayer.id}...`, destination);
-          const destinationBlocked = blocked(game, now, destination, player.id);
-          if (destinationBlocked) {
-            console.warn(`Agent ${player.id} destination is blocked: ${destinationBlocked}`, destination);
-            // Find available positions nearby
-            const alternatives = [];
-            for (let dx = -1; dx <= 1; dx++) {
-              for (let dy = -1; dy <= 1; dy++) {
-                if (dx === 0 && dy === 0) continue; // Skip the original position
-                
-                const alt = {
-                  x: Math.floor(destination.x) + dx,
-                  y: Math.floor(destination.y) + dy
-                };
-                
-                if (!blocked(game, now, alt, player.id)) {
-                  alternatives.push(alt);
-                }
-              }
-            }
-            
-            if (alternatives.length > 0) {
-              // Choose the closest available position to the target
-              alternatives.sort((a, b) => 
-                distance(a, otherPlayer.position) - distance(b, otherPlayer.position)
-              );
-              destination = alternatives[0];
-              console.log(`Agent ${player.id} using alternative destination`, destination);
-            }
-          }
-          movePlayer(game, now, player, destination);
-        }
-        return;
-      }
-      
-      if (member.status.kind === 'participating') {
-        const started = member.status.started;
-        
-        // Check if agent has run out of energy during conversation
-        const agentDescription = game.agentDescriptions.get(this.id);
-        const energyDepleted = agentDescription && agentDescription.energy <= 0;
-        
-        // If energy is depleted, leave the conversation
-        if (energyDepleted) {
-          console.log(`${player.id} leaving conversation with ${otherPlayer.id} due to depleted energy.`);
-          const messageUuid = crypto.randomUUID();
-          
-          conversation.setIsTyping(now, player, messageUuid);
-          
-          this.startOperation(game, now, 'agentGenerateMessage', {
-            worldId: game.worldId,
-            playerId: player.id,
-            agentId: this.id,
-            conversationId: conversation.id,
-            otherPlayerId: otherPlayer.id,
-            messageUuid,
-            type: 'leave',
-          });
-          return;
-        }
-        
-        if (conversation.isTyping && conversation.isTyping.playerId !== player.id) {
-          // Wait for the other player to finish typing.
-          return;
-        }
-        if (!conversation.lastMessage) {
-          const isInitiator = conversation.creator === player.id;
-          const awkwardDeadline = started + AWKWARD_CONVERSATION_TIMEOUT;
-          // Send the first message if we're the initiator or if we've been waiting for too long.
-          if (isInitiator || awkwardDeadline < now) {
-            // Grab the lock on the conversation and send a "start" message.
-            console.log(`${player.id} initiating conversation with ${otherPlayer.id}.`);
-            const messageUuid = crypto.randomUUID();
-            
-            conversation.setIsTyping(now, player, messageUuid);
-            
-            this.startOperation(game, now, 'agentGenerateMessage', {
-              worldId: game.worldId,
-              playerId: player.id,
-              agentId: this.id,
-              conversationId: conversation.id,
-              otherPlayerId: otherPlayer.id,
-              messageUuid,
-              type: 'start',
-            });
-            return;
-          } else {
-            // Wait on the other player to say something up to the awkward deadline.
-            return;
-          }
-        }
-        // See if the conversation has been going on too long and decide to leave.
-        const tooLongDeadline = started + MAX_CONVERSATION_DURATION;
-        if (tooLongDeadline < now || conversation.numMessages > MAX_CONVERSATION_MESSAGES) {
-          console.log(`${player.id} leaving conversation with ${otherPlayer.id}.`);
-          const messageUuid = crypto.randomUUID();
-          
-          conversation.setIsTyping(now, player, messageUuid);
-          
-          this.startOperation(game, now, 'agentGenerateMessage', {
-            worldId: game.worldId,
-            playerId: player.id,
-            agentId: this.id,
-            conversationId: conversation.id,
-            otherPlayerId: otherPlayer.id,
-            messageUuid,
-            type: 'leave',
-          });
-          return;
-        }
-        // Wait for the awkward deadline if we sent the last message.
-        if (conversation.lastMessage.author === player.id) {
-          const awkwardDeadline = conversation.lastMessage.timestamp + AWKWARD_CONVERSATION_TIMEOUT;
-          if (now < awkwardDeadline) {
-            return;
-          }
-        }
-        // Wait for a cooldown after the last message to simulate "reading" the message.
-        const messageCooldown = conversation.lastMessage.timestamp + MESSAGE_COOLDOWN;
-        if (now < messageCooldown) {
-          return;
-        }
-        // Grab the lock and send a message!
-        console.log(`${player.id} continuing conversation with ${otherPlayer.id}.`);
-        const messageUuid = crypto.randomUUID();
-        
-        conversation.setIsTyping(now, player, messageUuid);
-        
-        this.startOperation(game, now, 'agentGenerateMessage', {
-          worldId: game.worldId,
-          playerId: player.id,
-          agentId: this.id,
-          conversationId: conversation.id,
-          otherPlayerId: otherPlayer.id,
-          messageUuid,
-          type: 'continue',
-        });
-        return;
-      }
+    } else {
+      console.log(`Agent ${player.id} rejecting invite from ${otherPlayer.id}`);
+      conversation.rejectInvite(game, now, player);
     }
+  }
+
+  handleWalkingOverState(game: Game, now: number, player: Player, conversation: any, otherPlayer: Player, member: any): void {
+    // (Keep the existing logic for walking over, checking timeout, distance)
+    const agentDescription = game.agentDescriptions.get(this.id);
+    const energyDepleted = agentDescription && agentDescription.energy <= 0;
+    
+    if (energyDepleted) {
+      console.log(`Agent ${player.id} giving up on invite to ${otherPlayer.id} due to depleted energy`);
+      conversation.leave(game, now, player);
+      return;
+    }
+    
+    if (member.invited + INVITE_TIMEOUT < now) {
+      console.log(`Giving up on invite to ${otherPlayer.id}`);
+      conversation.leave(game, now, player);
+      return;
+    }
+
+    const playerDistance = distance(player.position, otherPlayer.position);
+    if (playerDistance < CONVERSATION_DISTANCE) {
+      return; // Close enough, wait
+    }
+
+    if (!player.pathfinding) {
+      let destination;
+      if (playerDistance < MIDPOINT_THRESHOLD) {
+        destination = { x: Math.floor(otherPlayer.position.x), y: Math.floor(otherPlayer.position.y) };
+      } else {
+        destination = { x: Math.floor((player.position.x + otherPlayer.position.x) / 2), y: Math.floor((player.position.y + otherPlayer.position.y) / 2) };
+      }
+      console.log(`Agent ${player.id} walking towards ${otherPlayer.id}...`, destination);
+      const destinationBlocked = blocked(game, now, destination, player.id);
+      if (destinationBlocked) {
+        console.warn(`Agent ${player.id} destination is blocked: ${destinationBlocked}`, destination);
+        // Find available positions nearby
+        const alternatives = [];
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            if (dx === 0 && dy === 0) continue; // Skip the original position
+            
+            const alt = {
+              x: Math.floor(destination.x) + dx,
+              y: Math.floor(destination.y) + dy
+            };
+            
+            if (!blocked(game, now, alt, player.id)) {
+              alternatives.push(alt);
+            }
+          }
+        }
+        
+        if (alternatives.length > 0) {
+          // Choose the closest available position to the target
+          alternatives.sort((a, b) => 
+            distance(a, otherPlayer.position) - distance(b, otherPlayer.position)
+          );
+          destination = alternatives[0];
+          console.log(`Agent ${player.id} using alternative destination`, destination);
+        }
+      }
+      movePlayer(game, now, player, destination);
+    }
+  }
+
+  handleParticipatingState(game: Game, now: number, player: Player, conversation: any, otherPlayer: Player, member: any): void {
+    // (Keep the existing logic for generating messages, checking timeouts, etc.)
+    const started = member.status.started;
+    const agentDescription = game.agentDescriptions.get(this.id);
+    const energyDepleted = agentDescription && agentDescription.energy <= 0;
+
+    if (energyDepleted) {
+      // Leave conversation due to energy
+      this.triggerAgentMessage(game, now, player, conversation, otherPlayer, 'leave');
+      return;
+    }
+
+    if (conversation.isTyping && conversation.isTyping.playerId !== player.id) {
+      return; // Wait for other player
+    }
+
+    if (!conversation.lastMessage) {
+      const isInitiator = conversation.creator === player.id;
+      const awkwardDeadline = started + AWKWARD_CONVERSATION_TIMEOUT;
+      if (isInitiator || awkwardDeadline < now) {
+        // Send first message
+        this.triggerAgentMessage(game, now, player, conversation, otherPlayer, 'start');
+        return;
+      }
+    } else {
+      const tooLongDeadline = started + MAX_CONVERSATION_DURATION;
+      if (tooLongDeadline < now || conversation.numMessages > MAX_CONVERSATION_MESSAGES) {
+        // Leave due to duration/length
+        this.triggerAgentMessage(game, now, player, conversation, otherPlayer, 'leave');
+        return;
+      }
+
+      if (conversation.lastMessage.author === player.id) {
+        const awkwardDeadline = conversation.lastMessage.timestamp + AWKWARD_CONVERSATION_TIMEOUT;
+        if (now < awkwardDeadline) {
+          return; // Wait for reply
+        }
+      }
+
+      const messageCooldown = conversation.lastMessage.timestamp + MESSAGE_COOLDOWN;
+      if (now < messageCooldown) {
+        return; // Wait for cooldown
+      }
+      
+      // Continue conversation
+      this.triggerAgentMessage(game, now, player, conversation, otherPlayer, 'continue');
+    }
+  }
+
+  // Helper to start agentGenerateMessage operation
+  triggerAgentMessage(game: Game, now: number, player: Player, conversation: any, otherPlayer: Player, type: 'start' | 'continue' | 'leave'): void {
+    console.log(`${player.id} ${type}ing conversation with ${otherPlayer.id}.`);
+    const messageUuid = crypto.randomUUID();
+    conversation.setIsTyping(now, player, messageUuid);
+    this.startOperation(game, now, 'agentGenerateMessage', {
+      worldId: game.worldId,
+      playerId: player.id,
+      agentId: this.id,
+      conversationId: conversation.id,
+      otherPlayerId: otherPlayer.id,
+      messageUuid,
+      type,
+    });
   }
 
   startOperation<Name extends keyof AgentOperations>(
@@ -528,4 +461,21 @@ export const findConversationCandidate = internalQuery({
     // 只选择最接近的候选人
     return candidates[0]?.id;
   },
+});
+
+// Query the world and find the agent within it
+
+export const getAgent = internalQuery({
+  args: {
+    worldId: v.id('worlds'), // Assuming we can pass worldId here
+    agentId: agentId 
+  },
+  handler: async (ctx, args) => {
+    const world = await ctx.db.get(args.worldId);
+    if (!world || !world.agents) {
+      return null;
+    }
+    const agent = world.agents.find((a) => a.id === args.agentId);
+    return agent || null;
+  }
 });
