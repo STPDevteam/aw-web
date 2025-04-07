@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       hmr: mode === 'development',
-      allowedHosts: ['localhost', '127.0.0.1','ai-town-lb-1479478427.ap-northeast-1.elb.amazonaws.com','world.fun','www.world.fun'],
+      allowedHosts: ['localhost', '127.0.0.1','ai-town-lb-1479478427.ap-northeast-1.elb.amazonaws.com','world.fun','www.world.fun','test.world.fun'],
     },
     // for dev
     define: mode === 'production'
