@@ -13,7 +13,7 @@ import { serializedAgent, SerializedAgent } from './agent';
 import { ACTIVITIES } from '../constants';
 import { api, internal } from '../_generated/api';
 import { sleep } from '../util/sleep';
-import { serializedPlayer } from './player';
+import { serializedPlayer, SerializedPlayer } from './player';
 import { Id } from '../_generated/dataModel';
 import { Point } from '../util/types';
 import { 
@@ -25,6 +25,8 @@ import {
   getMovementStats,
   agentMovementTracker // Added export for tracking
 } from './deterministicDestination';
+import { distance } from '../util/geometry'; // Import distance function
+import { CONVERSATION_DISTANCE } from '../constants'; // Import conversation distance
 
 // Lockout duration must match the lock in insertInput.ts
 const AGENT_LOCK_DURATION = 10000; // 10 seconds
@@ -98,6 +100,18 @@ export const agentGenerateMessage = internalAction({
       return;
     }
     
+    // *** Get AgentDescription ID needed for update ***
+    const agentDesc = await ctx.runQuery(internal.aiTown.agentDescription.getAgentDescription, {
+      worldId: args.worldId,
+      agentId: args.agentId as GameId<'agents'>
+    });
+    if (!agentDesc) {
+      console.error(`[${args.agentId}] Agent description not found! Cannot generate message or update stats.`);
+      // Optionally finish the operation here if needed
+      return;
+    }
+    // *** End Get ID ***
+    
     let completionFn;
     switch (args.type) {
       case 'start':
@@ -119,6 +133,7 @@ export const agentGenerateMessage = internalAction({
       args.playerId as GameId<'players'>,
       args.otherPlayerId as GameId<'players'>,
     );
+
     if (!completion) {
       console.log("Agent returned empty message, cancelling")
       // Failed to generate the message, cancel the operation
@@ -137,6 +152,19 @@ export const agentGenerateMessage = internalAction({
       });
       return;
     }
+    
+    // *** Update Stats ***
+    try {
+      await ctx.runMutation(internal.aiTown.agentDescription.updateAgentStats, {
+        agentDescriptionId: agentDesc._id, // Pass the fetched description ID
+        energyDecrement: 1, // Decrease energy by 1
+        inferencesIncrement: 1, // Increment inferences by 1
+      });
+    } catch (e) {
+      console.error(`[${args.agentId}] Failed to update agent stats:`, e);
+      // Decide if failure to update stats should stop the message sending (probably not)
+    }
+    // *** End Update Stats ***
     
     let text = completion; // Assume completion is string
     const leaveConversation = args.type === 'leave'; // Simplify, no function call check
@@ -166,60 +194,163 @@ export const agentDoSomething = internalAction({
     operationId: v.string(),
   },
   handler: async (ctx, args) => {
-    const { player, agent } = args;
+    const { player, agent, otherFreePlayers, worldId } = args;
+    const agentId = agent.id as GameId<'agents'>;
+    const playerId = player.id as GameId<'players'>;
     const now = Date.now();
+    const oneMinuteAgo = now - 60000; // Milliseconds in a minute - FOR TESTING
+
+    console.log(`[${agentId}] agentDoSomething entered. OpID: ${args.operationId}`);
+
+    // Get current agent's description
+    const agentDescDoc = await ctx.runQuery(internal.aiTown.agentDescription.getAgentDescription, { agentId, worldId });
+    if (!agentDescDoc) {
+      console.error(`[${agentId}] Self description not found! Cannot proceed.`);
+      return;
+    }
     
-    const agentDoc = await ctx.runQuery(internal.aiTown.agent.getAgent, { worldId: args.worldId, agentId: agent.id as GameId<'agents'> });
-    if (agentDoc?.inProgressOperation && 
-        agentDoc.inProgressOperation.operationId !== args.operationId) {
-      console.log(`Agent ${agent.id} already has operation ${agentDoc.inProgressOperation.operationId} in progress, skipping ${args.operationId}.`);
+    // Check energy level - use nullish coalescing for safety
+    const currentEnergy = agentDescDoc.energy ?? 0;
+    if (currentEnergy <= 0) {
+        console.log(`[${agentId}] has 0 energy (or undefined). Skipping doSomething.`);
+        // Optionally, send an input to just finish the operation without action
+        try {
+            await ctx.runMutation(api.aiTown.main.sendInput, {
+              worldId: worldId,
+              name: 'finishDoSomething', // Finish immediately
+              args: { operationId: args.operationId, agentId: agentId, destination: null } // No destination
+            });
+        } catch (e) { console.error(`[${agentId}] Error finishing no-energy operation:`, e); }
+        return; 
+    }
+
+    // Check if another operation is already in progress for this agent
+    // Fetching Agent document separately to check inProgressOperation
+    const agentDocFromAgentTable = await ctx.runQuery(internal.aiTown.agent.getAgent, { worldId, agentId });
+    if (agentDocFromAgentTable?.inProgressOperation && 
+        agentDocFromAgentTable.inProgressOperation.operationId !== args.operationId) {
+      console.log(`[${agentId}] Already has operation ${agentDocFromAgentTable.inProgressOperation.operationId}, skipping ${args.operationId}.`);
       return;
     }
 
-    // Get map data for movement
-    const mapData = await ctx.runQuery(internal.aiTown.game.getFirstMap);
-    if (!mapData) {
-      console.error('Failed to fetch map data: no maps found');
-      throw new Error('No maps found in database');
+    let decidedAction = null;
+    const lastConversationTs = agentDescDoc.lastConversationTimestamp;
+    const shouldTryToConverse = !lastConversationTs || lastConversationTs < oneMinuteAgo;
+
+    console.log(`[${agentId}] Should try to converse? ${shouldTryToConverse} (Last convo TS: ${lastConversationTs}, One MINUTE ago: ${oneMinuteAgo})`);
+
+    if (shouldTryToConverse) {
+      console.log(`[${agentId}] Prioritizing conversation attempt.`);
+      let closestValidPartner: SerializedPlayer | null = null;
+      let minValidDistance = CONVERSATION_DISTANCE;
+
+      console.log(`[${agentId}] Checking ${otherFreePlayers.length} other free players.`);
+      for (const otherPlayer of otherFreePlayers) {
+        const dist = distance(player.position, otherPlayer.position);
+        if (dist >= minValidDistance) {
+          // console.log(`[${agentId}] Player ${otherPlayer.id} too far (${dist}).`);
+          continue; // Too far
+        }
+
+        // Check if the other player is an agent and has energy > 0
+        const otherAgentDesc = await ctx.runQuery(internal.aiTown.agentDescription.getAgentDescriptionByPlayerId, { playerId: otherPlayer.id as GameId<'players'>, worldId });
+        if (!otherAgentDesc) {
+           // console.log(`[${agentId}] Player ${otherPlayer.id} is not an agent.`);
+           continue; // Not an agent
+        }
+        // Check energy using nullish coalescing
+        const otherEnergy = otherAgentDesc.energy ?? 0;
+        if (otherEnergy <= 0) {
+            console.log(`[${agentId}] Player ${otherPlayer.id} has 0 energy (or undefined).`);
+            continue; // Target has no energy
+        }
+
+        // Found a potentially valid partner closer than the previous best
+        console.log(`[${agentId}] Found potential partner ${otherPlayer.id} at distance ${dist} with energy ${otherEnergy}.`);
+        minValidDistance = dist;
+        closestValidPartner = otherPlayer;
+      }
+
+      if (closestValidPartner) {
+        // Found a partner!
+        console.log(`[${agentId}] Found closest valid partner: ${closestValidPartner.id}. Initiating conversation.`);
+        decidedAction = {
+          worldId: worldId,
+          name: 'startConversation',
+          args: {
+            operationId: args.operationId,
+            agentId: agentId,
+            playerId: playerId,
+            invitee: closestValidPartner.id as GameId<'players'>,
+          },
+        };
+      } else {
+         console.log(`[${agentId}] No valid conversation partner found nearby.`);
+      }
     }
-    const map = new WorldMap(mapData as SerializedWorldMap);
-    
-    // Prepare input data
-    let inputData = null;
-    
-    // Simplified behavior: Always attempt to move unless a specific condition overrides it.
-    // Let's remove the explicit shouldMove random check for now and make movement the default.
 
-    // Generate a simple random destination
-    const newDestination = simpleWanderDestination(map);
-    
-    // Default action is movement
-    inputData = {
-      worldId: args.worldId,
-      name: 'finishDoSomething',
-      args: {
-        operationId: args.operationId,
-        agentId: agent.id,
-        destination: newDestination,
-      },
-    };
-    
-    console.log(`Agent ${agent.id} chose to move to (${newDestination.x}, ${newDestination.y})`);
+    // Fallback to wandering if no conversation was initiated
+    if (!decidedAction) {
+      console.log(`[${agentId}] No conversation initiated or not time yet, deciding to wander.`);
+      const mapData = await ctx.runQuery(internal.aiTown.game.getFirstMap);
+      if (!mapData) {
+        console.error(`[${agentId}] Failed to fetch map data for wandering.`);
+        // Send finishDoSomething without destination to unblock agent
+         try {
+            await ctx.runMutation(api.aiTown.main.sendInput, {
+              worldId: worldId,
+              name: 'finishDoSomething',
+              args: { operationId: args.operationId, agentId: agentId, destination: null }
+            });
+        } catch (e) { console.error(`[${agentId}] Error finishing wander-no-map operation:`, e); }
+        return; 
+      }
+      const map = new WorldMap(mapData as SerializedWorldMap);
+      const newDestination = simpleWanderDestination(map);
+      
+      decidedAction = {
+        worldId: worldId,
+        name: 'finishDoSomething',
+        args: {
+          operationId: args.operationId,
+          agentId: agentId,
+          destination: newDestination,
+        },
+      };
+      console.log(`[${agentId}] Chose wander destination: (${newDestination.x}, ${newDestination.y})`);
+    }
 
-    // NOTE: We removed the activity choice. If activities are needed later,
-    // they would need a specific trigger condition, otherwise agents will always move.
-    
-    // Send the chosen action (which is always movement now)
-    if (inputData) {
+    // Send the chosen action
+    if (decidedAction) {
       try {
+        console.log(`[${agentId}] Sending input: ${decidedAction.name} with args:`, JSON.stringify(decidedAction.args));
         await ctx.runMutation(api.aiTown.main.sendInput, {
-          worldId: inputData.worldId,
-          name: inputData.name,
-          args: inputData.args
+          worldId: decidedAction.worldId,
+          name: decidedAction.name as any, 
+          args: decidedAction.args
         });
       } catch (error) {
-        console.error(`Error sending input for ${agent.id}:`, error);
+        console.error(`[${agentId}] Error sending input ${decidedAction.name}:`, error);
+         // Attempt to finish the operation gracefully even if input sending failed
+         try {
+            await ctx.runMutation(api.aiTown.main.sendInput, {
+              worldId: worldId,
+              name: 'finishDoSomething',
+              args: { operationId: args.operationId, agentId: agentId, destination: null } 
+            });
+            console.log(`[${agentId}] Sent fallback finishDoSomething after input error.`);
+        } catch (e) { console.error(`[${agentId}] Error finishing error-fallback operation:`, e); }
       }
+    } else {
+      // This case should theoretically not be reached anymore, but included for safety
+      console.error(`[${agentId}] No action decided upon in agentDoSomething! Finishing operation.`);
+       try {
+            await ctx.runMutation(api.aiTown.main.sendInput, {
+              worldId: worldId,
+              name: 'finishDoSomething',
+              args: { operationId: args.operationId, agentId: agentId, destination: null }
+            });
+        } catch (e) { console.error(`[${agentId}] Error finishing no-action operation:`, e); }
     }
   },
 });

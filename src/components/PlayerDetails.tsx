@@ -45,8 +45,6 @@ export default function PlayerDetails({
 
   const player = playerId && game.world.players.get(playerId);
   const playerConversation = player && game.world.playerConversation(player);
-
-  console.log('playerConversation', playerConversation)
   
   const previousConversation = useQuery(
     api.world.previousConversation,

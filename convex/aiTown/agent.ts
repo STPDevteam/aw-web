@@ -132,12 +132,34 @@ export class Agent {
     // 6. If agent is idle (no operation, not in conversation, not moving), trigger agentDoSomething
     console.log(`Agent ${this.id} is idle, triggering agentDoSomething.`);
     
-    // Simplified parameters for agentDoSomething
+    // --- Calculate otherFreePlayers --- 
+    const otherPlayers = [...game.world.players.values()];
+    const otherFreePlayers = otherPlayers.filter(otherPlayer => {
+      // Exclude self
+      if (otherPlayer.id === player.id) {
+        return false;
+      }
+      // Exclude players currently in a conversation
+      if (game.world.playerConversation(otherPlayer)) {
+        return false;
+      }
+      // Exclude human players (optional, but common)
+      if (otherPlayer.human) {
+         return false;
+      }
+      // Optional: Exclude players recently conversed with (requires checking history/memory)
+      // const recentlyTalked = checkRecentConversation(game, player.id, otherPlayer.id);
+      // if (recentlyTalked) return false;
+      
+      return true; // Include this player
+    }).map(p => p.serialize()); // Serialize the players for the action args
+    // --- End Calculate --- 
+
+    // Corrected parameters for agentDoSomething
     const operationArgs = {
       worldId: game.worldId,
       player: player.serialize(),
-      // We might not need otherFreePlayers if we simplify conversation logic inside agentDoSomething
-      otherFreePlayers: [], 
+      otherFreePlayers: otherFreePlayers, // Pass the calculated list
       agent: this.serialize(),
       mapId: game.worldMap.id!,
     };

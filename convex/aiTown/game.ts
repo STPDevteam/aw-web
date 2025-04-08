@@ -442,17 +442,46 @@ export class Game extends AbstractGame {
     for (const conversation of existingWorld.conversations) {
       if (!newWorld.conversations.some((c) => c.id === conversation.id)) {
         const participants = conversation.participants.map((p) => p.playerId);
+        const endedTimestamp = Date.now(); // Use a consistent timestamp for archiving
+        
+        // Archive conversation details
         const archivedConversation = {
           worldId,
           id: conversation.id,
           created: conversation.created,
           creator: conversation.creator,
-          ended: Date.now(),
+          ended: endedTimestamp,
           lastMessage: conversation.lastMessage,
           numMessages: conversation.numMessages,
           participants,
         };
         await ctx.db.insert('archivedConversations', archivedConversation);
+
+        // *** Corrected: Get agents from the *newWorld* state, not a direct DB query ***
+        // We assume newWorld.agents holds the current agent state including playerId
+        const agentPlayerIds = new Map<string, string>();
+        for (const agent of newWorld.agents) {
+          agentPlayerIds.set(agent.playerId, agent.id); 
+        }
+        // *** End Correction ***
+
+        for (const playerId of participants) {
+          const agentId = agentPlayerIds.get(playerId);
+          if (agentId) {
+            // This participant is an agent, update their description
+            const agentDesc = await ctx.db
+              .query('agentDescriptions')
+              .withIndex('worldId', (q) => q.eq('worldId', worldId).eq('agentId', agentId as GameId<'agents'>)) // Cast agentId
+              .unique();
+            if (agentDesc) {
+              await ctx.db.patch(agentDesc._id, { lastConversationTimestamp: endedTimestamp });
+            } else {
+              console.warn(`Agent description not found for agentId ${agentId} during conversation archival.`);
+            }
+          }
+        }
+
+        // Insert participatedTogether entries
         for (let i = 0; i < participants.length; i++) {
           for (let j = 0; j < participants.length; j++) {
             if (i == j) {
@@ -465,7 +494,7 @@ export class Game extends AbstractGame {
               conversationId: conversation.id,
               player1,
               player2,
-              ended: Date.now(),
+              ended: endedTimestamp, // Use consistent timestamp
             });
           }
         }

@@ -1,5 +1,6 @@
 import { ObjectType, v } from 'convex/values';
-import { GameId, agentId, parseGameId } from './ids';
+import { GameId, agentId, parseGameId, playerId } from './ids';
+import { internalQuery, internalMutation } from '../_generated/server';
 
 export class AgentDescription {
   agentId: GameId<'agents'>;
@@ -15,9 +16,10 @@ export class AgentDescription {
   userWalletAddress?: string; // agent owner's wallet address
   status?: any; // Agent status information
   events?: any[]; // Agent daily events
+  lastConversationTimestamp?: number; // Add timestamp for last conversation
 
   constructor(serialized: SerializedAgentDescription) {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events } = serialized;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp } = serialized;
     this.agentId = parseGameId('agents', agentId);
     this.identity = identity;
     this.plan = plan;
@@ -31,10 +33,11 @@ export class AgentDescription {
     this.userWalletAddress = userWalletAddress;
     this.status = status;
     this.events = events;
+    this.lastConversationTimestamp = lastConversationTimestamp; // Assign new field
   }
 
   serialize(): SerializedAgentDescription {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events } = this;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp } = this;
     return { 
       agentId, 
       identity, 
@@ -48,7 +51,8 @@ export class AgentDescription {
       avatarUrl,
       userWalletAddress,
       status,
-      events
+      events,
+      lastConversationTimestamp
     };
   }
 }
@@ -88,7 +92,74 @@ export const serializedAgentDescription = {
     action: v.string(),
     details: v.string(),
   }))),
+  lastConversationTimestamp: v.optional(v.number()), // Add field to schema definition
 };
 export type SerializedAgentDescription = ObjectType<typeof serializedAgentDescription>;
+
+// Query to get agent description by agentId
+export const getAgentDescription = internalQuery({
+  args: { agentId: agentId, worldId: v.id('worlds') },
+  handler: async (ctx, args) => {
+    // Query by worldId and filter by agentId
+    const descriptions = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+    return descriptions.find(d => d.agentId === args.agentId) || null;
+  },
+});
+
+// Query to get agent description by playerId
+export const getAgentDescriptionByPlayerId = internalQuery({
+  args: { playerId: playerId, worldId: v.id('worlds') },
+  handler: async (ctx, args) => {
+    const world = await ctx.db.get(args.worldId);
+    if (!world) return null;
+
+    const agent = world.agents.find(a => a.playerId === args.playerId);
+    if (!agent) {
+      return null;
+    }
+
+    // Query by worldId and filter for the specific agentId
+    const descriptions = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+    return descriptions.find(d => d.agentId === agent.id) || null;
+  },
+});
+
+// NEW: Internal mutation to update energy and inferences
+export const updateAgentStats = internalMutation({
+  args: {
+    agentDescriptionId: v.id('agentDescriptions'),
+    energyDecrement: v.optional(v.number()), // Amount to decrease energy by (e.g., 1)
+    inferencesIncrement: v.optional(v.number()), // Amount to increase inferences by (e.g., 1)
+  },
+  handler: async (ctx, args) => {
+    const agentDesc = await ctx.db.get(args.agentDescriptionId);
+    if (!agentDesc) {
+      console.error(`AgentDescription not found: ${args.agentDescriptionId}`);
+      return;
+    }
+
+    const currentEnergy = agentDesc.energy ?? 0;
+    const currentInferences = agentDesc.inferences ?? 0;
+
+    const energyDecrement = args.energyDecrement ?? 0;
+    const inferencesIncrement = args.inferencesIncrement ?? 0;
+
+    // Ensure energy doesn't go below 0
+    const newEnergy = Math.max(0, currentEnergy - energyDecrement);
+    const newInferences = currentInferences + inferencesIncrement;
+
+    await ctx.db.patch(args.agentDescriptionId, {
+      energy: newEnergy,
+      inferences: newInferences,
+    });
+    console.log(`Updated Agent ${agentDesc.agentId}: Energy=${newEnergy}, Inferences=${newInferences}`);
+  }
+});
 
 
