@@ -25,7 +25,7 @@ export const PixiGame:React.FC<{
   pixiWidth: number
   agentInfo: any,
   selectedAgentId: (id: number) => void
-  onClearFEAgent:() => void
+  onClickAgent:(p:any) => void
   clearSelectedAgentInfo:() => void
 }> = ({
   worldId,
@@ -36,7 +36,7 @@ export const PixiGame:React.FC<{
   agentInfo,
   pixiWidth,
   selectedAgentId,
-  onClearFEAgent,
+  onClickAgent,
   clearSelectedAgentInfo,
 }) => {
   // PIXI setup.
@@ -213,7 +213,7 @@ export const PixiGame:React.FC<{
             isViewer={p.id === humanPlayerId}
             onClick={setSelectedElement}
             historicalTime={historicalTime}
-            onClearFEAgent={onClearFEAgent}
+            onClickAgent={onClickAgent}
           />
         ))
       }

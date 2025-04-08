@@ -25,6 +25,8 @@ export const mapRightWidth = 494
 
 export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
   
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>('')
+
   const [agentInfoVisible, setAgentInfoVisible] = useState(false)
   // const [delayRender, setDelayRender] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
@@ -121,6 +123,13 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
       setCurrentFEAgent(targetAgent[0])
     }
   }  
+  const onClickAgent = (p:any) => {
+    if(p) {
+      setSelectedPlayerId(p.id)
+      setAgentInfoVisible(true)
+    }
+
+  }
 
   return (  
     <Box 
@@ -141,7 +150,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
       </Box>     
 
       {
-        true && ( //  agentInfoVisible
+        agentInfoVisible && (
           <Box 
             className=''
             zIndex={2}
@@ -153,7 +162,19 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
             overflowY="scroll"
             onWheel={(e) => e.stopPropagation()} 
           >
-            { list && !!list.length && <SearchAgents  scrollViewRef={scrollViewRef} engineId={engineId} worldId={worldId}  agentList={list} game={game} onFold={() => setAgentInfoVisible(false)}/>}
+            { list && !!list.length && 
+              <SearchAgents 
+                selectedPlayerId={selectedPlayerId} 
+                scrollViewRef={scrollViewRef} 
+                engineId={engineId} 
+                worldId={worldId}  
+                agentList={list} 
+                game={game} 
+                onFold={() => {
+                  setAgentInfoVisible(false)
+                  setSelectedPlayerId('')
+                }}
+              />}
             
             {/* <PlayerDetails
               worldId={worldId} 
@@ -218,7 +239,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
                   engineId={engineId}
                   historicalTime={historicalTime}
                   setSelectedElement={setSelectedElement}
-                  onClearFEAgent={() => setCurrentFEAgent(null)}
+                  onClickAgent={onClickAgent}
                   clearSelectedAgentInfo={() => dispatch(selectedAgentInfoAction(null))}
                 />
               </ConvexProvider>

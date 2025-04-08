@@ -12,7 +12,7 @@ import { Messages } from '@/components/Messages'
 
 interface iFEPlayerDetails {
     currentFEAgent: any
-    onClearFEAgent: () => void
+    onClickAgent: () => void
     game: ServerGame
     worldId: any
     engineId: Id<'engines'>
@@ -20,7 +20,7 @@ interface iFEPlayerDetails {
 }
 export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
     currentFEAgent,
-    onClearFEAgent,
+    onClickAgent,
     game,
     worldId,
     engineId,

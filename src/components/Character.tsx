@@ -16,6 +16,7 @@ export const Character = ({
   isViewer = false,
   speed = 0.1,
   onClick,
+  energy
 }: {
   // Path to the texture packed image.
   textureUrl: string;
@@ -36,6 +37,8 @@ export const Character = ({
   // The speed of the animation. Can be tuned depending on the side and speed of the NPC.
   speed?: number;
   onClick: () => void;
+  energy: number
+
 }) => {
   const [spriteSheet, setSpriteSheet] = useState<Spritesheet>();
 
@@ -104,17 +107,52 @@ export const Character = ({
   const emojiText = (e:string, x?: number) => (
     <Text x={x || 12} y={-36} scale={{ x: 1, y: 1 }} text={e} anchor={{ x: 0.5, y: 0.5 }} />
   )
+
+  const isLowBattery = energy < 20 && energy > 0
+  const isSleeping = energy === 0
+
+
   return (
     <Container x={x} y={y} interactive={true} pointerdown={onClick} cursor="pointer">
+      
+      {
+      isLowBattery ? (
+        <>{emojiText('🪫')}</>
+      ) : isSleeping ? (
+        <>{emojiText('💤')}</>
+      ) : isThinking ? (
+        <>{emojiText('💭')}</>
+      ) : isSpeaking ? (
+        <>{emojiText('💬')}</>
+      ) : emoji ? (
+        <>{emojiText(emoji)}</>
+      ) : (
+        <>{emojiText(randomEmoji)}</>
+      )
+    }
+
+
+
+     {/* { isLowBattery && <>{emojiText('🪫')}</> }
+      { isSleeping  && <>{emojiText('💤')}</> }
+
       {isThinking && (
-        // TODO: We'll eventually have separate assets for thinking and speech animations.
         <>{emojiText('💭')}</>
       )}
       {isSpeaking && ( // 
-        // TODO: We'll eventually have separate assets for thinking and speech animations.
         <>{emojiText('💬')}</>
       )}
+      {emoji && (
+        <>{emojiText(emoji)}</>
+      )}
+      
+      {
+        !isThinking && !isSpeaking && !!!emoji &&  
+        <>{emojiText(randomEmoji)}</>
+      }  */}
+
       {isViewer && <ViewerIndicator />}
+
       <AnimatedSprite
         ref={ref}
         isPlaying={isMoving}
@@ -123,14 +161,8 @@ export const Character = ({
         anchor={{ x: 0.5, y: 0.5 }}
         scale={{ x: 1, y: 1 }} 
       />
-      {emoji && (
-        <>{emojiText(emoji)}</>
-      )}
-      
-       {
-        !isThinking && !isSpeaking && !!!emoji  &&  
-        <>{emojiText(randomEmoji)}</>
-      }
+
+     
     </Container>
   );
 };

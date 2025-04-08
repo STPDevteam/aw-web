@@ -19,7 +19,7 @@ export default function PlayerDetails({
   playerId,
   setSelectedElement,
   scrollViewRef,
-  onClearFEAgent
+  onClickAgent
 }: {
   worldId: Id<'worlds'>;
   engineId: Id<'engines'>;
@@ -27,7 +27,7 @@ export default function PlayerDetails({
   playerId?: GameId<'players'>;
   setSelectedElement: SelectElement;
   scrollViewRef: React.RefObject<HTMLDivElement>;
-  onClearFEAgent:() => void
+  onClickAgent:() => void
 
 }) {
   const humanTokenIdentifier = useQuery(api.world.userStatus, { worldId });
@@ -220,7 +220,7 @@ export default function PlayerDetails({
 
         <Image src={Close} w="34px" h="34px" className='click' onClick={() => {
           setSelectedElement(undefined)
-          onClearFEAgent()
+          onClickAgent()
         }}/>
       </Box>
 

@@ -1,6 +1,6 @@
 import React, { useState,FC, useEffect } from 'react'
 import { Box, Text, Image } from '@chakra-ui/react'
-import { Search, Back, LowBattery, Fold} from '@/images'
+import { Search, Back, LowBattery, Fold, ZZZ } from '@/images'
 import { FEPlayerDetails } from './FEPlayerDetails'
 import { ServerGame } from '@/hooks/serverGame';
 import { motion } from 'framer-motion';
@@ -15,14 +15,27 @@ interface iSearchAgents {
     worldId:any
     engineId: Id<'engines'>
     scrollViewRef: React.RefObject<HTMLDivElement>
+    selectedPlayerId: string
 }
-export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldId, engineId, scrollViewRef }) => {  
+export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldId, engineId, scrollViewRef, selectedPlayerId }) => {  
     const [isHover, setHover] = useState<boolean>(false)
     const [isDetail, setDetail] = useState<boolean>(false)
     const [keyword, setKeyword] = useState<string>('')
     const [currentFEAgent, setCurrentFEAgent] = useState<any>()
     const [filteredList, setFilteredList] = useState<any[]>([])
 
+    // const a = agentList.filter(item => item.energy < 21)
+    // console.log('aa', a)
+    useEffect(() => {   
+        if(selectedPlayerId) {
+            const taegetAgent = agentList.find(item => item.playerId === selectedPlayerId)
+            if(taegetAgent) {
+                setCurrentFEAgent(taegetAgent)
+                setDetail(true)
+            }
+            
+        }
+    },[selectedPlayerId])
     useEffect(() => {
         filterList()
     },[keyword])
@@ -107,7 +120,7 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
                                 engineId={engineId} 
                                 game={game} 
                                 currentFEAgent={currentFEAgent} 
-                                onClearFEAgent={() => setCurrentFEAgent(null)}/>
+                                onClickAgent={() => setCurrentFEAgent(null)}/>
 
                         }
                     </Box>
@@ -141,7 +154,35 @@ interface iAgentItem {
 export const AgentItem:FC<iAgentItem> = ({
     item
 }) => {
-    const isLowBattery = false
+    const isLowBattery = item.energy < 20 && item.energy > 0
+    const isSleeping = item.energy === 0
+    const isActity = item.energy >= 20
+
+
+
+
+    const style = {
+        isLowBattery: {
+            bg: 'linear-gradient(to right, #E7E5DE 0%,#E1E3DF 45%, #C3827D 100%)',
+            progress: 'linear-gradient(to right, #F8ED7E, #E77C46)',
+            icon: LowBattery
+        },
+        isSleeping: {
+            bg: '#C2D0DD',
+            progress: 'rgba(0,0,0,0.1)',
+            icon: ZZZ
+        },
+        isActity: {
+            bg: 'rgba(255, 255, 255, 0.5)',
+            progress: 'linear-gradient(to right, #C4F77E, #46B6E7)',
+            icon: null
+        },
+
+    }
+    const currentStyle = isLowBattery ? style.isLowBattery : isSleeping ? style.isSleeping : style.isActity;
+
+
+
     return (
         <Box           
             className=' fx-row ai-ct jc-sb w100 click'  
@@ -149,7 +190,7 @@ export const AgentItem:FC<iAgentItem> = ({
             px="13px"
             py="10px"
             borderRadius="10px" 
-            bg={isLowBattery ? 'linear-gradient(to right, #E7E5DE 0%,#E1E3DF 45%, #C3827D 100%)' : 'rgba(255, 255, 255, 0.5)'}
+            bg={currentStyle.bg}
         >
             <Box  className='fx-row ai-ct w100'>
                 {/* logo */}
@@ -173,7 +214,7 @@ export const AgentItem:FC<iAgentItem> = ({
                         <Box className=''>
                             <Text fontSize="14px" color='rgba(83, 92, 95, 1)'>Power</Text>
                             <Box w="152px" bgColor='#C5C5C5' h='14px' borderRadius='10px' mt="5px">
-                                <Box w={`${item.energy}%`} h='100%' borderRadius='10px' bg={ isLowBattery ? 'linear-gradient(to right, #F8ED7E, #E77C46)' : 'linear-gradient(to right, #C4F77E, #46B6E7)'}/>
+                                <Box w={`${item.energy}%`} h='100%' borderRadius='10px' bg={currentStyle.progress}/>
                             </Box>
                         </Box>
                     </Box>
@@ -181,7 +222,7 @@ export const AgentItem:FC<iAgentItem> = ({
                 </Box>
             </Box>    
             {
-                isLowBattery && <Image src={LowBattery} w='24px' h='24px' pos='absolute' top='10px' right='12px'/>
+                currentStyle.icon && <Image src={currentStyle.icon} w='24px' h='24px' pos='absolute' top='10px' right='12px'/>
             }
         </Box>
     )

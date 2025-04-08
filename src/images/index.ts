@@ -67,3 +67,4 @@ export { default as Search } from "./search.png";
 export { default as Back } from "./back.png";
 export { default as LowBattery } from "./lowBattery.png";
 export { default as Fold } from "./fold.png";
+export { default as ZZZ } from "./zzz.png";

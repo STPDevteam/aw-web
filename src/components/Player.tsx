@@ -23,7 +23,7 @@ export const Player = ({
   onClick,
   historicalTime,
   engineId,
-  onClearFEAgent
+  onClickAgent
 }: {
   engineId: Id<'engines'>,
   game: ServerGame;
@@ -32,7 +32,7 @@ export const Player = ({
 
   onClick: SelectElement;
   historicalTime?: number;
-  onClearFEAgent:() => void
+  onClickAgent:(p:any) => void
 }) => {
   const playerCharacter = game.playerDescriptions.get(player.id)?.character;
   if (!playerCharacter) {
@@ -81,6 +81,7 @@ export const Player = ({
         isMoving={historicalLocation.speed > 0}
         isThinking={isThinking}
         isSpeaking={isSpeaking}
+        energy={player.energy || 100}
         emoji={
           player.activity && player.activity.until > (historicalTime ?? Date.now())
             ? player.activity?.emoji
@@ -96,7 +97,7 @@ export const Player = ({
           // moveTo({ playerId: player.id, destination: { x: 51, y: 52} })
 
           onClick({ kind: 'player', id: player.id });
-          onClearFEAgent()
+          onClickAgent(player)
         }}
       />
     </>
