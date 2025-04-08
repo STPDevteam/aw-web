@@ -819,9 +819,9 @@ http.route({
   }),
 });
 
-// Get total inferences count across all agents
+// Get all stats
 http.route({
-  path: '/api/agent-stats/total-inferences',
+  path: '/api/agent-stats/all',
   method: 'GET',
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
@@ -836,7 +836,7 @@ http.route({
     }
     
     try {
-      const stats = await ctx.runQuery(api.aiTown.game.getTotalInferencesPublic, { 
+      const stats = await ctx.runQuery(api.aiTown.game.getAgentStatsPublic, { 
         worldId: worldId as Id<'worlds'>
       });
       

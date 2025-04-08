@@ -81,7 +81,22 @@ export const internal_createDigitalTwin = internalMutation({
       throw new Error(`Digital twin already exists for wallet address: ${args.userWalletAddress}`);
     }
 
-    // 2. Insert the new digital twin document
+    // 2. Find the walletUser to update points
+    const walletUser = await ctx.db
+      .query("walletUsers")
+      .withIndex("walletAddress", (q) => q.eq("walletAddress", args.userWalletAddress))
+      .unique();
+
+    if (!walletUser) {
+      throw new Error(`User with wallet address ${args.userWalletAddress} not found`);
+    }
+
+    // 3. Update the user's points by adding 500
+    await ctx.db.patch(walletUser._id, {
+      points: (walletUser.points || 0) + 500, // Add 500 points, defaulting to 0 if points is undefined
+    });
+
+    // 4. Insert the new digital twin document
     const twinId = await ctx.db.insert("digitalTwins", {
       userWalletAddress: args.userWalletAddress,
       profession: args.profession,

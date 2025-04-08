@@ -979,31 +979,55 @@ export const getMostFavoritedAgent = internalQuery({
 });
 
 // Get total inferences count across all agents
-export const getTotalInferences = internalQuery({
+export const getAgentStats = internalQuery({
   args: {
     worldId: v.id('worlds'),
   },
-  handler: async (ctx, args) => {
+  // Define explicit return type for the handler
+  handler: async (ctx, args): Promise<{
+    totalInferences: number;
+    liveAgents: number;
+    totalAgents: number;
+  }> => {
     // Get all agent descriptions
     const agentDescriptions = await ctx.db
       .query('agentDescriptions')
       .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
       .collect();
     
-    // Sum up all inferences
     let totalInferences = 0;
-    let agentCount = 0;
-    
     for (const agent of agentDescriptions) {
       totalInferences += agent.inferences || 0;
-      agentCount++;
     }
     
+    const digitalTwins = await ctx.db.query("digitalTwins").collect();
+    const digitalTwinCount = digitalTwins.length;
+    const liveAgents = 100;
+    const totalAgents = liveAgents + digitalTwinCount;
+
     return {
       totalInferences,
-      agentCount
+      liveAgents,
+      totalAgents,
     };
   },
+});
+
+// Public version of getTotalInferences
+export const getAgentStatsPublic = query({
+    args: {
+        worldId: v.id('worlds'),
+    },
+    // Define matching explicit return type for the handler
+    handler: async (ctx, args): Promise<{
+      totalInferences: number;
+      liveAgents: number;
+      totalAgents: number;
+    }> => {
+        return await ctx.runQuery(internal.aiTown.game.getAgentStats, { 
+            worldId: args.worldId 
+        });
+    },
 });
 
 // Public query functions for HTTP access
@@ -1039,18 +1063,6 @@ export const getMostFavoritedAgentPublic = query({
     worldName: string;
   } | null> => {
     return await ctx.runQuery(internal.aiTown.game.getMostFavoritedAgent, args);
-  },
-});
-
-export const getTotalInferencesPublic = query({
-  args: {
-    worldId: v.id('worlds'),
-  },
-  handler: async (ctx, args): Promise<{
-    totalInferences: number;
-    agentCount: number;
-  }> => {
-    return await ctx.runQuery(internal.aiTown.game.getTotalInferences, args);
   },
 });
 
