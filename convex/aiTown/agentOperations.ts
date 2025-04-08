@@ -100,17 +100,51 @@ export const agentGenerateMessage = internalAction({
       return;
     }
     
-    // *** Get AgentDescription ID needed for update ***
+    // Get AgentDescription for energy check and ID
     const agentDesc = await ctx.runQuery(internal.aiTown.agentDescription.getAgentDescription, {
       worldId: args.worldId,
       agentId: args.agentId as GameId<'agents'>
     });
     if (!agentDesc) {
       console.error(`[${args.agentId}] Agent description not found! Cannot generate message or update stats.`);
-      // Optionally finish the operation here if needed
+      // Finish the operation to unblock the agent
+      try {
+          await ctx.runMutation(api.aiTown.main.sendInput, {
+            worldId: args.worldId,
+            name: 'agentFinishSendingMessage', // Use the correct input name
+            args: { 
+                agentId: args.agentId, 
+                conversationId: args.conversationId, 
+                timestamp: Date.now(), 
+                operationId: args.operationId, 
+                leaveConversation: true // Assume leave if we can't generate
+            }
+          });
+       } catch (e) { console.error(`[${args.agentId}] Error finishing no-desc operation:`, e); }
       return;
     }
-    // *** End Get ID ***
+
+    // *** NEW: Check Energy BEFORE AI call ***
+    const currentEnergy = agentDesc.energy ?? 0;
+    if (currentEnergy <= 0) {
+      console.log(`[${args.agentId}] Has 0 energy. Skipping message generation.`);
+      // Finish the operation immediately, forcing leave
+      try {
+          await ctx.runMutation(api.aiTown.main.sendInput, {
+            worldId: args.worldId,
+            name: 'agentFinishSendingMessage',
+            args: { 
+                agentId: args.agentId, 
+                conversationId: args.conversationId, 
+                timestamp: Date.now(), 
+                operationId: args.operationId, 
+                leaveConversation: true 
+            }
+          });
+       } catch (e) { console.error(`[${args.agentId}] Error finishing no-energy message operation:`, e); }
+      return; // Stop processing
+    }
+    // *** END ENERGY CHECK ***
     
     let completionFn;
     switch (args.type) {
@@ -126,6 +160,8 @@ export const agentGenerateMessage = internalAction({
       default:
         assertNever(args.type);
     }
+
+    // Only proceed with AI call if energy > 0
     const completion = await completionFn(
       ctx,
       args.worldId,
