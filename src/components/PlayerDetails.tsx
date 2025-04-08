@@ -46,10 +46,15 @@ export default function PlayerDetails({
   const player = playerId && game.world.players.get(playerId);
   const playerConversation = player && game.world.playerConversation(player);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> 6851c68 (feat: search agents)
   
+=======
+
+
+>>>>>>> 75075d4 (feat: agents conversation)
   const previousConversation = useQuery(
     api.world.previousConversation,
     playerId ? { worldId, playerId } : 'skip',

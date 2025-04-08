@@ -3,35 +3,48 @@ import { Box, Image, Text  } from '@chakra-ui/react'
 import { useEffect, useMemo, useState} from 'react';
 import { SwitchTab} from "@/components"
 import { AgentItem } from './SearchAgents'
-import { ServerGame } from '@/hooks/serverGame';
+import { ServerGame } from '@/hooks/serverGame'
 import { formatYYYYMMDDHHMMSS } from '@/utils/tool'
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { Id } from '../../../convex/_generated/dataModel'
+import { Messages } from '@/components/Messages'
 
 interface iFEPlayerDetails {
     currentFEAgent: any
     onClearFEAgent: () => void
     game: ServerGame
+    worldId: any
+    engineId: Id<'engines'>
+    scrollViewRef: React.RefObject<HTMLDivElement>
 }
 export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
     currentFEAgent,
     onClearFEAgent,
-    game
+    game,
+    worldId,
+    engineId,
+    scrollViewRef
 }) => {
+    const playerId = currentFEAgent.playerId
     // console.log('currentFEAgent', currentFEAgent)
-    const player = currentFEAgent.playerId && game.world.players.get(currentFEAgent.playerId); 
+    const player =  playerId && game.world.players.get(playerId)
     
     const playerConversation = player && game.world.playerConversation(player)
 
     // console.log('player', player)
     
     // console.log('playerConversation', playerConversation)
-
+    
+    const previousConversation = useQuery(
+        api.world.previousConversation,
+        playerId ? { worldId, playerId } : 'skip',
+    )
  
     const [selectedIdx, setSelectedIdx] = useState(0)
-    
-    
-   
+       
     return (
-        <Box className='w100 ' >
+        <Box className='w100'>
             {
                 currentFEAgent &&
                 <Box className=''>
@@ -46,15 +59,26 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
                         {
                             selectedIdx === 0 ? <>
                                 {
-                                    playerConversation && playerConversation.map((item:any) => (
-                                    <Box key={item.timestamp} className='fx-col' mt="10px" bgColor="rgba(255,255,255,0.5)">
-                                        <Box className='fx-row ai-ct jc-sb fm3'>
-                                            <Text color="#000" fontWeight={700} fontSize={['14px','14px','14px','14px','14px','16px']}>{item.role}</Text>
-                                            <Text color="#535C5F" fontWeight={400} fontSize={['14px','14px','14px','14px','14px','16px']}>{formatYYYYMMDDHHMMSS(item.timestamp) }</Text>
-                                        </Box>
-                                        <Text color="#535C5F" fontWeight={400} mt="8px" fontSize={['14px']}>{item.content}</Text>
-                                    </Box>
-                                    ))
+                                     !playerConversation && previousConversation && 
+                                    <Messages
+                                        worldId={worldId}
+                                        engineId={engineId}
+                                        inConversationWithMe={false}
+                                        conversation={{ kind: 'archived', doc: previousConversation }}
+                                        humanPlayer={undefined}
+                                        scrollViewRef={scrollViewRef}
+                                    />
+                                     
+                                        
+                                    // playerConversation && playerConversation.map((item:any) => (
+                                    // <Box key={item.timestamp} className='fx-col' mt="10px" bgColor="rgba(255,255,255,0.5)">
+                                    //     <Box className='fx-row ai-ct jc-sb fm3'>
+                                    //         <Text color="#000" fontWeight={700} fontSize={['14px','14px','14px','14px','14px','16px']}>{item.role}</Text>
+                                    //         <Text color="#535C5F" fontWeight={400} fontSize={['14px','14px','14px','14px','14px','16px']}>{formatYYYYMMDDHHMMSS(item.timestamp) }</Text>
+                                    //     </Box>
+                                    //     <Text color="#535C5F" fontWeight={400} mt="8px" fontSize={['14px']}>{item.content}</Text>
+                                    // </Box>
+                                    // ))
                                 }
                             </>:
                             <Box>

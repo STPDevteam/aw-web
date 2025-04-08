@@ -4,14 +4,19 @@ import { Search, Back, LowBattery, Fold} from '@/images'
 import { FEPlayerDetails } from './FEPlayerDetails'
 import { ServerGame } from '@/hooks/serverGame';
 import { motion } from 'framer-motion';
+import { Id } from '../../../convex/_generated/dataModel'
+
 const MotionImage = motion(Image);
 
 interface iSearchAgents {
     agentList: any[]
     game: ServerGame
     onFold:() => void
+    worldId:any
+    engineId: Id<'engines'>
+    scrollViewRef: React.RefObject<HTMLDivElement>
 }
-export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold}) => {  
+export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldId, engineId, scrollViewRef }) => {  
     const [isHover, setHover] = useState<boolean>(false)
     const [isDetail, setDetail] = useState<boolean>(false)
     const [keyword, setKeyword] = useState<string>('')
@@ -96,7 +101,13 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold}) => {
                                     </Box> 
                                 }
                             </Box> : 
-                            <FEPlayerDetails game={game} currentFEAgent={currentFEAgent} onClearFEAgent={() => setCurrentFEAgent(null)}/>
+                            <FEPlayerDetails 
+                                scrollViewRef={scrollViewRef}
+                                worldId={worldId} 
+                                engineId={engineId} 
+                                game={game} 
+                                currentFEAgent={currentFEAgent} 
+                                onClearFEAgent={() => setCurrentFEAgent(null)}/>
 
                         }
                     </Box>

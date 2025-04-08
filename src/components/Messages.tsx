@@ -71,19 +71,14 @@ export function Messages({
   }
   const messageNodes: { time: number; node: React.ReactNode }[] = messages.map((m) => {
     const node = (
-      <Box key={`text-${m._id}`} className=" " >
+      <Box key={`text-${m._id}`} className=" " bgColor='rgba(255,255,255,0.5)' borderRadius='10px' px="12px" py="10px" mb="10px">
         <Box className="fx-row ai-ct jc-sb " mt="10px">
-          <Text color="#E0E0E0" fontSize={['14px','14px','14px','14px','14px','16px']} className='fm2'>{m.authorName}</Text>
+          <Text color="#000"  fontSize={['14px','14px','14px','14px','14px','16px']} className='fm2'>{m.authorName}</Text>
           <time dateTime={m._creationTime.toString()} className='gray1'>
             {new Date(m._creationTime).toLocaleString()}
           </time>
-        </Box>
-        {/* <div className={clsx('bubble', m.author === humanPlayerId && 'bubble-mine')}>
-          <p className="bg-white -mx-3 -my-1" >{m.text}</p>
-        </div> */}
-        <Box className='box_clip' p="20px" bgColor='#838B8D' mt="10px">
-          <Text className='fm3' color="#101010" fontWeight={350} fontSize={['14px','14px','14px','14px','14px','16px']}>{m.text}</Text>
-        </Box>
+        </Box>        
+        <Text className='fm3' mt="10px" color="#000" fontWeight={400} fontSize={['14px','14px','14px','14px','14px','16px']}>{m.text}</Text>
       </Box>
     );
     return { node, time: m._creationTime };

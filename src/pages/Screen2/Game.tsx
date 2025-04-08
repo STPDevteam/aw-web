@@ -141,7 +141,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
       </Box>     
 
       {
-        agentInfoVisible && ( // 
+        true && ( //  agentInfoVisible
           <Box 
             className=''
             zIndex={2}
@@ -153,7 +153,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
             overflowY="scroll"
             onWheel={(e) => e.stopPropagation()} 
           >
-            { list && !!list.length && <SearchAgents agentList={list} game={game} onFold={() => setAgentInfoVisible(false)}/>}
+            { list && !!list.length && <SearchAgents  scrollViewRef={scrollViewRef} engineId={engineId} worldId={worldId}  agentList={list} game={game} onFold={() => setAgentInfoVisible(false)}/>}
             
             {/* <PlayerDetails
               worldId={worldId} 
