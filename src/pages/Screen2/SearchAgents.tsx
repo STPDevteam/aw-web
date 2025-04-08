@@ -213,7 +213,7 @@ export const AgentItem:FC<iAgentItem> = ({
 
                         <Box w="1px" h="33px" bgColor="#fff"/>
                         <Box className=''>
-                            <Text fontSize="14px" color='rgba(83, 92, 95, 1)'>Power</Text>
+                            <Text fontSize="14px" color='rgba(83, 92, 95, 1)'>Inference Power</Text>
                             <Box w="152px" bgColor='#C5C5C5' h='14px' borderRadius='10px' mt="5px">
                                 <Box w={`${item.energy}%`} h='100%' borderRadius='10px' bg={currentStyle.progress}/>
                             </Box>
