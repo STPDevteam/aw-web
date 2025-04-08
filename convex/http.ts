@@ -1208,4 +1208,129 @@ function isValidApiPath(module: string, func: string): boolean {
   );
 }
 
+// Create Digital Twin Endpoint
+http.route({
+  path: "/createDigitalTwin",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), { 
+          status: 400, 
+          headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    const { userWalletAddress, profession, interest } = body;
+
+    if (!userWalletAddress || !profession || !interest) {
+      return new Response(JSON.stringify({ error: "Missing required fields: userWalletAddress, profession, interest" }), { 
+          status: 400, 
+          headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // Optional: Early check if twin exists (Mutation also checks)
+    try {
+        const existing = await ctx.runQuery(internal.digitalTwin.internal_getDigitalTwin, { userWalletAddress });
+        if (existing) {
+            return new Response(JSON.stringify({ error: "Digital twin already exists for this address" }), { 
+                status: 409, // Conflict
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+    } catch (e) {
+        // Log query error but proceed, mutation will handle uniqueness
+        console.error("Error checking existing twin (proceeding):", e);
+    }
+
+    try {
+      // 1. Generate description via internal action
+      const description = await ctx.runAction(internal.digitalTwin.internal_generateDescription, { 
+          profession, 
+          interest 
+      });
+
+      // 2. Generate a simple name (e.g., based on profession)
+      // Customize as needed
+      const name = `${profession} Twin`; 
+
+      // 3. Create the twin via internal mutation
+      const twinId = await ctx.runMutation(internal.digitalTwin.internal_createDigitalTwin, {
+        userWalletAddress,
+        profession,
+        interest,
+        description,
+        name,
+      });
+
+      // 4. Fetch the created twin data to return it
+      const createdTwin = await ctx.runQuery(internal.digitalTwin.internal_getDigitalTwin, { userWalletAddress });
+
+      // 5. Return success response with created data
+      return new Response(JSON.stringify({ success: true, twin: createdTwin }), {
+        status: 201, // Created
+        headers: { "Content-Type": "application/json" },
+      });
+
+    } catch (error: any) {
+      console.error("Error creating digital twin:", error);
+      // Handle potential errors like OpenAI issues or the uniqueness constraint from mutation
+      if (error.message?.includes("Digital twin already exists")) {
+           return new Response(JSON.stringify({ error: "Digital twin already exists for this address" }), { 
+               status: 409, // Conflict
+               headers: { "Content-Type": "application/json" }
+           });
+      }
+      return new Response(JSON.stringify({ error: "Failed to create digital twin", details: error.message || String(error) }), { 
+          status: 500, // Internal Server Error
+          headers: { "Content-Type": "application/json" }
+      });
+    }
+  }),
+});
+
+// Get Digital Twin Endpoint
+http.route({
+  path: "/getDigitalTwin",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const userWalletAddress = url.searchParams.get("userWalletAddress");
+
+    if (!userWalletAddress) {
+      return new Response(JSON.stringify({ error: "Missing required query parameter: userWalletAddress" }), { 
+          status: 400, 
+          headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    try {
+        const twin = await ctx.runQuery(internal.digitalTwin.internal_getDigitalTwin, { userWalletAddress });
+
+        if (!twin) {
+            return new Response(JSON.stringify({ error: "Digital twin not found for this address" }), { 
+                status: 404, // Not Found
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
+        // Return the found twin data
+        return new Response(JSON.stringify(twin), {
+            status: 200, // OK
+            headers: { "Content-Type": "application/json" },
+        });
+
+    } catch (error: any) {
+        console.error("Error fetching digital twin:", error);
+        return new Response(JSON.stringify({ error: "Failed to fetch digital twin", details: error.message || String(error) }), { 
+            status: 500, // Internal Server Error
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+  }),
+});
+
 export default http;

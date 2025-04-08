@@ -40,6 +40,7 @@ import type * as aiTown_worldMap from "../aiTown/worldMap.js";
 import type * as constants from "../constants.js";
 import type * as crons from "../crons.js";
 import type * as data_agentNames from "../data/agentNames.js";
+import type * as digitalTwin from "../digitalTwin.js";
 import type * as engine_abstractGame from "../engine/abstractGame.js";
 import type * as engine_historicalObject from "../engine/historicalObject.js";
 import type * as favorites from "../favorites.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   constants: typeof constants;
   crons: typeof crons;
   "data/agentNames": typeof data_agentNames;
+  digitalTwin: typeof digitalTwin;
   "engine/abstractGame": typeof engine_abstractGame;
   "engine/historicalObject": typeof engine_historicalObject;
   favorites: typeof favorites;

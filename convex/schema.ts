@@ -124,6 +124,17 @@ export default defineSchema({
     .index('userDaily', ['userId', 'checkInDate'])
     .index('walletAddress', ['walletAddress']),
 
+  // Digital Twins table - stores information about digital twins
+  digitalTwins: defineTable({
+    userWalletAddress: v.string(),
+    name: v.string(),
+    description: v.string(),
+    profession: v.string(),
+    interest: v.string(),
+    createdAt: v.number(),
+  })
+    .index('by_userWalletAddress', ['userWalletAddress']),
+
   ...agentTables,
   ...aiTownTables,
   ...engineTables,
