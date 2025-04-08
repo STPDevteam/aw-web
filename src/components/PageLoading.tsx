@@ -22,7 +22,7 @@ export const PageLoading: FC<iPageLoading> = ({
     useEffect(() => {
 
         let start = 0
-        const duration = 3000
+        const duration = 10000
         const interval = 100;
         const step = interval / duration
 
