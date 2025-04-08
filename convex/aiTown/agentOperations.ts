@@ -61,14 +61,14 @@ export const agentRememberConversation = internalAction({
       await sleep(200);
       
       // Send completion input
-      await ctx.runMutation(api.aiTown.main.sendInput, {
-        worldId: args.worldId,
-        name: 'finishRememberConversation',
-        args: {
-          agentId: args.agentId,
-          operationId: args.operationId,
-        }
-      });
+        await ctx.runMutation(api.aiTown.main.sendInput, {
+          worldId: args.worldId,
+          name: 'finishRememberConversation',
+          args: {
+            agentId: args.agentId,
+            operationId: args.operationId,
+          }
+        });
     } catch (error) {
       console.error("Error in agentRememberConversation:", error);
     }
@@ -146,13 +146,13 @@ export const agentGenerateMessage = internalAction({
     await ctx.runMutation(internal.aiTown.agent.agentSendMessage, {
       worldId: args.worldId,
       conversationId: args.conversationId,
-      agentId: args.agentId,
+          agentId: args.agentId,
       playerId: args.playerId,
       text,
       leaveConversation,
       messageUuid: args.messageUuid,
-      operationId: args.operationId,
-    });
+          operationId: args.operationId,
+        });
   },
 });
 

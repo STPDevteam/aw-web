@@ -15,6 +15,7 @@ import { stopPlayer, findRoute, blocked, movePlayer } from './movement';
 import { inputHandler } from './inputHandler';
 import { characters } from '../../data/characters';
 import { PlayerDescription } from './playerDescription';
+import { AgentDescription } from './agentDescription';
 
 const pathfinding = v.object({
   destination: point,
@@ -54,6 +55,7 @@ export const serializedPlayer = {
   position: point,
   facing: vector,
   speed: v.number(),
+  energy: v.optional(v.number()),
 };
 export type SerializedPlayer = ObjectType<typeof serializedPlayer>;
 
@@ -68,9 +70,10 @@ export class Player {
   position: Point;
   facing: Vector;
   speed: number;
+  energy?: number;
 
   constructor(serialized: SerializedPlayer) {
-    const { id, human, pathfinding, activity, lastInput, position, facing, speed } = serialized;
+    const { id, human, pathfinding, activity, lastInput, position, facing, speed, energy } = serialized;
     this.id = parseGameId('players', id);
     this.human = human;
     this.pathfinding = pathfinding;
@@ -79,6 +82,7 @@ export class Player {
     this.position = position;
     this.facing = facing;
     this.speed = speed;
+    this.energy = energy;
   }
 
   tick(game: Game, now: number) {
@@ -280,6 +284,7 @@ export class Player {
         position,
         facing: { dx: 1, dy: 0 },
         speed: 0,
+        energy: 100,
       }),
     );
     game.playerDescriptions.set(
@@ -307,7 +312,7 @@ export class Player {
   }
 
   serialize(): SerializedPlayer {
-    const { id, human, pathfinding, activity, lastInput, position, facing, speed } = this;
+    const { id, human, pathfinding, activity, lastInput, position, facing, speed, energy } = this;
     return {
       id,
       human,
@@ -317,6 +322,7 @@ export class Player {
       position,
       facing,
       speed,
+      energy,
     };
   }
 }

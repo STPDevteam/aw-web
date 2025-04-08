@@ -354,9 +354,22 @@ export class Game extends AbstractGame {
     for (const conversation of this.world.conversations.values()) {
       conversation.tick(this, now);
     }
+    
+    // Agent ticks - this is where agent logic including energy updates might happen
     for (const agent of this.world.agents.values()) {
       agent.tick(this, now);
     }
+
+    // *** NEW: Update Player energy from AgentDescription ***
+    for (const agent of this.world.agents.values()) {
+      const agentDesc = this.agentDescriptions.get(agent.id);
+      const player = this.world.players.get(agent.playerId);
+      if (agentDesc && player) {
+        // Update player's energy. Default to 0 if not set on agentDesc.
+        player.energy = agentDesc.energy ?? 0; 
+      }
+    }
+    // *** END NEW ***
 
     // Save each player's location into the history buffer at the end of
     // each tick.
@@ -608,22 +621,20 @@ export const getAllAgents = internalQuery({
     const players = world.players || [];
     
     // Create a mapping from agentId to playerId
-    const agentPlayerMap = new Map();
+    const agentPlayerMap = new Map<string, string>();
     for (const agent of agents) {
       agentPlayerMap.set(agent.id, agent.playerId);
     }
     
-    // Create a mapping from playerId to player name
-    const playerNameMap = new Map();
+    // Create a mapping from playerId to player name and description
+    const playerInfoMap = new Map<string, { name: string; description: string }>();
     for (const player of players) {
-      // Get the corresponding playerDescription
       const playerDesc = await ctx.db
         .query('playerDescriptions')
         .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('playerId', player.id))
         .unique();
-      
       if (playerDesc) {
-        playerNameMap.set(player.id, playerDesc.name);
+        playerInfoMap.set(player.id, { name: playerDesc.name, description: playerDesc.description });
       }
     }
     
@@ -633,7 +644,7 @@ export const getAllAgents = internalQuery({
       .collect();
     
     // Create a map of agent IDs that have been favorited
-    const favoritedAgentIds = new Set();
+    const favoritedAgentIds = new Set<string>();
     favoriteAgents.forEach(favorite => {
       favoritedAgentIds.add(favorite.agentId);
     });
@@ -641,28 +652,17 @@ export const getAllAgents = internalQuery({
     // Merge data
     const agentsWithInfo = agentDescriptions.map(agent => {
       const playerId = agentPlayerMap.get(agent.agentId);
-      const name = playerNameMap.get(playerId) || 'Unknown';
-      
-      // Get player object and handle the case where energy is 0
-      const energy = agent.energy || 100;
-      
-      // Use world data time or current time
-      const currentTime = Date.now();
-      
-      // If energy is 0, handle the player's activity status
-      if (energy <= 0) {
-        // Find the player object
-        const playerObj = players.find(p => p.id === playerId);
-        if (playerObj) {
-          // If there is no activity or the activity has ended, log that this player needs to display low battery emoji
-          // Note: This only logs the status; actual modification needs to be handled in mutation
-          console.log(`Agent ${agent.agentId} has no energy, should display low battery emoji`);
-        }
-      }
+      const playerInfo = playerId ? playerInfoMap.get(playerId) : undefined;
+      const name = playerInfo?.name || 'Unknown';
+      const description = playerInfo?.description || '';
+      const energy = agent.energy ?? 100;
+    
       
       return {
         agentId: agent.agentId,
+        playerId: playerId || null,
         name: name,
+        description: description,
         energy: energy,
         inferences: agent.inferences || 0,
         tips: agent.tips || 0,
