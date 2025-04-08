@@ -72,6 +72,19 @@ export const Player = ({
     );
   const tileDim = game.worldMap.tileDim;
   const historicalFacing = { dx: historicalLocation.dx, dy: historicalLocation.dy };
+  
+  // if(player && player.id === 'p:32' ) {
+  //   console.log('player', player)
+
+  //   const isLowBattery = player.energy < 20 && player.energy > 0
+  // const isSleeping = player.energy === 0
+  // console.log('isLowBattery', isLowBattery)
+  // console.log('isSleeping', isSleeping)
+  // console.log('isThinking', isThinking)
+
+  // }
+
+
   return (
     <>
       <Character
@@ -79,9 +92,10 @@ export const Player = ({
         y={historicalLocation.y * tileDim + tileDim / 2}
         orientation={orientationDegrees(historicalFacing)}
         isMoving={historicalLocation.speed > 0}
+        isLowBattery={player.energy < 20 && player.energy > 0}
+        isSleeping={ player.energy === 0}
         isThinking={isThinking}
         isSpeaking={isSpeaking}
-        energy={player.energy || 100}
         emoji={
           player.activity && player.activity.until > (historicalTime ?? Date.now())
             ? player.activity?.emoji

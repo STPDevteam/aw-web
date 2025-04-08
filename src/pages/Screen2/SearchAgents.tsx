@@ -30,6 +30,7 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
         if(selectedPlayerId) {
             
             const taegetAgent = agentList.find(item => item.playerId === selectedPlayerId)
+            // console.log('taegetAgent11', taegetAgent)
             if(taegetAgent) {
                 setDetail(true)
                 setCurrentFEAgent(taegetAgent)
@@ -202,7 +203,7 @@ export const AgentItem:FC<iAgentItem> = ({
             <Box  className='fx-row ai-ct w100'>
                 {/* logo */}
                 <Box w="68px" h="68px"  borderRadius="50%" className='center'>
-                    <Image src={item.avatarUrl} border="4px solid rgba(255,255,255,0.6)" borderRadius='50%'/>
+                    <Image src={item.avatarUrl}  w="60px" h="56px" objectFit='cover' border="4px solid rgba(255,255,255,0.6)" borderRadius='50%'/>
                 </Box>
                 {/* info */}
                 <Box  className='fx-col w100 ' ml="11px"> 

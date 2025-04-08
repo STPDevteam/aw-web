@@ -16,7 +16,8 @@ export const Character = ({
   isViewer = false,
   speed = 0.1,
   onClick,
-  energy
+  isLowBattery,
+  isSleeping
 }: {
   // Path to the texture packed image.
   textureUrl: string;
@@ -37,7 +38,8 @@ export const Character = ({
   // The speed of the animation. Can be tuned depending on the side and speed of the NPC.
   speed?: number;
   onClick: () => void;
-  energy: number
+  isLowBattery?: boolean
+  isSleeping?: boolean
 
 }) => {
   const [spriteSheet, setSpriteSheet] = useState<Spritesheet>();
@@ -108,48 +110,45 @@ export const Character = ({
     <Text x={x || 12} y={-36} scale={{ x: 1, y: 1 }} text={e} anchor={{ x: 0.5, y: 0.5 }} />
   )
 
-  const isLowBattery = energy < 20 && energy > 0
-  const isSleeping = energy === 0
+
 
 
   return (
     <Container x={x} y={y} interactive={true} pointerdown={onClick} cursor="pointer">
-      
       {
-      isLowBattery ? (
-        <>{emojiText('🪫')}</>
-      ) : isSleeping ? (
-        <>{emojiText('💤')}</>
-      ) : isThinking ? (
-        <>{emojiText('💭')}</>
-      ) : isSpeaking ? (
-        <>{emojiText('💬')}</>
-      ) : emoji ? (
-        <>{emojiText(emoji)}</>
-      ) : (
-        <>{emojiText(randomEmoji)}</>
-      )
-    }
+        // isThinking ? (
+        //   <>{emojiText('💭')}</>
+        // ) : isLowBattery ? (
+        //   <>{emojiText('🪫')}</>
+        // ) : isSleeping ? (
+        //   <>{emojiText('💤')}</>
+        // ) : isSpeaking ? (
+        //   <>{emojiText('💬')}</>
+        // ) : emoji ? (
+        //   <>{emojiText(emoji)}</>
+        // ) : (
+        //   <>{emojiText(randomEmoji)}</>
+        // )
+      }
 
-
-
-     {/* { isLowBattery && <>{emojiText('🪫')}</> }
+      { isLowBattery && <>{emojiText('🪫')}</> }
       { isSleeping  && <>{emojiText('💤')}</> }
 
-      {isThinking && (
+      {isThinking && !!!isSleeping && !!!isLowBattery && (
         <>{emojiText('💭')}</>
       )}
-      {isSpeaking && ( // 
+      
+      {isSpeaking && !!!isSleeping && !!!isLowBattery && (
         <>{emojiText('💬')}</>
       )}
-      {emoji && (
+      {emoji && !!!isSleeping && !!!isLowBattery  && (
         <>{emojiText(emoji)}</>
       )}
       
       {
-        !isThinking && !isSpeaking && !!!emoji &&  
+        !isThinking && !isSpeaking && !!!emoji && !!!isLowBattery && !!!isSleeping  &&  
         <>{emojiText(randomEmoji)}</>
-      }  */}
+      } 
 
       {isViewer && <ViewerIndicator />}
 
