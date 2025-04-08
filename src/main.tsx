@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import './index.css';
@@ -21,10 +21,13 @@ import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { ReduxProvider } from '@/redux/ReduxProvider'
 import { base } from 'wagmi/chains'
+import { LoadingPortal } from '@/components/LoadingPortal'
 
 const queryClient = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+
+
+const MainApp = () => (
   <React.StrictMode>
     <ReduxProvider>
       <WagmiProvider config={config}>
@@ -39,9 +42,17 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </QueryClientProvider>
       </WagmiProvider>
     </ReduxProvider>
+    <LoadingPortal/>
   </React.StrictMode>
-);
+)
 
 
+ReactDOM.createRoot(document.getElementById('root')!).render(<MainApp/>)
 
 
+setTimeout(() => {
+  const loader = document.getElementById('initial-loading')
+  if (loader) {
+    loader.style.display = 'none'
+  }
+}, 3000)

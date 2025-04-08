@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks.ts'
 import { PageLoading, BorderButton } from '@/components'
 import { FEPlayerDetails } from './FEPlayerDetails'
 import { Mouse1, Mouse2, Mouse3, Search} from '@/images'
+import { SearchAgents } from './SearchAgents'
 
 export const mapContainerWidth = 1720
 export const mapContainerHeight = 661
@@ -24,19 +25,21 @@ export const mapRightWidth = 494
 
 export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
   
-  const [delayRender, setDelayRender] = useState(false)
+  const [agentInfoVisible, setAgentInfoVisible] = useState(false)
+  // const [delayRender, setDelayRender] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
   
   const [currentFEAgent, setCurrentFEAgent] = useState<any>()
-  const [mapLoadingStatus, setMapLoadingStatus] = useState<'notStarted' | 'loading' | 'end'>('loading')
+  const [mapLoadingStatus, setMapLoadingStatus] = useState<'notStarted' | 'loading' | 'end'>('end')
 
   const agentInfo = useAppSelector(selectedAgentInfo)
   const dispatch = useAppDispatch()
   const convex = useConvex();
   const [selectedElement, setSelectedElement] = useState<{
     kind: 'player';
-    id: GameId<'players'>;
-  }>();
+    id: GameId<'players'>
+  }>()
+  const scrollViewRef = useRef<HTMLDivElement>(null)
 
   const worldStatus = useQuery(api.world.defaultWorldStatus);
   const worldId = worldStatus?.worldId;
@@ -44,7 +47,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
 
 
   const game = useServerGame(worldId)
-
+  
 
   useWorldHeartbeat();
   
@@ -71,12 +74,12 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
 
   useEffect(() => {    
     document.addEventListener("mousedown", handleClickOutside)
-    const timer = setTimeout(() => {
-      setDelayRender(true);
-    }, 2800)
+    // const timer = setTimeout(() => {
+    //   setDelayRender(true);
+    // }, 2800)
   
     return () => {
-      clearTimeout(timer)
+      // clearTimeout(timer)
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
@@ -113,38 +116,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
   }
 
 
-  const welcomeText = () => (
-    <Box  className='fx-col ai-ct' maxW="700px" >
-      <Text fontWeight={400}  color='#838B8D'  className='fm3'  fontSize={['20px','20px','20px','24px','28px','32px']}>
-        Welcome to AI Town
-        </Text>
-        <Text
-          my={['30px','30px','30px','42px','48px','60px']}
-          fontWeight={350} 
-          fontSize={['14px','14px','14px','14px','14px','16px']}
-          className='fm3'
-          color='#838B8D'
-        >
-          <p>
-            <span>Introducing the first-ever live demo of 1,000 AI agents running in real-time – our tribute to </span>
-            <a className='gray click underline' href='https://github.com/joonspk-research/generative_agents' target='_blank'>Stanford Smallville</a> 
-            <span> and </span>
-            <a className='gray click underline' href='https://github.com/a16z-infra/ai-town'  target='_blank'>a16z AI Town</a>.
-          </p>
-          <p style={{ marginTop: '15px' }}>
-            <span>Built in collaboration with our core AI contributor </span>
-            <a className='gray click underline'  href='https://zhiqiangxie.com/'  target='_blank'>Zhiqiang Xie</a>
-            <span> from Stanford University, this simulation brings his </span>
-            <a className='gray click underline'  href='https://arxiv.org/abs/2411.03519'  target='_blank'>AI Metropolis</a>
-            <span> paper to life, enabling massively multi-agent simulations while drastically reducing compute and inferencing costs.</span>
-
-          </p>
-          <p  style={{ marginTop: '15px' }}>
-            <span>This is just the beginning – World.Fun is your launchpad to the Autonomous World era.</span>
-          </p>
-        </Text>
-    </Box>
-  )
+  
 
 
 
@@ -156,42 +128,51 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
       h="100vh"
       w="100vw"
     >
-      <Box pos='absolute' right="0px" bottom="240px" zIndex={99}> 
-        <Button className='fx-row ai-ct click jc-sb click' w="120px" h="64px" px="20px">
+      <Box pos='absolute' right="0px" bottom="240px" zIndex={2}> 
+        <Button className='fx-row ai-ct click jc-sb click' w="120px" h="64px" px="20px" onClick={() => setAgentInfoVisible(true)}>
             <Image src={Search} h="20px" w="20px" />
             <Text color="#000000" fontSize="14px" ml="12px" fontWeight={700}>Search</Text>
         </Button>
-      </Box>         
+      </Box>     
+
+      {
+        false && ( // agentInfoVisible
+          <Box 
+            className='bd1'
+            zIndex={2}
+            h="814px"
+            w="400px"
+            pos='absolute' 
+            right="10px" 
+            bottom="70px"
+            overflowY="scroll"
+            onWheel={(e) => e.stopPropagation()} 
+          >
+            <SearchAgents/>
+            
+            <PlayerDetails
+              worldId={worldId} 
+              engineId={engineId}
+              game={game}
+              playerId={selectedElement?.id}
+              setSelectedElement={setSelectedElement}
+              scrollViewRef={scrollViewRef}
+              onClearFEAgent={() => setCurrentFEAgent(null)}
+            />
+          </Box>                  
+        )
+      }
+    
+
 
       <Box        
         className='center h100 w100'  
         cursor={ mapLoadingStatus === 'end' ? 'all-scroll' : 'default'}
         pos='relative'
       > 
+        
         {
-          mapLoadingStatus !== 'end' && 
-          <Box className='center h100 w100 fx-col ai-ct'>
-            { welcomeText() }
-            { 
-              mapLoadingStatus === 'notStarted' &&                       
-                <Box w="369px">
-                  <BorderButton
-                    isFixedWidth={true}
-                    w={369}
-                    h={58}
-                    onClick={() => setMapLoadingStatus('loading')}
-                    title="Launch 1,000-Agent AI Town"
-                  />          
-                </Box>                
-            }
-            { mapLoadingStatus === 'loading' &&  
-              <PageLoading maxW={_leftWidth * 0.861326} onCompleted={p => setMapLoadingStatus(p === 1 ? 'end' : 'loading')} />
-            }
-          </Box>
-        }
-
-        {
-          delayRender &&  
+          // delayRender &&  
           <Box display={ mapLoadingStatus === 'end' ? 'block' : 'none'}>
             {
               guideOpen &&  
@@ -241,41 +222,8 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
         }          
       </Box>
               
-        {/* right */}
+      
 
-        {/* <Box
-           w={___rightWidth}
-           h={`${h}px`}
-           className='fx jc-ct ai-ct'
-        >
-        
-            <Box className='h100 center'>
-              <Box 
-                className='' 
-                h={`${h - 56}px`}
-                overflowY="scroll"
-                onWheel={(e) => e.stopPropagation()} 
-                px={[' 6px',' 6px',' 6px',' 6px',' 6px',' 20px',]}  
-              >
-                {
-                  currentFEAgent ? 
-                  <>{memoizedFeDetail}</>: 
-                  <PlayerDetails
-                    worldId={worldId} 
-                    engineId={engineId}
-                    game={game}
-                    playerId={selectedElement?.id}
-                    setSelectedElement={setSelectedElement}
-                    scrollViewRef={scrollViewRef}
-                    onClearFEAgent={() => setCurrentFEAgent(null)}
-                  />
-                }
-              </Box>
-            </Box>          
-        </Box>           */}
-
-
-     
     </Box>
   );
 }
