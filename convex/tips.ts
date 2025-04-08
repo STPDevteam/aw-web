@@ -416,10 +416,9 @@ export const updateAgentWithWallet = mutation({
     walletAddress: v.string(), // User's wallet address
     identity: v.string(),
     plan: v.string(),
-    avatarUrl: v.string(),
   },
   handler: async (ctx, args) => {
-    const { worldId, agentId, walletAddress, identity, plan, avatarUrl } = args;
+    const { worldId, agentId, walletAddress, identity, plan } = args;
     
     // Verify if the user's wallet address is registered
     const user = await ctx.db
@@ -453,12 +452,12 @@ export const updateAgentWithWallet = mutation({
       throw new Error('This agent has already been bound to another user');
     }
     
-    // Update the agent's identity, plan, avatar, and bound user wallet address
+    // Update the agent's identity, plan, bound user wallet address, and set isCreated to true
     await ctx.db.patch(agentDesc._id, {
       identity,
       plan,
-      avatarUrl,
-      userWalletAddress: walletAddress
+      userWalletAddress: walletAddress,
+      isCreated: true // Mark the agent as created/claimed
     });
     
     return { 

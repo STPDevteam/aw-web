@@ -17,12 +17,11 @@ export class AgentDescription {
   status?: any; // Agent status information
   events?: any[]; // Agent daily events
   lastConversationTimestamp?: number; // Add timestamp for last conversation
-
-  // --- Denormalized fields ---
-  favoriteCount?: number;
+  favoriteCount?: number; // Stores the number of times this agent was favorited
+  isCreated?: boolean; // Tracks if the agent was created/claimed via wallet bind
 
   constructor(serialized: SerializedAgentDescription) {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp, favoriteCount } = serialized;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp, favoriteCount, isCreated } = serialized;
     this.agentId = parseGameId('agents', agentId);
     this.identity = identity;
     this.plan = plan;
@@ -38,10 +37,11 @@ export class AgentDescription {
     this.events = events;
     this.lastConversationTimestamp = lastConversationTimestamp; // Assign new field
     this.favoriteCount = favoriteCount;
+    this.isCreated = isCreated ?? false; // Default to false if undefined
   }
 
   serialize(): SerializedAgentDescription {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp, favoriteCount } = this;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp, favoriteCount, isCreated } = this;
     return { 
       agentId, 
       identity, 
@@ -58,6 +58,7 @@ export class AgentDescription {
       events,
       lastConversationTimestamp,
       favoriteCount, 
+      isCreated
     };
   }
 }
@@ -101,6 +102,7 @@ export const serializedAgentDescription = {
 
   // --- Denormalized fields for performance ---
   favoriteCount: v.optional(v.number()), // Stores the number of times this agent was favorited
+  isCreated: v.optional(v.boolean()), // Tracks agent creation/claim status
   // Note: 'tips' already exists, assuming it stores the SUM of tip amounts.
   // If you need the COUNT of tips, add a new field like tipCount: v.optional(v.number())
   

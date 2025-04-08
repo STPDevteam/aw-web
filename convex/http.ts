@@ -1135,7 +1135,6 @@ PLAN:
           walletAddress,
           identity,
           plan,
-          avatarUrl: imageUrl
         });
         
         // Update player description (find player associated with agent from world data)
