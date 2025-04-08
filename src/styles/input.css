@@ -62,3 +62,25 @@
     font-size: 16px;
     font-family: 'fm3' !important;
 }
+
+
+
+
+.agent_search_input {
+  
+    background-color: transparent;
+    font-size: 14px;
+    font-weight: 400;
+    color: #000;
+    /* border: none; */
+}
+.agent_search_input:focus {
+    outline: none;
+    /* border: none; */
+    border: 1px solid transparent;
+}
+   
+.agent_search_input::placeholder {
+    color: #000;
+    font-size: 14px;
+} 

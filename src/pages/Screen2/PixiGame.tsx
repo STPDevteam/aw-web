@@ -57,6 +57,8 @@ export const PixiGame:React.FC<{
   const { width, height, tileDim } = game.worldMap;
   const players = [...game.world.players.values()];
 
+  // console.log('players', players[0])
+  
   const onMapPointerDown = (e: any) => {
     // https://pixijs.download/dev/docs/PIXI.FederatedPointerEvent.html
     dragStart.current = { screenX: e.screenX, screenY: e.screenY };

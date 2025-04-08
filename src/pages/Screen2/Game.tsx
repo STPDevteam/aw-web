@@ -51,14 +51,22 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
 
   useWorldHeartbeat();
   
-  const memoizedFeDetail = useMemo(() => {
-    return currentFEAgent ? <FEPlayerDetails currentFEAgent={currentFEAgent} onClearFEAgent={() => setCurrentFEAgent(null)}/>  : null;
-}, [currentFEAgent]);
+//   const memoizedFeDetail = useMemo(() => {
+//     return currentFEAgent ? <FEPlayerDetails currentFEAgent={currentFEAgent} onClearFEAgent={() => setCurrentFEAgent(null)}/>  : null;
+// }, [currentFEAgent]);
 
   const worldState = useQuery(api.world.worldState, worldId ? { worldId } : 'skip');
+  
+  const list = useQuery(api.aiTown.game.getAllAgentsPublic, worldId ? { worldId,sortBy: 'name' } : 'skip');
+
+
   const { historicalTime, timeManager } = useHistoricalTime(worldState?.engine);
- 
+  
   const newRef = useRef<HTMLDivElement | null>(null)
+
+
+
+
 
   function handleClickOutside(event:MouseEvent) {
     if (guideOpen && newRef.current && event.target instanceof Node && !newRef.current.contains(event.target)) {
@@ -74,12 +82,9 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
 
   useEffect(() => {    
     document.addEventListener("mousedown", handleClickOutside)
-    // const timer = setTimeout(() => {
-    //   setDelayRender(true);
-    // }, 2800)
+   
   
     return () => {
-      // clearTimeout(timer)
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
@@ -94,6 +99,8 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
 
   
   },[mapLoadingStatus])
+
+
 
   if (!worldId || !engineId || !game) {
     return null;
@@ -113,12 +120,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
     if(targetAgent) {
       setCurrentFEAgent(targetAgent[0])
     }
-  }
-
-
-  
-
-
+  }  
 
   return (  
     <Box 
@@ -136,19 +138,19 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
       </Box>     
 
       {
-        false && ( // agentInfoVisible
+        true && ( // agentInfoVisible
           <Box 
-            className='bd1'
+            className=''
             zIndex={2}
-            h="814px"
+            h="90%"
             w="400px"
             pos='absolute' 
-            right="10px" 
-            bottom="70px"
+            right="9px" 
+            bottom="20px"
             overflowY="scroll"
             onWheel={(e) => e.stopPropagation()} 
           >
-            <SearchAgents/>
+            {/* { list && !!list.length && <SearchAgents agentList={list} game={game} />} */}
             
             <PlayerDetails
               worldId={worldId} 

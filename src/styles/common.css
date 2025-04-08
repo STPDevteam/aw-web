@@ -424,3 +424,18 @@
 .underline {
   text-decoration: underline;
 }
+
+
+ 
+.gradient-border-box {
+  position: relative;
+  background: linear-gradient(to bottom right, #AFA080, #72878E);
+}
+
+.gradient-border-box::before {
+  content: '';
+  position: absolute;
+  top: 4px; left: 4px; right: 4px; bottom: 4px;
+  border-radius: 10px;
+  z-index: 1;
+}

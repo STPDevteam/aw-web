@@ -4,7 +4,6 @@ import { Game } from './Screen2/Game'
 import { Notification } from '@/components'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
-import { PageLoading } from '@/components'
 
 
 

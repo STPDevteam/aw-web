@@ -46,6 +46,8 @@ export default function PlayerDetails({
   const player = playerId && game.world.players.get(playerId);
   const playerConversation = player && game.world.playerConversation(player);
 
+  console.log('playerConversation', playerConversation)
+  
   const previousConversation = useQuery(
     api.world.previousConversation,
     playerId ? { worldId, playerId } : 'skip',
@@ -88,14 +90,6 @@ export default function PlayerDetails({
   if (!playerId) {
     return (
       <Box className='h100'>
-        {/* <Box
-          mb="10px"
-          h="10px"
-          w="10px"
-           borderWidth="1px"
-        borderStyle='solid'
-        borderColor={['red','green','yellow','blue','pink','green','red']}
-        /> */}
         <Box 
           className='center gradient_border'
           w="100%"
