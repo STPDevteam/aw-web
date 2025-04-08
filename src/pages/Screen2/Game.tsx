@@ -205,6 +205,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
               guideOpen &&  
               <Box 
                 ref={newRef} 
+                zIndex={3}
                 onWheel={(e) => null}  
                 onClick={hideGuide} 
                 className='  click jc-sb fx-row ai-ct' 
