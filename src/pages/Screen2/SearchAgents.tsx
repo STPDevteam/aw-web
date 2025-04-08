@@ -97,7 +97,6 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
                 backdropFilter="blur(10px)"  
                 bgColor='#C5C7BE'
                 borderRadius="10px"
-        
                 >
                     <Box className='w100 h100' >
                         {
@@ -194,7 +193,9 @@ export const AgentItem:FC<iAgentItem> = ({
         >
             <Box  className='fx-row ai-ct w100'>
                 {/* logo */}
-                <Image src={item.avatarUrl} w="68px" h="68px" border="4px solid rgba(255,255,255,0.6)" borderRadius="50%"/>
+                <Box w="68px" h="68px"  borderRadius="50%" className='center'>
+                    <Image src={item.avatarUrl} border="4px solid rgba(255,255,255,0.6)" borderRadius='50%'/>
+                </Box>
                 {/* info */}
                 <Box  className='fx-col w100 ' ml="11px"> 
                     <Box className='fx-row ai-ct jc-sb'>
