@@ -21,9 +21,9 @@ export const FEPlayerDetails:React.FC<iFEPlayerDetails> = ({
     
     const playerConversation = player && game.world.playerConversation(player)
 
-    console.log('player', player)
+    // console.log('player', player)
     
-    console.log('playerConversation', playerConversation)
+    // console.log('playerConversation', playerConversation)
 
  
     const [selectedIdx, setSelectedIdx] = useState(0)

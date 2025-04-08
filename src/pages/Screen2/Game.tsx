@@ -131,14 +131,17 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
       w="100vw"
     >
       <Box pos='absolute' right="0px" bottom="240px" zIndex={2}> 
-        <Button className='fx-row ai-ct click jc-sb click' w="120px" h="64px" px="20px" onClick={() => setAgentInfoVisible(true)}>
-            <Image src={Search} h="20px" w="20px" />
-            <Text color="#000000" fontSize="14px" ml="12px" fontWeight={700}>Search</Text>
-        </Button>
+        {
+          !agentInfoVisible && 
+          <Button className='fx-row ai-ct click jc-sb click' w="120px" h="64px" px="20px" onClick={() => setAgentInfoVisible(true)}>
+              <Image src={Search} h="20px" w="20px" />
+              <Text color="#000000" fontSize="14px" ml="12px" fontWeight={700}>Search</Text>
+          </Button>
+        }
       </Box>     
 
       {
-        true && ( // agentInfoVisible
+        agentInfoVisible && ( // 
           <Box 
             className=''
             zIndex={2}
@@ -150,9 +153,9 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
             overflowY="scroll"
             onWheel={(e) => e.stopPropagation()} 
           >
-            {/* { list && !!list.length && <SearchAgents agentList={list} game={game} />} */}
+            { list && !!list.length && <SearchAgents agentList={list} game={game} onFold={() => setAgentInfoVisible(false)}/>}
             
-            <PlayerDetails
+            {/* <PlayerDetails
               worldId={worldId} 
               engineId={engineId}
               game={game}
@@ -160,7 +163,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
               setSelectedElement={setSelectedElement}
               scrollViewRef={scrollViewRef}
               onClearFEAgent={() => setCurrentFEAgent(null)}
-            />
+            /> */}
           </Box>                  
         )
       }

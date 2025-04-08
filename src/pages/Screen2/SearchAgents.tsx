@@ -1,22 +1,37 @@
-import React, { useState,FC } from 'react'
+import React, { useState,FC, useEffect } from 'react'
 import { Box, Text, Image } from '@chakra-ui/react'
-import { Search, Back, LowBattery } from '@/images'
+import { Search, Back, LowBattery, Fold} from '@/images'
 import { FEPlayerDetails } from './FEPlayerDetails'
 import { ServerGame } from '@/hooks/serverGame';
+import { motion } from 'framer-motion';
+const MotionImage = motion(Image);
 
 interface iSearchAgents {
     agentList: any[]
     game: ServerGame
+    onFold:() => void
 }
-export const SearchAgents:FC<iSearchAgents> = ({ agentList, game }) => {  
-    
+export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold}) => {  
+    const [isHover, setHover] = useState<boolean>(false)
     const [isDetail, setDetail] = useState<boolean>(false)
     const [keyword, setKeyword] = useState<string>('')
     const [currentFEAgent, setCurrentFEAgent] = useState<any>()
-    
-    
-    // console.log('agentList', agentList)
+    const [filteredList, setFilteredList] = useState<any[]>([])
 
+    useEffect(() => {
+        filterList()
+    },[keyword])
+    const filterList = () => {
+        if(keyword) {            
+            const reg = new RegExp(keyword, 'i')
+            const res = agentList.filter(item => reg.test(item.name))
+            setFilteredList(res)
+
+        }else {
+            setFilteredList([])
+            setDetail(false)
+        }   
+    }
     const onChange = (e:any) => {
         const v = e.target.value
         setKeyword(v)
@@ -30,58 +45,80 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game }) => {
         setCurrentFEAgent(item)
 
     }
+    const onDetailSearch = () => {}
+
     return(
-        <Box h={window.innerHeight * 0.7822 } className=''>
-            {/* <Box className='bd1 fx-row ai-ct '>
-                <Image src={isDetail ? Back : Search} h='23px' w='23px' className='click' onClick={isDetail ? () => onBack() : () => null}/>
-                <Box 
-                    h="64px" 
-                    className='w100 fx-row ai-ct' 
-                    borderRadius="10px"
-                    bgColor="rgba(255,255,255, 0.6)"
-                    // bg='linear-gradient(#D8D7A7, #95B9C900, #99CCE2)' 
-                   
+        <Box h={window.innerHeight * 0.7822 } className='' onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+            <Box 
+                h="64px" 
+                className='w100 fx-row ai-ct jc-sb' 
+                px="12px"
+                borderRadius="10px"
+                bgColor="rgba(255,255,255, 0.6)"                   
+            >
+                <Image src={isDetail ? Back : Search} h='20px' w='20px' className='click' onClick={isDetail ? () => onBack() : () => null}/>
+                { isDetail &&  <Box h="23px" w="1px" bgColor="#fff" mx="12px"/>}
+                
+                <input 
+                    placeholder='Search by Agent Name'
+                    value={keyword} 
+                    onChange={onChange} 
+                    className=' agent_search_input'
+                    style={{
+                        width: 'calc(100% - 40px - 24px - 25px)'
+                    }}/>
+                {
+                    isDetail ? <Image src={Search} h='20px' w='20px' className='click' onClick={onDetailSearch}/> : <Box w='20px' h='20px'/>
+                }
+            </Box>       
+            
+            <Box 
+                overflowY="scroll" 
+                className=' fx-col ai-ct h100 '  
+                mt="10px"    
+                backdropFilter="blur(10px)"  
+                bgColor='#C5C7BE'
+                borderRadius="10px"
+        
                 >
-                    <Image src={Search} h='20px' w='20px'/>
-                    <input 
-                        value={keyword} 
-                        onChange={onChange} 
-                        className=' agent_search_input'
-                        style={{
-                            width: 'calc(100% - 120px)'
-                        }}/>
-                </Box>
-            </Box>  */}
+                    <Box className='w100 h100' >
+                        {
+                            !isDetail ?
+                            <Box className='w100 h100' px="7px">
+                                {
+                                    !!filteredList.length ? filteredList.map((item:any) => (
+                                        <Box mt="8px"  key={item.name}  onClick={() => onItem(item)}>
+                                            <AgentItem item={item}/>
+                                        </Box>
+                                    )): 
+                                    <Box className='h100 w100 center '>
+                                        <Text color='#000' fontSize="14px" fontWeight={600}>Search Result</Text>
+                                    </Box> 
+                                }
+                            </Box> : 
+                            <FEPlayerDetails game={game} currentFEAgent={currentFEAgent} onClearFEAgent={() => setCurrentFEAgent(null)}/>
 
-       
-               
-                <Box 
-                    overflowY="scroll" 
-                    className=' fx-col ai-ct h100 '  
-                    mt="10px"    
-                    backdropFilter="blur(10px)"  
-                    bgColor='#C5C7BE'
-                    borderRadius="10px"
-           
-                    >
-                        <Box className='w100 ' >
-                            {
-                                !isDetail ?
-                                <Box className='w100' px="7px">
-                                    {
-                                        !!agentList.length && agentList.map((item:any) => (
-                                            <Box mt="8px"  key={item._id}  onClick={() => onItem(item)}>
-                                                <AgentItem item={item}/>
-                                            </Box>
-                                        ))
-                                    }
-                                </Box> : 
-                                <FEPlayerDetails game={game} currentFEAgent={currentFEAgent} onClearFEAgent={() => setCurrentFEAgent(null)}/>
-
-                            }
-                        </Box>
-                </Box> 
-         
+                        }
+                    </Box>
+            </Box> 
+            {
+                isHover && (
+                    <MotionImage
+                      src={Fold}
+                      w="32px"
+                      h="32px"
+                      pos="absolute"
+                      right="10px"
+                      top="224px"
+                      className="click"
+                      onClick={onFold}
+                      initial={{ opacity: 0, x: 20 }}  
+                      animate={{ opacity: 1, x: 0 }}   
+                      exit={{ opacity: 0, x: 20 }}  
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                  )
+            }
         </Box>
     )
 }

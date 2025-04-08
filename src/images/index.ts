@@ -66,3 +66,4 @@ export { default as Tooltip3 } from "./tooltip3.png";
 export { default as Search } from "./search.png";
 export { default as Back } from "./back.png";
 export { default as LowBattery } from "./lowBattery.png";
+export { default as Fold } from "./fold.png";
