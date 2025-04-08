@@ -723,40 +723,93 @@ export const getAllAgents = internalQuery({
   },
 });
 
-// Public query function for HTTP access
+// Get all agents with denormalized data for public HTTP access
 export const getAllAgentsPublic = query({
   args: {
     worldId: v.id('worlds'),
-    sortBy: v.optional(v.union(
-      v.literal('name'),
-      v.literal('inferences'),
-      v.literal('tips'),
-    )),
+    sortBy: v.optional(v.union(v.literal('name'), v.literal('inferences'), v.literal('tips'), v.literal('favorites'))),
   },
-  handler: async (ctx, args): Promise<Array<{
-    agentId: string;
-    name: string;
-    energy: number;
-    inferences: number;
-    tips: number;
-    walletAddress: string | null;
-    status?: Array<{ title: string; icon: string }> | { 
-      emotion: string; 
-      status: string; 
-      current_work: string;
-      energy_level?: string;
-      location?: string;
-      mood_trend?: string;
-    };
-    events?: Array<{ 
-      time: string;
-      action: string;
-      details: string;
-    }>;
-  }>> => {
-    // Simply call the internal query
-    const agents = await ctx.runQuery(internal.aiTown.game.getAllAgents, args);
-    return agents;
+  handler: async (ctx, args): Promise<{
+      agentId: string;
+      name: string;
+      energy: number;
+      inferences: number;
+      tips: number; // Now represents total tip amount
+      favoriteCount: number;
+      walletAddress: string | null;
+      avatarUrl: string | null;
+      identity: string;
+      userWalletAddress: string | null;
+      status?: any; // Include status if needed
+      events?: any[]; // Include events if needed
+  }[]> => {
+    // 1. Fetch all agent descriptions for the world
+    const agentDescriptions = await ctx.db
+      .query('agentDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+
+    // 2. Fetch all player descriptions (needed for names/character)
+    const playerDescriptionsDocs = await ctx.db
+      .query('playerDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+      
+    // Create a map for quick player lookup by playerId
+    const playerDescriptionsMap = new Map(playerDescriptionsDocs.map(doc => [doc.playerId, doc]));
+    
+    // 3. Fetch world data to map agentId to playerId
+    const world = await ctx.db.get(args.worldId);
+    if (!world) {
+        throw new Error("World not found");
+    }
+    const agentPlayerMap = new Map(world.agents.map(agent => [agent.id, agent.playerId]));
+
+    // 4. Combine data
+    let combinedAgents = agentDescriptions.map(agentDesc => {
+      const playerId = agentPlayerMap.get(agentDesc.agentId);
+      const playerDesc = playerId ? playerDescriptionsMap.get(playerId) : null;
+      
+      // Construct avatar URL: Prefer player character, then agent avatarUrl, then null
+      const avatarUrl = playerDesc?.character 
+          ? `/ai-town/assets/player/${playerDesc.character}.png` 
+          : (agentDesc.avatarUrl || null);
+          
+      return {
+        agentId: agentDesc.agentId,
+        name: playerDesc?.name || 'Unknown', // Get name from playerDesc
+        energy: agentDesc.energy ?? 100,
+        inferences: agentDesc.inferences ?? 0,
+        tips: agentDesc.tips ?? 0, // Use denormalized total tip amount
+        favoriteCount: agentDesc.favoriteCount ?? 0, // Use denormalized favorite count
+        walletAddress: agentDesc.walletAddress || null,
+        avatarUrl: avatarUrl, // Use constructed avatar URL
+        identity: agentDesc.identity,
+        userWalletAddress: agentDesc.userWalletAddress || null,
+        status: agentDesc.status, // Include status if available
+        events: agentDesc.events, // Include events if available
+      };
+    });
+
+    // 5. Sort results if sortBy is provided
+    if (args.sortBy) {
+      combinedAgents.sort((a, b) => {
+        switch (args.sortBy) {
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'inferences':
+            return b.inferences - a.inferences; // Descending
+          case 'tips':
+            return b.tips - a.tips; // Descending
+          case 'favorites':
+            return b.favoriteCount - a.favoriteCount; // Descending
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return combinedAgents;
   },
 });
 

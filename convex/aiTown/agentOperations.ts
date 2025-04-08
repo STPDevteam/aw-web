@@ -613,7 +613,7 @@ export const updatePlayerDescription = internalMutation({
     // Update the player description
     await ctx.db.patch(playerDesc._id, {
       name,
-      description
+      description,
     });
     
     return { success: true };

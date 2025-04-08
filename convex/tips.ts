@@ -130,13 +130,16 @@ export const tipAgent = mutation({
       }
     }
     
-    // Update agent's total tips
-    const newTips = (agentDesc.tips || 0) + amount;
+    // --- Update denormalized tips amount on agentDescription ---
+    // This now uses the `tips` field as the sum of tip amounts
+    const newTipsAmount = (agentDesc.tips || 0) + amount;
+    // ----------------------------------------------------
+    
     const newEnergy = Math.min(100, (agentDesc.energy || 0) + 10); // Add 10 energy points, but max is 100
     
-    // Update agentDescription - using type assertion
+    // Update agentDescription with new tips amount and energy
     await ctx.db.patch(agentDesc._id as Id<"agentDescriptions">, {
-      tips: newTips,
+      tips: newTipsAmount, // Update the denormalized total tips amount
       energy: newEnergy
     });
     
@@ -164,7 +167,7 @@ export const tipAgent = mutation({
       success: true,
       tipId,
       agentId,
-      newTips,
+      newTips: newTipsAmount, // Return the updated total tips amount
       newEnergy
     };
   },

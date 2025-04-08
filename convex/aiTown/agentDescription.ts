@@ -18,8 +18,11 @@ export class AgentDescription {
   events?: any[]; // Agent daily events
   lastConversationTimestamp?: number; // Add timestamp for last conversation
 
+  // --- Denormalized fields ---
+  favoriteCount?: number;
+
   constructor(serialized: SerializedAgentDescription) {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp } = serialized;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp, favoriteCount } = serialized;
     this.agentId = parseGameId('agents', agentId);
     this.identity = identity;
     this.plan = plan;
@@ -34,10 +37,11 @@ export class AgentDescription {
     this.status = status;
     this.events = events;
     this.lastConversationTimestamp = lastConversationTimestamp; // Assign new field
+    this.favoriteCount = favoriteCount;
   }
 
   serialize(): SerializedAgentDescription {
-    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp } = this;
+    const { agentId, identity, plan, walletAddress, walletPublicKey, encryptedPrivateKey, energy, inferences, tips, avatarUrl, userWalletAddress, status, events, lastConversationTimestamp, favoriteCount } = this;
     return { 
       agentId, 
       identity, 
@@ -52,7 +56,8 @@ export class AgentDescription {
       userWalletAddress,
       status,
       events,
-      lastConversationTimestamp
+      lastConversationTimestamp,
+      favoriteCount, 
     };
   }
 }
@@ -66,7 +71,7 @@ export const serializedAgentDescription = {
   encryptedPrivateKey: v.optional(v.string()),
   energy: v.optional(v.number()), // Initial value 100, maximum value 100
   inferences: v.optional(v.number()), // Initial value 0
-  tips: v.optional(v.number()), // Initial value 0, maximum value 10000
+  tips: v.optional(v.number()), // Initial value 0, maximum value 10000 (Represents total tip AMOUNT, rename if needed)
   avatarUrl: v.optional(v.string()), // Agent avatar URL
   userWalletAddress: v.optional(v.string()), // agent owner's wallet address
   // Agent status information (optional for backward compatibility)
@@ -93,6 +98,17 @@ export const serializedAgentDescription = {
     details: v.string(),
   }))),
   lastConversationTimestamp: v.optional(v.number()), // Add field to schema definition
+
+  // --- Denormalized fields for performance ---
+  favoriteCount: v.optional(v.number()), // Stores the number of times this agent was favorited
+  // Note: 'tips' already exists, assuming it stores the SUM of tip amounts.
+  // If you need the COUNT of tips, add a new field like tipCount: v.optional(v.number())
+  
+  // --- Potentially denormalize player data too ---
+  // name: v.optional(v.string()), // Agent's display name (from playerDescription)
+  // Consider if other player fields are frequently needed here
+  // playerName: v.optional(v.string()),       // REMOVED
+  // playerCharacter: v.optional(v.string()),  // REMOVED
 };
 export type SerializedAgentDescription = ObjectType<typeof serializedAgentDescription>;
 

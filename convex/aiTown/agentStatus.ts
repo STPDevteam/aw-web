@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { action, mutation, query } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 
 // 定义类型
 type AgentStatus = Array<{
@@ -85,20 +85,20 @@ export const updateAgentStatusAndEvents = mutation({
 });
 
 /**
- * Batch update existing agents to add status and events fields
+ * Batch update existing agents to FORCE ADD/OVERWRITE status and events fields
  */
 export const batchAddStatusAndEvents = action({
   args: {},
   handler: async (ctx): Promise<{ success: boolean; message: string }> => {
     try {
-      // 直接使用字符串索引访问API函数，绕过TypeScript类型检查
-      const getAllAgentsFunc = (api as any).aiTown.agentStatus.getAllAgents;
-      const updateAgentFunc = (api as any).aiTown.agentStatus.updateAgentStatusAndEvents;
+      // Use the public API references within the action
+      const getAllAgentsFunc = api.aiTown.agentStatus.getAllAgents;
+      const updateAgentFunc = api.aiTown.agentStatus.updateAgentStatusAndEvents;
       
-      // 在action中，直接获取所有agent
-      const agents = await ctx.runQuery(getAllAgentsFunc, {});
+      // Fetch all agents using the API reference
+      const agents = await ctx.runQuery(getAllAgentsFunc, {}); 
       
-      console.log(`Processing ${agents.length} agents all at once`);
+      console.log(`Processing ${agents.length} agents all at once for forced update...`);
       
       let updatedCount = 0;
       let errorCount = 0;
@@ -106,57 +106,35 @@ export const batchAddStatusAndEvents = action({
       // Update each agent
       for (const agent of agents) {
         try {
-          // Generate status and events if missing
-          let status;
+          // Always generate new status and events, overwriting any existing data
+          const status = generateAgentStatus(agent.identity, agent.plan);
+          const events = generateAgentEvents(agent.plan);
           
-          // Convert old object format to new array format if needed
-          if (agent.status && !Array.isArray(agent.status)) {
-            // Old format was an object with keys like emotion, status, etc.
-            const oldStatus = agent.status as OldAgentStatus;
-            status = [
-              { title: 'Current Work', icon: oldStatus.current_work || "🎨" },
-              { title: 'Emotion', icon: oldStatus.emotion || "😴" },
-            ];
-            
-            // Add other status items if they exist
-            if (oldStatus.status) status.push({ title: 'Status', icon: oldStatus.status });
-            if (oldStatus.energy_level) status.push({ title: 'Energy Level', icon: oldStatus.energy_level });
-            if (oldStatus.location) status.push({ title: 'Location', icon: oldStatus.location });
-            if (oldStatus.mood_trend) status.push({ title: 'Mood Trend', icon: oldStatus.mood_trend });
-          } else if (agent.status && Array.isArray(agent.status)) {
-            // Already in the correct format
-            status = agent.status;
-          } else {
-            // Generate new status if missing
-            status = generateAgentStatus(agent.identity, agent.plan);
-          }
-          
-          const events = agent.events || generateAgentEvents(agent.plan);
-          
-          // 执行更新操作
-          await ctx.runMutation(updateAgentFunc, {
+          // Execute the update mutation using the API reference
+          await ctx.runMutation(updateAgentFunc, { 
             id: agent._id,
-            status,
-            events
+            status, // Always use the newly generated status
+            events  // Always use the newly generated events
           });
           
           updatedCount++;
         } catch (error) {
-          console.error(`Error updating agent ${agent.agentId}:`, error);
+          console.error(`Error force updating agent ${agent.agentId}:`, error);
           errorCount++;
           // Continue with the next agent even if one fails
         }
       }
       
+      // Updated success message
       return { 
         success: true, 
-        message: `Updated ${updatedCount}/${agents.length} agents with status and events data. Errors: ${errorCount}` 
+        message: `Forced update on ${updatedCount}/${agents.length} agents with status and events data. Errors: ${errorCount}` 
       };
     } catch (error) {
-      console.error("Batch update error:", error);
+      console.error("Batch force update error:", error);
       return {
         success: false,
-        message: `Error during batch update: ${error}`
+        message: `Error during batch force update: ${error}`
       };
     }
   }
@@ -215,7 +193,7 @@ function generateAgentStatus(name: string, description: string): AgentStatus {
     { title: 'Current Work', possibleIcons: ["💻", "📱", "📊", "🔍", "🎨", "📝", "📚", "🎬", "🔧", "🏗️", "🧪", "🔬", "📡", "🎼"] },
     { title: 'Emotion', possibleIcons: ["😄", "😎", "🤔", "😌", "🙂", "😊", "🧐", "🤓", "😴", "🥱", "😯", "🤠", "🤩", "😇"] },
     { title: 'Status', possibleIcons: ["🚶", "🏃", "🧘", "💼", "🚴", "🏋️", "📚", "🎮", "🎧", "💻", "🍽️", "🛌", "🧗", "🏊"] },
-    { title: 'Energy Level', possibleIcons: ["🔋", "🔋🔋", "🔋🔋🔋"] },
+    { title: 'Health Status', possibleIcons: ["💖", "🩺", "💊", "🧬", "🧘‍♂️"] },
     { title: 'Location', possibleIcons: ["🏠", "🏢", "🏙️", "🌃", "🏫", "🏕️", "🏝️", "🏟️", "🏪", "🏨", "🌲", "🌊", "🏞️", "🗻"] },
     { title: 'Mood Trend', possibleIcons: ["📈", "📉", "➖", "〰️", "🔄"] }
   ];

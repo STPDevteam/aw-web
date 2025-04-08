@@ -38,6 +38,19 @@ export const favoriteAgent = mutation({
         createdAt: Date.now(),
       });
       
+      // --- Update denormalized count on agentDescription ---
+      const agentDesc = await ctx.db
+        .query('agentDescriptions')
+        .withIndex('worldId', (q) => q.eq('worldId', worldId).eq('agentId', agentId))
+        .unique();
+        
+      if (agentDesc) {
+        await ctx.db.patch(agentDesc._id, {
+          favoriteCount: (agentDesc.favoriteCount || 0) + 1,
+        });
+      }
+      // ----------------------------------------------------
+      
       results.push({ 
         agentId, 
         status: 'created', 
@@ -81,6 +94,20 @@ export const unfavoriteAgent = mutation({
       
       // Delete favorite
       await ctx.db.delete(favorite._id);
+      
+      // --- Update denormalized count on agentDescription ---
+      const agentDesc = await ctx.db
+        .query('agentDescriptions')
+        .withIndex('worldId', (q) => q.eq('worldId', favorite.worldId).eq('agentId', agentId))
+        .unique();
+        
+      if (agentDesc) {
+        await ctx.db.patch(agentDesc._id, {
+          // Ensure count doesn't go below 0
+          favoriteCount: Math.max(0, (agentDesc.favoriteCount || 0) - 1),
+        });
+      }
+      // ----------------------------------------------------
       
       results.push({ 
         agentId, 
