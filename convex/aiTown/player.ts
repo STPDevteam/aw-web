@@ -145,35 +145,47 @@ export class Player {
       return;
     }
 
-    // Compute a candidate new position and check if it collides
-    // with anything.
+    const oldPosition = { ...this.position }; // Store position before update
+
+    // Compute the target position based on the path and current time.
     const candidate = pathPosition(this.pathfinding.state.path as any, now);
     if (!candidate) {
-      console.warn(`Path out of range of ${now} for ${this.id}`);
-      return;
-    }
-    const { position, facing, velocity } = candidate;
-    const collisionReason = blocked(game, now, position, this.id);
-    if (collisionReason !== null) {
-      const backoff = Math.random() * PATHFINDING_BACKOFF;
-      console.warn(`Stopping path for ${this.id}, waiting for ${backoff}ms: ${collisionReason}`);
-      this.pathfinding.state = {
-        kind: 'waiting',
-        until: now + backoff,
-      };
-      // Set speed to 0 when stopped due to collision
+      console.warn(`[${this.id}] Path out of range of ${now}, stopping movement.`);
+      // If path is out of range, consider the path finished.
+      stopPlayer(this); // Use the existing stopPlayer function
       this.speed = 0;
       return;
     }
-    // Update the player's location and facing direction.
-    // Ensure facing is never a zero vector
-    this.position = position;
-    // Only update facing if the new facing vector is not (0,0)
-    if (facing.dx !== 0 || facing.dy !== 0) {
-        this.facing = facing;
-    } 
-    // If the new facing is (0,0), keep the old one - prevents facing reset at path end
+    const { position: newPosition, velocity } = candidate;
+
+    // Check for collisions at the new position.
+    const collisionReason = blocked(game, now, newPosition, this.id);
+    if (collisionReason !== null) {
+      const backoff = Math.random() * PATHFINDING_BACKOFF;
+      console.warn(`[${this.id}] Stopping path due to collision (${collisionReason}), waiting for ${backoff}ms.`);
+      this.pathfinding.state = { kind: 'waiting', until: now + backoff };
+      this.speed = 0;
+      return;
+    }
+
+    // Update the player's position.
+    this.position = newPosition;
     this.speed = velocity;
+
+    // Calculate the actual movement vector for this tick.
+    const moveDeltaX = newPosition.x - oldPosition.x;
+    const moveDeltaY = newPosition.y - oldPosition.y;
+
+    // Update facing direction based on the actual movement, if any occurred.
+    if (Math.abs(moveDeltaX) > 0.01 || Math.abs(moveDeltaY) > 0.01) { // Check for significant movement
+      // Normalize the delta vector to get the facing direction
+      const magnitude = Math.sqrt(moveDeltaX * moveDeltaX + moveDeltaY * moveDeltaY);
+      this.facing = {
+        dx: moveDeltaX / magnitude,
+        dy: moveDeltaY / magnitude,
+      };
+    } 
+    // If there was no significant movement, keep the previous facing direction.
   }
 
   static join(

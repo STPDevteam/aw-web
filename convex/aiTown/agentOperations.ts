@@ -198,7 +198,7 @@ export const agentDoSomething = internalAction({
     const agentId = agent.id as GameId<'agents'>;
     const playerId = player.id as GameId<'players'>;
     const now = Date.now();
-    const oneMinuteAgo = now - 60000; // Milliseconds in a minute - FOR TESTING
+    const oneHourAgo = now - 3600000; // Milliseconds in an hour - RESTORED
 
     console.log(`[${agentId}] agentDoSomething entered. OpID: ${args.operationId}`);
 
@@ -235,9 +235,9 @@ export const agentDoSomething = internalAction({
 
     let decidedAction = null;
     const lastConversationTs = agentDescDoc.lastConversationTimestamp;
-    const shouldTryToConverse = !lastConversationTs || lastConversationTs < oneMinuteAgo;
+    const shouldTryToConverse = !lastConversationTs || lastConversationTs < oneHourAgo;
 
-    console.log(`[${agentId}] Should try to converse? ${shouldTryToConverse} (Last convo TS: ${lastConversationTs}, One MINUTE ago: ${oneMinuteAgo})`);
+    console.log(`[${agentId}] Should try to converse? ${shouldTryToConverse} (Last convo TS: ${lastConversationTs}, One HOUR ago: ${oneHourAgo})`);
 
     if (shouldTryToConverse) {
       console.log(`[${agentId}] Prioritizing conversation attempt.`);
