@@ -12,6 +12,8 @@ import {
 import { playerId } from './aiTown/ids';
 import { kickEngine, startEngine, stopEngine } from './aiTown/main';
 import { engineInsertInput } from './engine/abstractGame';
+import { Id } from './_generated/dataModel';
+import { SerializedPlayerDescription } from './aiTown/playerDescription';
 
 export const defaultWorldStatus = query({
   handler: async (ctx) => {
@@ -236,6 +238,31 @@ export const gameDescriptions = query({
     }
     
     return { worldMap, playerDescriptions: uniquePlayerDescriptions, agentDescriptions };
+  },
+});
+
+// New query function specifically for player descriptions
+export const getPlayerDescriptionsByWorld = query({
+  args: {
+    worldId: v.id('worlds'),
+  },
+  handler: async (ctx, args): Promise<SerializedPlayerDescription[]> => {
+    const playerDescriptions = await ctx.db
+      .query('playerDescriptions')
+      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
+      .collect();
+      
+    // Deduplicate player descriptions by playerId (keeping existing logic)
+    const uniquePlayerDescriptions = [];
+    const seenPlayerIds = new Set();
+    for (const playerDesc of playerDescriptions) {
+      if (!seenPlayerIds.has(playerDesc.playerId)) {
+        seenPlayerIds.add(playerDesc.playerId);
+        uniquePlayerDescriptions.push(playerDesc);
+      }
+    }
+    
+    return uniquePlayerDescriptions;
   },
 });
 

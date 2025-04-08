@@ -1,16 +1,48 @@
 import { v } from 'convex/values';
-import { internalMutation, internalQuery, internalAction } from './_generated/server';
+import { internalMutation, internalQuery, internalAction, MutationCtx, QueryCtx, ActionCtx } from './_generated/server';
 import { api } from './_generated/api';
 import { Id } from './_generated/dataModel';
-import { ActionCtx } from './_generated/server';
 import { chatCompletion } from './util/llm';
+
+// Define response types for better type safety
+interface DigitalTwin {
+  _id: Id<"digitalTwins">;
+  userWalletAddress: string;
+  name: string;
+  description: string;
+  profession: string;
+  interest: string;
+  createdAt: number;
+}
+
+interface WalletUser {
+  _id: Id<"walletUsers">;
+  walletAddress: string;
+  points: number;
+  [key: string]: any; // For other fields we don't need to explicitly type
+}
+
+interface EngageAgentResult {
+  conversation: string[];
+  agent: {
+    agentId: string;
+    name: string;
+    identity?: string;
+    avatarUrl?: string;
+  };
+  twin: {
+    name: string;
+    description: string;
+  };
+  pointsAwarded: number;
+}
 
 // --- Internal Query: Get Digital Twin ---
 export const internal_getDigitalTwin = internalQuery({
   args: {
     userWalletAddress: v.string(),
   },
-  async handler(ctx, args) {
+  async handler(ctx: QueryCtx, args): Promise<DigitalTwin | null> {
     const digitalTwin = await ctx.db
       .query("digitalTwins")
       .withIndex("by_userWalletAddress", (q) => q.eq("userWalletAddress", args.userWalletAddress))
@@ -25,7 +57,7 @@ export const internal_generateDescription = internalAction({
       profession: v.string(),
       interest: v.string(),
     },
-    async handler(ctx, args) {
+    async handler(ctx: ActionCtx, args): Promise<string> {
       try {
         const prompt = `
           Create a short, compelling, first-person backstory (2-3 sentences) for a digital character
@@ -57,6 +89,64 @@ export const internal_generateDescription = internalAction({
     },
 });
 
+// --- Internal Action: Generate Conversation with Agent ---
+export const internal_generateConversation = internalAction({
+  args: {
+    twinName: v.string(),
+    twinDescription: v.string(),
+    agentName: v.string(),
+    agentDescription: v.string(),
+  },
+  async handler(ctx: ActionCtx, args): Promise<string[]> {
+    try {
+      const prompt = `
+        Create a natural, friendly conversation between two characters in a virtual world.
+        
+        CHARACTER 1: ${args.twinName}
+        DESCRIPTION: ${args.twinDescription}
+        
+        CHARACTER 2: ${args.agentName}
+        DESCRIPTION: ${args.agentDescription}
+        
+        Generate exactly 8 messages total - 4 from each character, alternating. Start with ${args.twinName} greeting ${args.agentName}.
+        Format each message as "NAME: message text" on separate lines.
+        Make the conversation feel natural, friendly, and reflective of both characters' backgrounds and personalities.
+        Keep each message relatively short (1-3 sentences).
+      `;
+
+      const { content: conversation } = await chatCompletion({
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 800,
+        temperature: 0.8,
+      });
+
+      if (!conversation || conversation.trim() === '') {
+        throw new Error('Failed to generate conversation.');
+      }
+
+      // Parse the conversation into an array of messages
+      const messages = conversation
+        .split('\n')
+        .filter(line => line.trim() !== '')
+        .map(line => line.trim());
+      
+      return messages;
+    } catch (error) {
+      console.error("Error generating conversation:", error);
+      // Fallback basic conversation
+      return [
+        `${args.twinName}: Hello there! I'm ${args.twinName}.`,
+        `${args.agentName}: Nice to meet you! I'm ${args.agentName}.`,
+        `${args.twinName}: I'm interested in ${args.twinDescription.split(' ').slice(-5).join(' ')}...`,
+        `${args.agentName}: That's fascinating! I'm focused on ${args.agentDescription.split(' ').slice(-5).join(' ')}...`,
+        `${args.twinName}: How did you end up in this virtual world?`,
+        `${args.agentName}: It's a long story, but I've found my place here.`,
+        `${args.twinName}: I hope we can talk again sometime.`,
+        `${args.agentName}: Definitely! Looking forward to our next conversation.`
+      ];
+    }
+  },
+});
 
 // --- Internal Mutation: Create Digital Twin ---
 export const internal_createDigitalTwin = internalMutation({
@@ -68,7 +158,7 @@ export const internal_createDigitalTwin = internalMutation({
     name: v.string(), // Name for the twin
     // Add other relevant fields as needed, e.g., avatarUrl, initial stats, etc.
   },
-  async handler(ctx, args) {
+  async handler(ctx: MutationCtx, args): Promise<Id<"digitalTwins">> {
     // 1. Check if a twin already exists for this wallet address
     const existingTwin = await ctx.db
       .query("digitalTwins")
@@ -109,4 +199,4 @@ export const internal_createDigitalTwin = internalMutation({
 
     return twinId; // Return the ID of the newly created twin
   },
-}); 
+});

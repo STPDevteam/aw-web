@@ -1333,4 +1333,117 @@ http.route({
   }),
 });
 
+// Engage Agent Endpoint - Generate a conversation between digital twin and a random agent
+http.route({
+  path: "/engageAgent",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const userWalletAddress = url.searchParams.get("userWalletAddress");
+
+    if (!userWalletAddress) {
+      return new Response(JSON.stringify({ error: "Missing required query parameter: userWalletAddress" }), { 
+          status: 400, 
+          headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    try {
+        // 1. Get the user's digital twin
+        const digitalTwin = await ctx.runQuery(internal.digitalTwin.internal_getDigitalTwin, { 
+          userWalletAddress 
+        });
+
+        if (!digitalTwin) {
+          return new Response(JSON.stringify({ 
+            error: "No digital twin found for this wallet address" 
+          }), { 
+            status: 404, 
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        // 2. Get the default world ID
+        const world = await ctx.runQuery(api.world.defaultWorldStatus);
+        if (!world || !world.worldId) {
+          return new Response(JSON.stringify({ 
+            error: "No default world found in the system" 
+          }), { 
+            status: 500, 
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // 3. Use the new function to get player descriptions
+        const playerDescriptions = await ctx.runQuery(api.world.getPlayerDescriptionsByWorld, { 
+          worldId: world.worldId 
+        });
+        
+        if (!playerDescriptions || playerDescriptions.length === 0) {
+          return new Response(JSON.stringify({ 
+            error: "No player descriptions found in the world" 
+          }), { 
+            status: 500, 
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+        
+        // 4. Select a random player description
+        const randomPlayerIndex = Math.floor(Math.random() * playerDescriptions.length);
+        const randomPlayer = playerDescriptions[randomPlayerIndex];
+        
+        // 5. Generate conversation using the digital twin and the random player
+        const conversation = await ctx.runAction(internal.digitalTwin.internal_generateConversation, {
+          twinName: digitalTwin.name,
+          twinDescription: digitalTwin.description,
+          agentName: randomPlayer.name, // Use random player's name
+          agentDescription: randomPlayer.description, // Use random player's description
+        });
+        
+        // 6. Award 40 points to the user
+        const user = await ctx.runQuery(api.wallet.getUserByWalletAddress, {
+          walletAddress: userWalletAddress
+        });
+        
+        if (user) {
+          const newPoints = (user.points || 0) + 40;
+          await ctx.runMutation(api.wallet.updateUserPoints, {
+            walletAddress: userWalletAddress,
+            points: newPoints
+          });
+        }
+        
+        // 7. Return the conversation and random player details
+        return new Response(JSON.stringify({
+            success: true,
+            conversation: conversation,
+            agent: { 
+              playerId: randomPlayer.playerId,
+              name: randomPlayer.name,
+              description: randomPlayer.description,
+              character: randomPlayer.character,
+            },
+            twin: {
+              name: digitalTwin.name,
+              description: digitalTwin.description,
+            },
+            pointsAwarded: 40
+        }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+        });
+
+    } catch (error: any) {
+        console.error("Error engaging agent:", error);
+        return new Response(JSON.stringify({ 
+            error: "Failed to engage agent", 
+            details: error.message || String(error) 
+        }), { 
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+  }),
+});
+
 export default http;
