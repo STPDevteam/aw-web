@@ -170,6 +170,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
                 worldId={worldId}  
                 agentList={list} 
                 game={game} 
+                onClearSelectedItem={() => setSelectedPlayerId('')}
                 onFold={() => {
                   setAgentInfoVisible(false)
                   setSelectedPlayerId('')

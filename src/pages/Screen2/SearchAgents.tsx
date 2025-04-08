@@ -16,8 +16,9 @@ interface iSearchAgents {
     engineId: Id<'engines'>
     scrollViewRef: React.RefObject<HTMLDivElement>
     selectedPlayerId: string
+    onClearSelectedItem: () => void
 }
-export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldId, engineId, scrollViewRef, selectedPlayerId }) => {  
+export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldId, engineId, scrollViewRef, selectedPlayerId, onClearSelectedItem}) => {  
     const [isHover, setHover] = useState<boolean>(false)
     const [isDetail, setDetail] = useState<boolean>(false)
     const [keyword, setKeyword] = useState<string>('')
@@ -25,20 +26,22 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
     const [filteredList, setFilteredList] = useState<any[]>([])
 
     // const a = agentList.filter(item => item.energy < 21)
-    // console.log('aa', a)
     useEffect(() => {   
         if(selectedPlayerId) {
+            
             const taegetAgent = agentList.find(item => item.playerId === selectedPlayerId)
             if(taegetAgent) {
-                setCurrentFEAgent(taegetAgent)
                 setDetail(true)
+                setCurrentFEAgent(taegetAgent)
             }
             
         }
-    },[selectedPlayerId])
+    },[selectedPlayerId, agentList])
+
     useEffect(() => {
         filterList()
     },[keyword])
+    
     const filterList = () => {
         if(keyword) {            
             const reg = new RegExp(keyword, 'i')
@@ -46,10 +49,13 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
             setFilteredList(res)
 
         }else {
-            setFilteredList([])
-            setDetail(false)
+            if (!selectedPlayerId) {
+                setFilteredList([]);
+                setDetail(false);
+            }
         }   
     }
+
     const onChange = (e:any) => {
         const v = e.target.value
         setKeyword(v)
@@ -57,13 +63,15 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
 
     const onBack = () => {
         setDetail(false)
+        onClearSelectedItem()
     }
     const onItem = (item: any) => {
         setDetail(true) 
         setCurrentFEAgent(item)
 
     }
-    const onDetailSearch = () => {}
+
+
 
     return(
         <Box h={window.innerHeight * 0.7822 } className='' onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
@@ -86,7 +94,7 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
                         width: 'calc(100% - 40px - 24px - 25px)'
                     }}/>
                 {
-                    isDetail ? <Image src={Search} h='20px' w='20px' className='click' onClick={onDetailSearch}/> : <Box w='20px' h='20px'/>
+                    isDetail ? <Image src={Search} h='20px' w='20px' className='click' /> : <Box w='20px' h='20px'/>
                 }
             </Box>       
             
