@@ -154,7 +154,7 @@ export const Game:React.FC<{ feAgentsInfo:any[]}>= ({  feAgentsInfo }) => {
           <Box 
             className=''
             zIndex={2}
-            h="90%"
+            h="78%"
             w="400px"
             pos='absolute' 
             right="9px" 
