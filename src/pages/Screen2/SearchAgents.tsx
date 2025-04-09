@@ -73,9 +73,9 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
     }
 
 
-
+    const boxHeight = window.innerHeight * 0.7822 
     return(
-        <Box h={window.innerHeight * 0.7822 } className='' onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+        <Box h={boxHeight} className='' onMouseOver={() => setHover(true)} onMouseLeave={() => setHover(false)}>
             <Box 
                 h="64px" 
                 className='w100 fx-row ai-ct jc-sb' 
@@ -100,6 +100,7 @@ export const SearchAgents:FC<iSearchAgents> = ({ agentList, game, onFold, worldI
             </Box>       
             
             <Box 
+                h={boxHeight - 74}
                 overflowY="scroll" 
                 className=' fx-col ai-ct h100 '  
                 mt="10px"    
