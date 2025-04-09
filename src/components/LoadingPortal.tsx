@@ -14,7 +14,7 @@ export const LoadingPortal = () => {
   const welcomeText = () => (
     <Box  className='fx-col ai-ct' maxW="700px" >
       <Text fontWeight={400}  color='#838B8D'  className='fm3'  fontSize={['20px','20px','20px','24px','28px','32px']}>
-        Welcome to AI Town
+        Genesis AI Town
         </Text>
         <Text
           my={['30px','30px','30px','42px','48px','60px']}
@@ -24,7 +24,9 @@ export const LoadingPortal = () => {
           color='#838B8D'
         >
           <p>
-            <span>Introducing the first-ever live demo of 1,000 AI agents running in real-time – our tribute to </span>
+          <span>Welcome to Genesis AI Town, the first multi-agent simulation launching on World.Fun autonomous world launchpad, featuring 100 live agents living, evolving and socializing in a world of endless possibilities.</span>
+
+            {/* <span>Introducing the first-ever live demo of 1,000 AI agents running in real-time – our tribute to </span>
             <a className='gray click underline' href='https://github.com/joonspk-research/generative_agents' target='_blank'>Stanford Smallville</a> 
             <span> and </span>
             <a className='gray click underline' href='https://github.com/a16z-infra/ai-town'  target='_blank'>a16z AI Town</a>.
@@ -38,7 +40,7 @@ export const LoadingPortal = () => {
 
           </p>
           <p  style={{ marginTop: '15px' }}>
-            <span>This is just the beginning – World.Fun is your launchpad to the Autonomous World era.</span>
+            <span>This is just the beginning – World.Fun is your launchpad to the Autonomous World era.</span> */}
           </p>
         </Text>
     </Box>
