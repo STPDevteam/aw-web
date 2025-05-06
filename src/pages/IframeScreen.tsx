@@ -4,6 +4,7 @@ import { Game } from './Screen2/Game'
 import { Notification } from '@/components'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { alertInfoAction, selectAlertInfo } from '@/redux/reducer'
+import { ElectionResults } from '@/pages/Screen2/ElectionResults'
 
 
 
@@ -15,6 +16,7 @@ export const IframeScreen = () => {
   return(
         <Box>
             <Game feAgentsInfo={[]}/>  
+            <ElectionResults/>
             <Notification
                 visible={open}
                 onClose={() => {

@@ -68,3 +68,7 @@ export { default as Back } from "./back.png";
 export { default as LowBattery } from "./lowBattery.png";
 export { default as Fold } from "./fold.png";
 export { default as ZZZ } from "./zzz.png";
+export { default as ElectionResultsImg } from "./electionResults.jpg";
+export { default as ModalClose } from "./modalClose.png";
+export { default as ModalCloseHover } from "./modalCloseHover.png";
+export { default as AweLogo } from "./aweLogo.png";
